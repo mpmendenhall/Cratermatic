@@ -19,29 +19,37 @@
 //
 //-----------------------------------------------------------------------
 
-#include "Interactive.hh"
+#ifndef CRATERS_MERGER
+#define CRATERS_MERGER
 
-//run example: ./craters l ut3gridA findcraters ut3a.txt lc ut3a.txt d ut3a.bmp
+#include "Basics.hh"
 
-extern bool domovie;
-extern char* moviebase;
-extern int movieframeadvance;
-extern int mergemethod;
+class ClassifyImage;
+class Matrix;
+class Image;
 
-int main (int argc, char **argv)
+class Merger
 {
-	//systemwide globals
-	domovie = false;
-	moviebase = "movieframe_%04i.bmp";
-	movieframeadvance = 20;
-	mergemethod=2;
-	//------------------
-	
-	TopInteractor* I = new TopInteractor();
-	printf("\n");
-	if(argc>1) I->commandLineToCommandstream(argc,argv);
-	else I->interactiveMode();
-	printf("\n");
-	
-	return 0;
+public:
+	Merger(ClassifyImage* ws, Image** ch, int nch);
+	void basinstats();
+	void mainloop();
+	void domerge(float);
+	void snapshot();
+	void genfcritvals(float);
+	float getfcritval(int);
+	float calcweight(int,int);
+	float** linkweights;
+	//~Merger();
+	ClassifyImage* w;
+	Image** ch;
+	Matrix** reg_sum;
+	Matrix** reg_sscp;
+	float* fcritvals;
+	int* bestj;
+	float* bestdv;
+	int nch;
+	void merge(int i, int j);
 };
+
+#endif

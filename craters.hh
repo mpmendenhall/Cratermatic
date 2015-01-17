@@ -19,29 +19,20 @@
 //
 //-----------------------------------------------------------------------
 
+
+//Use this include file to quickly include all classes.
+#ifndef CRATERS
+#define CRATERS
+
+#include "Basics.hh"
+#include "Classify.hh"
+#include "ComplexImage.hh"
+#include "Histogram.hh"
+#include "Image.hh"
 #include "Interactive.hh"
+#include "Merger.hh"
+#include "RectRegion.hh"
+#include "RGBImage.hh"
+#include "Utils.hh"
 
-//run example: ./craters l ut3gridA findcraters ut3a.txt lc ut3a.txt d ut3a.bmp
-
-extern bool domovie;
-extern char* moviebase;
-extern int movieframeadvance;
-extern int mergemethod;
-
-int main (int argc, char **argv)
-{
-	//systemwide globals
-	domovie = false;
-	moviebase = "movieframe_%04i.bmp";
-	movieframeadvance = 20;
-	mergemethod=2;
-	//------------------
-	
-	TopInteractor* I = new TopInteractor();
-	printf("\n");
-	if(argc>1) I->commandLineToCommandstream(argc,argv);
-	else I->interactiveMode();
-	printf("\n");
-	
-	return 0;
-};
+#endif

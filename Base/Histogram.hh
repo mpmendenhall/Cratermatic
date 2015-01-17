@@ -19,29 +19,25 @@
 //
 //-----------------------------------------------------------------------
 
-#include "Interactive.hh"
+#ifndef CRATERS_HISTOGRAM
+#define CRATERS_HISTOGRAM
 
-//run example: ./craters l ut3gridA findcraters ut3a.txt lc ut3a.txt d ut3a.bmp
+#include "Basics.hh"
 
-extern bool domovie;
-extern char* moviebase;
-extern int movieframeadvance;
-extern int mergemethod;
-
-int main (int argc, char **argv)
+class Histogram
 {
-	//systemwide globals
-	domovie = false;
-	moviebase = "movieframe_%04i.bmp";
-	movieframeadvance = 20;
-	mergemethod=2;
-	//------------------
-	
-	TopInteractor* I = new TopInteractor();
-	printf("\n");
-	if(argc>1) I->commandLineToCommandstream(argc,argv);
-	else I->interactiveMode();
-	printf("\n");
-	
-	return 0;
+public:
+	float* binbounds;
+	float* count;
+	float totalcount;
+	int n;
+	float wtot;
+	Histogram(float *d, int size, float* weight, float min, float max, int nbins);
+	~Histogram();
+	void display();
+	int maxbin();
+	float uniformity();
+	float coverage();
 };
+
+#endif

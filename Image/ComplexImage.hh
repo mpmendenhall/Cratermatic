@@ -19,29 +19,33 @@
 //
 //-----------------------------------------------------------------------
 
-#include "Interactive.hh"
 
-//run example: ./craters l ut3gridA findcraters ut3a.txt lc ut3a.txt d ut3a.bmp
+#ifndef CRATERS_COMPLEXIMAGE
+#define CRATERS_COMPLEXIMAGE
 
-extern bool domovie;
-extern char* moviebase;
-extern int movieframeadvance;
-extern int mergemethod;
+#include "RectRegion.hh"
 
-int main (int argc, char **argv)
+#ifdef WITHFFTW
+
+#include <fftw3.h>
+class Image;
+
+class ComplexImage : public RectRegion
 {
-	//systemwide globals
-	domovie = false;
-	moviebase = "movieframe_%04i.bmp";
-	movieframeadvance = 20;
-	mergemethod=2;
-	//------------------
-	
-	TopInteractor* I = new TopInteractor();
-	printf("\n");
-	if(argc>1) I->commandLineToCommandstream(argc,argv);
-	else I->interactiveMode();
-	printf("\n");
-	
-	return 0;
+public:
+	int origwidth;
+	int origheight;
+	fftw_complex* data;
+	ComplexImage(int w, int h);
+	~ComplexImage();
+	ComplexImage* copy();
+	Image* inversefftreal();
+	static ComplexImage* fftreal(Image* I);
+	Image* real();
+	Image* imag();
+	Image* magv();
+	ComplexImage* mult(ComplexImage*);
 };
+#endif
+
+#endif
