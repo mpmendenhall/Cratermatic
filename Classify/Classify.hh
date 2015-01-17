@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //
 // CRATERMATIC Topography Analysis Toolkit
-// Copyright (C) 2006 Michael Mendenhall
+// Copyright (C) 2006-2015 Michael Mendenhall
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -23,6 +23,8 @@
 #define CRATERS_CLASSIFY
 
 #include "RectRegion.hh"
+#include <string>
+using std::string;
 
 class Image;
 class RGBImage;
@@ -112,9 +114,9 @@ public:
 	void cleardata();
 	
 	ClassifyImage* copy();
-	void loadarcgis(char* ifname);
-	void writeArcGIS(char *ofname);
-	void writeLowBitBMP(char *ofname);
+	void loadarcgis(const string& ifname);
+	void writeArcGIS(const string& ofname);
+	void writeLowBitBMP(const string& ofname);
 	Image* lowBitsToImage(int nbits);
 	Image* dataToImage();
 	

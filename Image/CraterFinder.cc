@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //
 // CRATERMATIC Topography Analysis Toolkit
-// Copyright (C) 2006 Michael Mendenhall
+// Copyright (C) 2006-2015 Michael Mendenhall
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -27,6 +27,9 @@
 #include "Utils.hh"
 #include "RasterRegion.hh"
 
+#include <string>
+using std::string;
+
 int comparestatbytemp(const void* a, const void* b) { //for qsort by average z
 	float at = (*(BasinStat**)a)->temp;
 	float bt = (*(BasinStat**)b)->temp;
@@ -48,7 +51,7 @@ struct crawler
 
 int searchx[] = {1,1,1,0};
 int searchy[] = {1,0,-1,1};
-float srmag[] = {sqrt(2.0),1,sqrt(2.0),1};
+float srmag[] = {(float)sqrt(2.0), 1, (float)sqrt(2.0), 1};
 
 void sameCrawlers(ClassifyImage* bounds, Image* topo, Image* drx, Image* dry, float minstr)
 {
@@ -160,7 +163,7 @@ void sameCrawlers(ClassifyImage* bounds, Image* topo, Image* drx, Image* dry, fl
 }
 
 
-int Image::findcraters(char* basefolder, Image* msk, CraterSpec*** cspecs, float k1, float k2, float k3, float k4, float k5, float k6, float k7)
+int Image::findcraters(const string& basefolder, Image* msk, CraterSpec*** cspecs, float k1, float k2, float k3, float k4, float k5, float k6, float k7)
 {
 	char* tc = (char*)malloc(256*sizeof(char));
 	
@@ -216,10 +219,10 @@ int Image::findcraters(char* basefolder, Image* msk, CraterSpec*** cspecs, float
 		combined->renumerateWithKey(0x01);
 		
 		//unexpanded regions output files
-		sprintf(tc,"%s/unexpand_%i_%03i.bmp",basefolder,size,r);
+		sprintf(tc,"%s/unexpand_%i_%03i.bmp",basefolder.c_str(),size,r);
 		combined->writeLowBitBMP(tc);
 		
-		printf("Narrowing down crater candidates from %i...\n");
+		printf("Narrowing down crater candidates from %i...\n",combined->nbasins);
 
 		//First cut: NOT TOO MUCH PREVIOUS STEP
 		for(int i=1; i<combined->nbasins; i++)
@@ -269,7 +272,7 @@ int Image::findcraters(char* basefolder, Image* msk, CraterSpec*** cspecs, float
 		sameCrawlers(combined, bld, drx, dry,pow(.10,.2*r));
 		combined->renumerateWithKey(0x04); //shrink basins to crawled size
 		
-		sprintf(tc,"%s/Preculling_%i_%03i.bmp",basefolder,size,r);
+		sprintf(tc,"%s/Preculling_%i_%03i.bmp",basefolder.c_str(),size,r);
 		combined->prettyoverlayimage(grd)->writeBMP(tc);
 		
 		//clear extra data from background regions
@@ -278,7 +281,7 @@ int Image::findcraters(char* basefolder, Image* msk, CraterSpec*** cspecs, float
 		//Clean regions
 		combined->fillHoles(0x04 | 0x08);
 		combined->renumerateWithKey(0x04);
-		combined->constrainSize((int)(PI*r*r/4),(int)(8*PI*(r+5)*(r+5)));
+		combined->constrainSize((int)(M_PI*r*r/4),(int)(8*M_PI*(r+5)*(r+5)));
 		combined->renumerateWithKey(0x04);
 		
 		//Characterize each region
@@ -297,7 +300,7 @@ int Image::findcraters(char* basefolder, Image* msk, CraterSpec*** cspecs, float
 			c->hipt = combined->stats[i]->basinmax;
 			c->lowpt = combined->stats[i]->basinmin;
 			c->depth = c->hipt - c->lowpt;
-			c->r = sqrt(c->area/PI);
+			c->r = sqrt(c->area/M_PI);
 			radialFourier(c->x,c->y,combined->pic[i], combined->npic[i], (float*)NULL, &(c->xsft), &(c->ysft), 10);
 			radialFourier(c->x,c->y,combined->pic[i], combined->npic[i], drx, &(c->grxxsft), &(c->grxysft), 10);
 			radialFourier(c->x,c->y,combined->pic[i], combined->npic[i], dry, &(c->gryxsft), &(c->gryysft), 10);
@@ -316,8 +319,8 @@ int Image::findcraters(char* basefolder, Image* msk, CraterSpec*** cspecs, float
 				
 				//gradient fourier test
 				//if(c->grxxsft[1] > 0 || c->gryysft[1] > 0) { passed = false; break; }
-				float xymx = max(fabs(c->grxxsft[1]),fabs(c->gryysft[1]));
-				float xymn = min(fabs(c->grxxsft[1]),fabs(c->gryysft[1]));
+				float xymx = std::max(fabs(c->grxxsft[1]),fabs(c->gryysft[1]));
+				float xymn = std::min(fabs(c->grxxsft[1]),fabs(c->gryysft[1]));
 				if(xymn/xymx < k5) { passed = false; break; } //x-y balance k5 0.5
 				
 				float primarycomponent = sqrt(c->grxxsft[1]*c->grxxsft[1]+c->gryysft[1]*c->gryysft[1]);
@@ -402,11 +405,11 @@ int Image::findcraters(char* basefolder, Image* msk, CraterSpec*** cspecs, float
 		int nlayers = 0;
 		int* cpts;
 		ClassifyImage* layerImage = NULL;
-		sprintf(tc,"%s/Catalog.txt",basefolder);
+		sprintf(tc,"%s/Catalog.txt",basefolder.c_str());
 		FILE* catfile = fopen(tc,"w");
-		sprintf(tc,"%s/Shape.txt",basefolder);
+		sprintf(tc,"%s/Shape.txt",basefolder.c_str());
 		FILE* shapefile = fopen(tc,"w");
-		sprintf(tc,"%s/Slope.txt",basefolder);
+		sprintf(tc,"%s/Slope.txt",basefolder.c_str());
 		FILE* gradfile = fopen(tc,"w");
 		CraterSpec::writeHeaders(catfile);
 				
@@ -416,7 +419,7 @@ int Image::findcraters(char* basefolder, Image* msk, CraterSpec*** cspecs, float
 			{
 				if(layerImage)
 				{
-					sprintf(tc,"%s/Layer_%i.txt",basefolder,nlayers);
+					sprintf(tc,"%s/Layer_%i.txt",basefolder.c_str(),nlayers);
 					layerImage->writeArcGIS(tc);
 					delete(layerImage);
 				}
@@ -433,14 +436,14 @@ int Image::findcraters(char* basefolder, Image* msk, CraterSpec*** cspecs, float
 			free(cpts);
 		}
 
-		sprintf(tc,"%s/Layer_%i.txt",basefolder,nlayers);
+		sprintf(tc,"%s/Layer_%i.txt",basefolder.c_str(),nlayers);
 		layerImage->writeArcGIS(tc);
 		delete(layerImage);
 		
 		fclose(catfile);
 		fclose(shapefile);
 		fclose(gradfile);
-		sprintf(tc,"%s/final_%i.bmp",basefolder,size);
+		sprintf(tc,"%s/final_%i.bmp",basefolder.c_str(),size);
 		finalout->writeBMP(tc);
 		delete(finalout);
 	}
@@ -516,7 +519,7 @@ Image* Image::craterFindingTransform(float r0, Image* gx, Image* gy) {
 	pb->update(1.0);
 	
 	iout->copyfromrr((RectRegion*)gx);
-	sprintf(iout->name,"Crater Transform");
+    iout->name = "Crater Transform";
 	delete(pb);
 	return iout;
 };

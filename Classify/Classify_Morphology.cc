@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //
 // CRATERMATIC Topography Analysis Toolkit
-// Copyright (C) 2006 Michael Mendenhall
+// Copyright (C) 2006-2015 Michael Mendenhall
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -109,7 +109,7 @@ Image* ClassifyImage::simplepic()
 			int dy = connectdy[q];
 			b->data[x0+dx+97*(y0+dy)] = 1.0;
 			if(q<4 && (i & 1<<q)) b->data[x0+dx+97*(y0+dy)]=0;
-			if(q>4 && (i & 1<<q-1)) b->data[x0+dx+97*(y0+dy)]=0;
+			if(q>4 && (i & 1<<(q-1))) b->data[x0+dx+97*(y0+dy)]=0;
 		}
 		
 	}

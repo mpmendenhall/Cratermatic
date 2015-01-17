@@ -4,10 +4,10 @@ bool Stack::checkReadable()
 {
 	int foo = COF_CRATERSTRING;
 	if(!validateinput(&foo,1)) return false;
-	char* c = ((CraterString*)get())->val;
-	FILE* f = fopen(c,"r");
+	string c = ((CraterString*)get())->val;
+	FILE* f = fopen(c.c_str(),"r");
 	if(f==NULL) {
-		sprintf(tempchar,"File '%s' is unreadable",c);
+		sprintf(tempchar,"File '%s' is unreadable",c.c_str());
 		push(new CError(tempchar,5));
 		return false;
 	}
@@ -19,10 +19,10 @@ bool Stack::checkWritable()
 {
 	int foo = COF_CRATERSTRING;
 	if(!validateinput(&foo,1)) return false;
-	char* c = ((CraterString*)get())->val;
-	FILE* f = fopen(c,"a");
+	string c = ((CraterString*)get())->val;
+	FILE* f = fopen(c.c_str(), "a");
 	if(f==NULL) {
-		sprintf(tempchar,"File '%s' is unwritable",c);
+		sprintf(tempchar,"File '%s' is unwritable",c.c_str());
 		push(new CError(tempchar,6));
 		return false;
 	}
@@ -34,14 +34,14 @@ bool Stack::checkFolder()
 {
 	int foo = COF_CRATERSTRING;
 	if(!validateinput(&foo,1)) return false;
-	char* c = ((CraterString*)get())->val;
+	string c = ((CraterString*)get())->val;
 	//sprintf(tempchar,"ls %s/",c);
 	//if(!system(tempchar)) return true; //folder exists already
-	sprintf(tempchar,"mkdir %s",c);
+	sprintf(tempchar,"mkdir %s",c.c_str());
 	system(tempchar);
 	return true;
 	if(!system(tempchar)) return true; //folder can be created
-	sprintf(tempchar,"Folder '%s' is unwritable",c);
+	sprintf(tempchar,"Folder '%s' is unwritable",c.c_str());
 	push(new CError(tempchar,6));
 	return false;
 }
@@ -81,8 +81,8 @@ void Stack::disp() {
 	printf("+---------------+\n");
 	for(int i=0; i<nitems; i++) {
 		CratersBaseObject* foo = get(nitems-1-i);
-		printf("|%i (%i): %s ",nitems-i,entrynum[i],foo->isaName);
-		printf("'%s' ",foo->name); //item name
+		printf("|%i (%i): %s ",nitems-i,entrynum[i],foo->isaName.c_str());
+		printf("'%s' ",foo->name.c_str()); //item name
 		printf("\n");
 	}
 	if(nitems==0) printf("| <stack empty> |\n");
@@ -154,10 +154,10 @@ int Stack::getint(unsigned int n) { //get nth item as an int
 	return 0;
 }
 
-char* Stack::getstring(unsigned int n) { //get nth item as an int
-	if(nitems < n) return NULL;
-	if(get(n)->isaNum == COBJ_CRATERSTRING) return (char*)*(CraterString*)get(n);
-	return NULL;
+string Stack::getstring(unsigned int n) { //get nth item as an int
+	if(nitems < n) return "";
+	if(get(n)->isaNum == COBJ_CRATERSTRING) return ((CraterString*)get(n))->val;
+	return "";
 }
 
 void Stack::rot(int n) { //swap 2 items on the stack

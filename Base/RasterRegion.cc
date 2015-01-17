@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //
 // CRATERMATIC Topography Analysis Toolkit
-// Copyright (C) 2006 Michael Mendenhall
+// Copyright (C) 2006-2015 Michael Mendenhall
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -23,6 +23,7 @@
 #include "Image.hh"
 #include "Classify.hh"
 #include "Utils.hh"
+#include <climits>
 
 RasterRegion::RasterRegion()
 {
@@ -43,7 +44,7 @@ RasterRegion::RasterRegion(RectRegion* R, int x, int y)
 
 void RasterRegion::init()
 {
-	sprintf(isaName,"RasterRegion");
+	isaName = "RasterRegion";
 	isaNum = COBJ_RASTERREGION;
 	widths = NULL;
 	offsets = NULL;
@@ -92,7 +93,7 @@ RasterRegion* RasterRegion::scanFromImage(Image* I, int x, int y)
 	int ntot=0;
 	R->maxwidth = 0;
 	
-	while(n=ids.nextline(R->data+ntot)) {
+	while( (n=ids.nextline(R->data+ntot)) ) {
 		
 		if(n>R->maxwidth) R->maxwidth = n;
 		
@@ -124,7 +125,7 @@ RasterRegion* RasterRegion::scanFromClassify(ClassifyImage* C, int x, int y)
 	int ntot=0;
 	R->maxwidth = 0;
 	
-	while(n=cds.nextline(R->cdata+ntot)) {
+	while( (n=cds.nextline(R->cdata+ntot)) ) {
 		
 		if(n>R->maxwidth) R->maxwidth = n;
 		
@@ -149,7 +150,7 @@ RasterRegion* RasterRegion::updateImage(Image* I)
 	ImageDataScanner ids(I,myx,myy,&d);
 	int ntot=0;
 	int n;
-	while(n=ids.nextline(data+ntot)) ntot += n;
+	while( (n=ids.nextline(data+ntot)) ) ntot += n;
 	return this;
 }
 
@@ -159,8 +160,7 @@ RasterRegion* RasterRegion::updateClassify(ClassifyImage* C)
 	ScanIterator si((RectRegion*)C, myx, myy, &d);
 	int ntot=0;
 	int n;
-	while(n=si.nextline()) 
-	{
+	while( (n=si.nextline()) ) {
 		for(int i=0; i<n; i++) cdata[ntot+i] = C->data[d[i]];
 		ntot += n;
 	}
@@ -202,7 +202,7 @@ Image* RasterRegion::putIntoImage(Image* I)
 	int n;
 	int ntot=0;
 	
-	while(n=ids.nextline()) {
+	while( (n=ids.nextline()) ) {
 		ids.replacedata(data + ntot);
 		ntot+=n;
 	}
@@ -218,7 +218,7 @@ ClassifyImage* RasterRegion::putIntoClassify(ClassifyImage* C)
 	int n;
 	int ntot=0;
 	
-	while(n=si.nextline()) {
+	while( (n=si.nextline()) ) {
 		for(int i=0; i<n; i++) C->data[d[i]] = cdata[ntot+i];
 		ntot+=n;
 	}
@@ -310,7 +310,7 @@ RasterRegion* RasterRegion::cLineMerge(float ol, int andkey, int xorkey, int mod
 			
 			while(((newclass ^ xorkey) & andkey) && ((oldclass ^ xorkey) & andkey))
 			{
-				int l = min(segs1[i+1],segs2[j+1]) - max(segs1[i],segs2[j]);
+				int l = std::min(segs1[i+1],segs2[j+1]) - std::max(segs1[i],segs2[j]);
 				int sl1 = segs1[i+1]-segs1[i];
 				int sl2 = segs2[j+1]-segs2[j];
 				if(sl1>6 || sl2>6) { if(sl1*ol > l || sl2*ol > l) break; }//not overlapping enough
@@ -489,7 +489,7 @@ int samesignsegclass(float* d, int* c, int n, int peakn)
 	bool sgn = d[0] >= 0;
 	
 	//initial peaks count
-	for(int i=1; i<n-1; i++) if( (d[i] < d[i-1] xor sgn) && (d[i] <= d[i+1] xor sgn) ) peakpos[np++] = i;
+	for(int i=1; i<n-1; i++) if( ((d[i] < d[i-1]) xor sgn) && ((d[i] <= d[i+1]) xor sgn) ) peakpos[np++] = i;
 
 	if(!np)
 	{ //no appropriate extrema in segment
@@ -506,8 +506,8 @@ int samesignsegclass(float* d, int* c, int n, int peakn)
 		for(int p=0; p<np-1; p++)
 		{
 			float ht;
-			if(sgn) ht=max(d[peakpos[p]],d[peakpos[p+1]]);
-			else ht=min(d[peakpos[p]],d[peakpos[p+1]]);
+			if(sgn) ht=std::max(d[peakpos[p]],d[peakpos[p+1]]);
+			else ht=std::min(d[peakpos[p]],d[peakpos[p+1]]);
 			
 			for(int q=peakpos[p]; q<peakpos[p+1]; q++)
 			{
@@ -536,13 +536,13 @@ int samesignsegclass(float* d, int* c, int n, int peakn)
 	
 	for(int q=peakpos[0]; q>=0; q--)
 	{
-		if( d[q] > 0.02*pheight xor sgn ) break;
+		if( (d[q] > 0.02*pheight) xor sgn ) break;
 		c[q] = peakn*0x100 + ctyp;
 		accum += d[q]; naccum++;
 	}
 	for(int q=peakpos[0]+1; q<n; q++) //claim back
 	{
-		if( d[q] > 0.02*pheight xor sgn ) break;
+		if( (d[q] > 0.02*pheight) xor sgn ) break;
 		c[q] = peakn*0x100 + ctyp;
 		accum += d[q]; naccum++;
 	}
@@ -579,7 +579,7 @@ RasterRegion* RasterRegion::peakSegmenter()
 		
 		for(int i=0; i<n; i++)
 		{
-			if((dx[i] >= 0 xor sgn) || i == n-1) //just crossed 0!
+			if(((dx[i] >= 0) xor sgn) || i == n-1) //just crossed 0!
 			{
 				peakn += samesignsegclass(dx+lastp,claimer+lastp,i-lastp,peakn); //do claimation
 				sgn = !sgn;
@@ -674,7 +674,7 @@ RasterRegion* RasterRegion::rimExpand()
 				}
 			}
 			
-			startpt = max(x+1,startpt);
+			startpt = std::max(x+1,startpt);
 		}
 	}
 	
@@ -747,8 +747,7 @@ RasterRegion* RasterRegion::orthoblur(float r)
 	float* gk = RasterRegion::gausskernel(w,r);
 	float* cnvd;
 	int n;
-	while(n=oi.nextline())
-	{
+	while( (n=oi.nextline()) ) {
 		cnvd = RasterRegion::convolve1d(d,n,gk,2*w+1);
 		oi.replacedata(cnvd + 2*w);
 		free(cnvd);

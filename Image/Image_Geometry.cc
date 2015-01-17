@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //
 // CRATERMATIC Topography Analysis Toolkit
-// Copyright (C) 2006 Michael Mendenhall
+// Copyright (C) 2006-2015 Michael Mendenhall
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -20,6 +20,7 @@
 //-----------------------------------------------------------------------
 
 #include "Image.hh"
+#include "Utils.hh"
 
 Image* Image::trimmed(int l, int t, int r, int b) //return an image with trimmed borders
 {
@@ -127,7 +128,7 @@ Image* Image::bilinearscale(float s) {
 	delete(foor);
 	Image* barr = bar->rotate();
 	delete(bar);
-	sprintf(barr->name,"%s Scaled %g",name,s);
+	barr->name = name+" Scaled "+to_str(s);
 	return barr;
 }
 
@@ -198,17 +199,17 @@ Image* Image::getsubregion(unsigned int n, float overreach) {
 	if(n>mycatalog->ncraters-1) return NULL;
 	int y = height - mycatalog->entries[n]->centery;
 	int r = (int)(overreach*mycatalog->entries[n]->radius);
-	int xmin = max(0,mycatalog->entries[n]->centerx-r);
-	int xmax = min(width-1,mycatalog->entries[n]->centerx+r);
-	int ymin = max(0,y-r);
-	int ymax = min(height-1,y+r);
+	int xmin = std::max(0,mycatalog->entries[n]->centerx-r);
+	int xmax = std::min(width-1,mycatalog->entries[n]->centerx+r);
+	int ymin = std::max(0,y-r);
+	int ymax = std::min(height-1,y+r);
 	Image* foo = new Image(xmax-xmin+1,ymax-ymin+1);
 	for(int x=xmin; x<=xmax; x++){
 		for(int y=ymin; y<=ymax; y++){
 			foo->data[x-xmin+(xmax-xmin+1)*(y-ymin)]=data[x+width*y];
 		}
 	}
-	sprintf(foo->name,"%s Region %i",name,n);
+    foo->name = name+" Region "+to_str(n);
 	return foo;
 }
 

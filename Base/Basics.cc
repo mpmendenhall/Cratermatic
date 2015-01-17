@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //
 // CRATERMATIC Topography Analysis Toolkit
-// Copyright (C) 2006 Michael Mendenhall
+// Copyright (C) 2006-2015 Michael Mendenhall
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -20,6 +20,7 @@
 //-----------------------------------------------------------------------
 
 #include "Basics.hh"
+#include "Utils.hh"
 
 //calculate byte length
 int calcbytelength()
@@ -46,28 +47,17 @@ int CratersBaseObject::compareFloatP(const void * a, const void * b)
 
 const int CratersBaseObject::bytelength = calcbytelength();
 
-CratersBaseObject::CratersBaseObject()
-{
-	isaName = (char*)malloc(64*sizeof(char));
-	sprintf(isaName,"CratersBaseObject");
-	name=(char*)malloc(1024*sizeof(char));
-	sprintf(name,"");
+CratersBaseObject::CratersBaseObject() {
+    isaName = "CratersBaseObject";
+	name = "";
 	isaNum = COBJ_CRATERSBASEOBJECT;
-};
-
-CratersBaseObject::~CratersBaseObject()
-{
-	if(isaName) free(isaName);
-	isaName = NULL;
-	if(name) free(name);
-	name = NULL;
 };
 
 void CratersBaseObject::writeBinaryFromNormalizedFloat(float* fdat, int len, FILE* ofp, int nbits) {
 	
 	//test for max bit depth
 	int i=0;
-	while( (1<<i+1) > (1<<i)) i++;
+	while( (1<<(i+1)) > (1<<i)) i++;
 	if(nbits > i)
 	{
 		printf("\n*** Warning: maximum bit depth exceeded; writing file at %i bits/pixel ***\n",i);
@@ -86,12 +76,12 @@ void CratersBaseObject::writeBinaryFromNormalizedFloat(float* fdat, int len, FIL
 	{
 		if(dbl >= abl) //finish up accum and write
 		{
-			accum += (unsigned char)(dat[c] >> dbl - abl) << 8-abl >> 8-abl;
+			accum += (unsigned char)(dat[c] >> (dbl - abl)) << (8-abl) >> (8-abl);
 			dbl -= abl; abl = 8;
 			fputc(accum,ofp); accum=0;
 			if(!dbl) {++c; dbl = nbits;}
 		} else { //finish up data and get next data point
-			accum += (unsigned char)dat[c] << 8-dbl >> 8-abl;
+			accum += (unsigned char)dat[c] << (8-dbl) >> (8-abl);
 			abl -= dbl;
 			dbl = nbits; ++c;
 		}
@@ -109,7 +99,7 @@ void CratersBaseObject::writeBinaryFromBool(bool* bdat, int len, FILE* ofp) {
 		for(int j=0; j<8; j++)
 		{
 			if(i+j>=len) break;
-			accum |= (unsigned char)(bdat[i+j]) << 7-j;
+			accum |= (unsigned char)(bdat[i+j]) << (7-j);
 		}
 		fputc(accum,ofp);
 	}
@@ -259,129 +249,77 @@ void CratersBaseObject::lsrl(float* x, float* y, float* w, int n, float* a, floa
 	if(r) *r = (sw*sxy-sx*sy)/sqrt((sw*sxx-sx*sx)*(sw*syy-sy*sy));
 }
 
-CFloat::CFloat(float f) : CratersBaseObject()
-{
-	sprintf(isaName,"Float");
-	sprintf(name,"%g",f);
+CFloat::CFloat(float f) : CratersBaseObject() {
+	isaName = "Float";
+	name = to_str(f);
 	isaNum = COBJ_CFLOAT;
 	val = f;
 };
 
-CFloat* CFloat::copy()
-{
+CFloat* CFloat::copy() {
 	return new CFloat(val);
 }
 
-CFloat::operator float() const
-{
+CFloat::operator float() const {
 	return val;
-};
+}
 
-CraterString::CraterString(char* c) : CratersBaseObject()
-{
-	sprintf(isaName,"String");
+CraterString::CraterString(const string& c) : CratersBaseObject() {
+	isaName = "String";
 	isaNum = COBJ_CRATERSTRING;
-	sprintf(name,"%s",c);
-	val = (char*)malloc((strlen(c)+1)*sizeof(char));
-	strncpy(val,c,strlen(c)+1);
-};
+	name = c;
+	val = c;
+}
 
-CraterString* CraterString::copy()
-{
+CraterString* CraterString::copy() {
 	return new CraterString(val);
 }
 
-CraterString::~CraterString()
-{
-	if(val) free(val);
-	val=NULL;
+CError::CError(const string& c, int i) : CratersBaseObject() {
+	isaName = "Error";
+	isaNum = COBJ_CERROR;
+	errname = c;
+	name = "["+to_str(i)+"] "+errname;
+	errnum = i;
 }
 
-CraterString::operator char*() const
-{
-	return val;
-};
-
-CError::CError(char* c, int i) : CratersBaseObject()
-{
-	sprintf(isaName,"Error");
-	isaNum = COBJ_CERROR;
-	errname = (char*)malloc((strlen(c)+5)*sizeof(char));
-	strcpy(errname,c);
-	sprintf(name,"[%i] %s",i,errname);
-	errnum = i;
-};
-
-CError* CError::copy()
-{
+CError* CError::copy() {
 	return new CError(errname,errnum);
 }
 
-CError::~CError()
-{
-	if(errname) free(errname);
-}
-
-CMacro::CMacro() : CratersBaseObject()
-{
-	sprintf(isaName,"Macro");
+CMacro::CMacro(): CratersBaseObject() {
+	isaName = "Macro";
 	isaNum = COBJ_CMACRO;
-	sprintf(name,"[ ]");
+	name = "[ ]";
 	maxlen = 1;
-	stringval = (char*)malloc(maxlen*sizeof(char));
-	stringval[0]='\0';
-};
-
-CMacro::~CMacro()
-{
-	if(stringval) free(stringval);
-	stringval=NULL;
+	stringval = "";
 }
 
-CMacro* CMacro::copy()
-{
+CMacro* CMacro::copy() {
 	CMacro* M = new CMacro();
-	sprintf(M->name,name);
+	M->name = name;
 	M->maxlen = maxlen;
-	M->stringval = (char*)realloc(M->stringval,maxlen*sizeof(char));
-	strcpy(M->stringval,stringval);
+	M->stringval = stringval;
 	return M;
 }
 
-CMacro::operator char*() const
-{
-	return stringval;
-};
-
-char* shortize(char* t, int l)
-{
-	char* foo = (char*)malloc((l+5)*sizeof(char));
-	if(strlen(t)<l)
-	{
-		sprintf(foo,"[ %s ]",t);
-		return foo;
-	}
-	char* fool = (char*)malloc(((l/2)+1)*sizeof(char));
-	char* foor = (char*)malloc(((l/2)+1)*sizeof(char));
-	strncpy(fool,t,l/2-5); fool[l/2-5] = '\0';
-	strncpy(foor,t+strlen(t)-l/2+5,l/2-5); foor[l/2-5] = '\0';
-	sprintf(foo,"[ %s<...>%s ]",fool,foor);
-	free(fool); free(foor);
-	return(foo);
+string shortize(const string& t, int l) {
+	if(t.size()<l) return "[ "+t+" ]";
+    return "[ %s<...>%s ]"; // TODO
+    
+	//char* fool = (char*)malloc(((l/2)+1)*sizeof(char));
+	//char* foor = (char*)malloc(((l/2)+1)*sizeof(char));
+	//strncpy(fool,t,l/2-5); fool[l/2-5] = '\0';
+	//strncpy(foor,t+strlen(t)-l/2+5,l/2-5); foor[l/2-5] = '\0';
+	//sprintf(foo,"[ %s<...>%s ]",fool,foor);
+	//free(fool); free(foor);
+	//return(foo);
 }
 
-void CMacro::addtoken(char* t)
-{
-	int origlen = maxlen;
-	int lentot = strlen(stringval)+strlen(t);
-	while(lentot+10 > maxlen) maxlen += 128;
-	if(maxlen != origlen) stringval = (char*)realloc(stringval,maxlen*sizeof(char));
-	if(strlen(stringval) > 0) strcat(stringval," ");
-	strcat(stringval,t);
-	
-	char* shortname = shortize(stringval,60);
-	sprintf(name,"%s",shortname);
-	free(shortname);
+void CMacro::addtoken(const string& t) {
+    if(stringval.size()) stringval += " ";
+    stringval += t;	
+	name = shortize(stringval,60);
 };
 
 CraterSpec::CraterSpec(int idn)
@@ -456,7 +394,7 @@ void CraterSpec::writeGradFourierToFile(FILE* ofp)
 
 void CratersBaseObject::hsv2rgb(float h, float s, float v, float* r, float* g, float* b)
 {
-	h = fmod(h,2*PI);
+	h = fmod(h,2*M_PI);
 	
 	if(s==0)
 	{
@@ -464,7 +402,7 @@ void CratersBaseObject::hsv2rgb(float h, float s, float v, float* r, float* g, f
 		return;
 	}
 	
-	float var_h = 3*h/PI;
+	float var_h = 3*h/M_PI;
 	int var_i = (int)floor(var_h);
 	float var_1 = v * ( 1 - s );
 	float var_2 = v * ( 1 - s * ( var_h - var_i ));
@@ -507,12 +445,12 @@ void CratersBaseObject::hsv2rgb(float h, float s, float v, float* r, float* g, f
 
 void CratersBaseObject::rgb2hsv(float r, float g, float b, float* h, float* s, float* v)
 {
-	*v = max(r,max(g,b));
-	float d = *v - min(r,min(g,b));
+	*v = std::max(r,std::max(g,b));
+	float d = *v - std::min(r,std::min(g,b));
 	if(d==0) { *h=0; *s=0; return; }
 	*s = d/(*v);
 	if( *v == r ) *h = (g - b)/d;
 	else if( *v == g ) *h = 2 + (b -r)/d;
 	else *h = 4 + (r - g)/d;
-	*h *= PI/3;
+	*h *= M_PI/3;
 }

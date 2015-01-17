@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //
 // CRATERMATIC Topography Analysis Toolkit
-// Copyright (C) 2006 Michael Mendenhall
+// Copyright (C) 2006-2015 Michael Mendenhall
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -26,7 +26,7 @@
 #include "Utils.hh"
 
 bool domovie;
-char* moviebase;
+string moviebase;
 int movieframeadvance;
 int mergemethod;
 
@@ -74,9 +74,9 @@ void Merger::genfcritvals(float alpha) { //create table of critical-f values
 	printf(" reading critF table;");
 	fflush(stdout);
 
-	fcritvals = (float*)malloc(min(w->size,2000)*sizeof(float));
+	fcritvals = (float*)malloc(std::min(w->size,2000)*sizeof(float));
 	char* buf = (char*)malloc(256*sizeof(char));
-	for(int i=1; i<=min(w->size,2000); i++) {
+	for(int i=1; i<=std::min(w->size,2000); i++) {
 		fgets(buf,200,f);
 		float x=0;
 		sscanf(buf,"[1] %f\n",&x);
@@ -89,7 +89,7 @@ void Merger::genfcritvals(float alpha) { //create table of critical-f values
 
 float Merger::getfcritval(int n){
 	if(n<2000) return fcritvals[n-1];
-	return fcritvals[min(w->size,2000)-1];
+	return fcritvals[std::min(w->size,2000)-1];
 }
 
 Merger::Merger(ClassifyImage* ws, Image** c, int n)
@@ -109,7 +109,7 @@ void Merger::domerge(float alpha) {
 	
 	basinstats();
 	mainloop();
-	sprintf(w->name,"%s Merged",w->name);
+	w->name = w->name+" Merged";
 	printf ("%i basins left after merging, with %i Pixels/Basin average\n",w->nbasins,w->size/w->nbasins);
 }
 
@@ -279,7 +279,7 @@ void Merger::merge(int i, int j) //merge watershed regions (j into i) and statis
 void Merger::snapshot() { //save image of an intermediate frame
 	if(!domovie) return;
 	char* fname = (char*)malloc(1024*sizeof(char));
-	sprintf(fname,moviebase,framenum);
+	sprintf(fname,moviebase.c_str(),framenum);
 	RGBImage* C = w->prettyImage();
 	C->writeBMP(fname);
 	delete(C);

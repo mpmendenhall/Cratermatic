@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //
 // CRATERMATIC Topography Analysis Toolkit
-// Copyright (C) 2006 Michael Mendenhall
+// Copyright (C) 2006-2015 Michael Mendenhall
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -159,7 +159,7 @@ ClassifyImage::ClassifyImage(RectRegion* R) : RectRegion(R->width,R->height)
 };
 
 void ClassifyImage::initialize() {
-	sprintf(isaName,"ClassifyImage");
+	isaName = "ClassifyImage";
 	isaNum = COBJ_CLASSIFYIMAGE;
 	isclassified = false;
 	data = (int*)calloc(size,sizeof(int));
@@ -444,8 +444,8 @@ void ClassifyImage::joinregions(int a, int b, bool dobounds) { //merge region b 
 	for(int k=0; k<nconnected; k++) {
 		int i = connectedrs[k];
 		int s = connectedvs[k];
-		cg->set(a,i,max(s,cg->get(a,i)));
-		cg->set(i,a,max(s,cg->get(a,i)));
+		cg->set(a,i,std::max(s,cg->get(a,i)));
+		cg->set(i,a,std::max(s,cg->get(a,i)));
 		cg->set(i,b,0);
 		cg->set(b,i,0);
 	}	

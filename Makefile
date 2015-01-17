@@ -13,8 +13,8 @@ SHELL = /bin/sh
 CC = cc
 CXX = g++
 
-CXXFLAGS = -std=c++03 -O3 -fPIC -I. -IBase -IClassify -IImage -IInteractive
-LDFLAGS =  -L. -lCratermatic -L/sw/lib/ -lfftw3
+CXXFLAGS = -std=c++11 -O3 -fPIC -I. -IBase -IClassify -IImage -IInteractive
+LDFLAGS = -L. -lCratermatic -L/sw/lib/ -lfftw3
 
 #
 # things to build

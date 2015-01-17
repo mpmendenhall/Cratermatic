@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //
 // CRATERMATIC Topography Analysis Toolkit
-// Copyright (C) 2006 Michael Mendenhall
+// Copyright (C) 2006-2015 Michael Mendenhall
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -68,7 +68,7 @@ class CraterCatalog //catalog of subcraters in larger region
 public:
 	int ncraters;
 	CatalogEntry** entries;
-	CraterCatalog(char* infile);
+	CraterCatalog(const string& infile);
 	~CraterCatalog();
 };
 
@@ -89,7 +89,7 @@ public:
 	static bool* gennocds(int n);
 		
 	CraterCatalog* mycatalog;
-	void loadcatalog(char*);
+	void loadcatalog(const string&);
 	ImageCoords coords;
 	RectRegion(int, int);
 	~RectRegion();

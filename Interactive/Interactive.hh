@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //
 // CRATERMATIC Topography Analysis Toolkit
-// Copyright (C) 2006 Michael Mendenhall
+// Copyright (C) 2006-2015 Michael Mendenhall
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -23,6 +23,11 @@
 #define CRATERS_INTERACTIVE
 
 #include <vector>
+using std::vector;
+#include <string>
+using std::string;
+#include <deque>
+
 #include "Basics.hh"
 #include "Image.hh"
 #include "Classify.hh"
@@ -34,17 +39,19 @@
 #define STACK_MAX_ITEMS 256
 
 extern bool domovie;
-extern char* moviebase;
+extern string moviebase;
 extern int movieframeadvance;
 extern int mergemethod;
 
 class Interactor;
 
-class Stack
-{
+class Stack {
 public:
+    /// Constructor
 	Stack();
+    /// Destructor
 	~Stack();
+    
 	char* tempchar;
 	void push(CratersBaseObject* ptr);
 	CratersBaseObject* pop();
@@ -52,10 +59,10 @@ public:
 	CratersBaseObject* get(unsigned int);
 	float getfloat(unsigned int);
 	int getint(unsigned int);
-	char* getstring(unsigned int);
+	string getstring(unsigned int);
 	bool istype(int t);
 	bool istypef(int t);
-	bool istype(char*);
+	bool istype(string);
 	void disp();
 	bool validateinput(int*,unsigned int);
 	bool checkReadable();
@@ -75,10 +82,9 @@ public:
 class Action : public CratersBaseObject
 {
 public:
-	char* description;
-	char* commandnames[8];
-	int ncommandnames;
-	void addname(char* c);
+	string description;
+	vector<string> commandnames;
+	void addname(const string& c);
 	
 	int ninputs;
 	int* inputtypes;
@@ -98,8 +104,8 @@ class Interactor
 {
 public:
 	char* tempchar;
-	char* name;
-	char* description;
+	string name;
+	string description;
 	bool haltinteract;
 	bool istop;
 	unsigned int evallevel;
@@ -109,22 +115,22 @@ public:
 	Interactor** categories;
 	int ncategories;
 	Stack* mystack;
-	std::vector<char*> commandstream;
+	std::deque<string> commandstream;
 	
 	Interactor(Stack* s);
 	void processCommand();
-	void parseCommand(char* ib);
-	void prependCommand(char* ib);
+	void parseCommand(const string& ib);
+	void prependCommand(const string& ib);
 	void commandLineToCommandstream(int argc, char** argv);
-	bool knowstopic(char* c);
+	bool knowstopic(const string& c);
 	int nSubActions();
 	void printinfo();
-	void printhelp(char* topic, int depth);
-	void rprinthelp(char* topic, int depth);
+	void printhelp(const string& topic, int depth);
+	void rprinthelp(const string& topic, int depth);
 	void registerAction(Action*);
 	void registerCategory(Interactor*);
 	void interactiveMode();
-	Action* findaction(char* c);	
+	Action* findaction(const string& c);
 };
 
 class TopInteractor : public Interactor

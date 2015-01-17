@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //
 // CRATERMATIC Topography Analysis Toolkit
-// Copyright (C) 2006 Michael Mendenhall
+// Copyright (C) 2006-2015 Michael Mendenhall
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -21,15 +21,15 @@
 
 #include "Image.hh"
 
-void Image::load(char *ifname) { //load raw float data
-	FILE *ifp = fopen(ifname, "rb");
+void Image::load(const string& ifname) { //load raw float data
+	FILE *ifp = fopen(ifname.c_str(), "rb");
 	fread (data, size, sizeof(float), ifp);
 	coords.lx=0; coords.ux=width-1;
 	coords.ly=0; coords.uy=height-1;
 };
 
-Image* Image::loadrawbinary(char *ifname, int w, int h, int nbits) { //load raw arbitrary bit depth (short) raster data
-	FILE *ifp = fopen(ifname, "rb");
+Image* Image::loadrawbinary(const string& ifname, int w, int h, int nbits) { //load raw arbitrary bit depth (short) raster data
+	FILE *ifp = fopen(ifname.c_str(), "rb");
 	Image* foo = Image::loadrawbinary(ifp,w,h,nbits,0,1);
 	fclose(ifp);
 	return foo;
@@ -49,7 +49,7 @@ Image* Image::loadrawbinary(FILE* ifp, int w, int h, int nbits, int offset, int 
 	{
 		if(dbl >= abl) //add in and fetch next data chunk
 		{
-			accum += (long int)((unsigned char)(fin << 8-abl) >> 8-abl) << dbl-abl;
+			accum += (long int)((unsigned char)(fin << (8-abl)) >> (8-abl)) << (dbl-abl);
 			dbl -= abl;
 			fin = fgetc(ifp); abl=8;
 			if(!dbl) {
@@ -59,7 +59,7 @@ Image* Image::loadrawbinary(FILE* ifp, int w, int h, int nbits, int offset, int 
 				dbl = nbits;
 			}
 		} else { //add in partial data chunk and save to image
-			accum += ((unsigned char)(fin << 8-abl) >> 8-dbl);
+			accum += ((unsigned char)(fin << (8-abl)) >> (8-dbl));
 			if((c-offset)%every == 0) foo->data[(c-offset)/every] = accum;
 			accum=0; ++c;
 			abl -= dbl;
@@ -72,9 +72,9 @@ Image* Image::loadrawbinary(FILE* ifp, int w, int h, int nbits, int offset, int 
 	return foo;
 }
 
-void Image::writeBMP(char *ofname) {
+void Image::writeBMP(const string& ofname) {
 	
-	fprintf (stdout, "Saving greyscale image (%i x %i) to %s \n",width,height,ofname);
+	fprintf (stdout, "Saving greyscale image (%i x %i) to %s \n",width,height,ofname.c_str());
 	Image* foo;
 	if(nmarks)
 	{
@@ -85,7 +85,7 @@ void Image::writeBMP(char *ofname) {
 	}
 	
 	float* padzer = (float*)calloc(3*width,sizeof(float));
-	FILE* ofp = fopen(ofname,"wb");
+	FILE* ofp = fopen(ofname.c_str(), "wb");
 	CratersBaseObject::writeBMPHeaders(ofp,8,width,height);
 	CratersBaseObject::writeBMPgreyColorPalette(ofp);
 	for(int i=height-1; i>=0; i--) //pad each line to 32-bit boundaries
@@ -99,9 +99,9 @@ void Image::writeBMP(char *ofname) {
 	delete(foo);
 };
 
-void Image::writerawbinary(char* ofname, int nbits)
+void Image::writerawbinary(const string& ofname, int nbits)
 {
-	FILE* ofp = fopen(ofname,"wb");
+	FILE* ofp = fopen(ofname.c_str(), "wb");
 	writerawbinary(ofp, nbits);
 	fclose(ofp);
 }
@@ -113,9 +113,9 @@ void Image::writerawbinary(FILE* ofp, int nbits) {
 }
 
 
-Image* Image::loadppm(char* ifname, int n) { //import channel n of a 3-channel ppm file
+Image* Image::loadppm(const string& ifname, int n) { //import channel n of a 3-channel ppm file
 	
-	FILE *ifp = fopen(ifname,"rb");
+	FILE *ifp = fopen(ifname.c_str(),"rb");
 	
 	char* linebuffer = (char*)malloc(1024*sizeof(char));
 	char* wordptr;
@@ -174,11 +174,10 @@ Image* Image::loadppm(char* ifname, int n) { //import channel n of a 3-channel p
 	Image* foo;
 	
 	
-	switch(n)
-	{
-		case 0: foo = Image::loadrawbinary(ifp,w,h,maxval,0,3); sprintf(foo->name,"%s R",ifname); break;
-		case 1: foo = Image::loadrawbinary(ifp,w,h,maxval,1,3); sprintf(foo->name,"%s G",ifname); break;
-		case 2: foo = Image::loadrawbinary(ifp,w,h,maxval,2,3); sprintf(foo->name,"%s B",ifname); break;
+	switch(n) {
+		case 0: foo = Image::loadrawbinary(ifp,w,h,maxval,0,3); foo->name = ifname+" R"; break;
+		case 1: foo = Image::loadrawbinary(ifp,w,h,maxval,1,3); foo->name = ifname+" G"; break;
+		case 2: foo = Image::loadrawbinary(ifp,w,h,maxval,2,3); foo->name = ifname+" B"; break;
 	}
 	
 	fclose(ifp);
@@ -186,9 +185,9 @@ Image* Image::loadppm(char* ifname, int n) { //import channel n of a 3-channel p
 	return foo;
 };
 
-void Image::loadtexttable(char* ifname) {
+void Image::loadtexttable(const string& ifname) {
 	
-	FILE *ifp = fopen(ifname,"rb");
+	FILE *ifp = fopen(ifname.c_str(), "rb");
 	int nlines=0;
 	int maxnlines=1;
 	int* nitems = (int*)malloc(maxnlines*sizeof(int));
@@ -250,14 +249,14 @@ void Image::loadtexttable(char* ifname) {
 	}
 	free(nitems);
 	free(itms);
-	sprintf(name,ifname);
+	name = ifname;
 	coords.lx=0; coords.ux=width-1;
 	coords.ly=0; coords.uy=height-1;
 };
 
-void Image::loadarcgis(char* ifname) {
+void Image::loadarcgis(const string& ifname) {
 	
-	FILE *ifp = fopen(ifname,"rb");
+	FILE *ifp = fopen(ifname.c_str(), "rb");
 	char* linebuffer = (char*)malloc(50005*sizeof(char));
 	char* wordptr;
 	
@@ -309,19 +308,19 @@ void Image::loadarcgis(char* ifname) {
 	fclose(ifp);
 	
 	if(ndata<size) printf("### Warning: less data than indicated in file! ###\n");
-	printf("Done.\n",width,height,size);
-	sprintf(name,ifname);
+	printf("Done.\n");
+	name = ifname;
 	coords.lx=0; coords.ux=width-1;
 	coords.ly=0; coords.uy=height-1;
 };
 
-void Image::write(char *ofname) { //write raw float data
-	FILE *ofp = fopen (ofname, "wb");
+void Image::write(const string& ofname) { //write raw float data
+	FILE *ofp = fopen (ofname.c_str(), "wb");
 	fwrite (data, size, sizeof(float), ofp);
 };
 
-void Image::writeArcGIS(char *ofname) { //write text data to file
-	FILE *ofp = fopen (ofname, "w");
+void Image::writeArcGIS(const string& ofname) { //write text data to file
+	FILE *ofp = fopen (ofname.c_str(), "w");
 	fprintf(ofp,"ncols %i\nrows %i\nxllcorner 500\nyllcorner 500\ncellsize 500\nNODATA_value -9999",width,height);
 	for(int y=0; y<height; y++) {
 		fprintf(ofp,"\n");
@@ -331,10 +330,10 @@ void Image::writeArcGIS(char *ofname) { //write text data to file
 };
 
 //write data to a raw PGM format file (integers in range 0-65535)
-void Image::writePGM2(char *ofname) 
+void Image::writePGM2(const string& ofname)
 {
 	Image* foo = rec709gamma()->mult(65535);
-	FILE *ofp = fopen (ofname, "w");
+	FILE *ofp = fopen (ofname.c_str(), "w");
 	fprintf(ofp,"P5\n%i\n%i\n65535\n",width,height);
 	char* idat = (char*)malloc(2*size);
 	for(int i=0; i<size; i++) {
@@ -348,10 +347,10 @@ void Image::writePGM2(char *ofname)
 };
 
 //write data to a raw PGM format file (integers in range 0-255)
-void Image::writePGM1(char *ofname) 
+void Image::writePGM1(const string& ofname)
 {
 	Image* foo = rec709gamma()->mult(255);
-	FILE *ofp = fopen (ofname, "w");
+	FILE *ofp = fopen (ofname.c_str(), "w");
 	fprintf(ofp,"P5\n%i\t%i\n255\n",width,height);
 	char* idat = (char*)malloc(size);
 	for(int i=0; i<size; i++) {
@@ -363,13 +362,13 @@ void Image::writePGM1(char *ofname)
 	fclose(ofp);
 };
 
-void Image::dumpcatalog(char *outpath) //dump sepatate image files for each item in catalog
+void Image::dumpcatalog(const string& outpath) //dump sepatate image files for each item in catalog
 {
 	if(!mycatalog) return;
 	char* fname = (char*)malloc(1024*sizeof(char));
 	for(int i=0; i<mycatalog->ncraters; i++) {
 		Image* foo = getsubregion(i,2.0);
-		sprintf(fname,outpath,i);
+		sprintf(fname, outpath.c_str(), i);
 		printf("Saving %s ...\n",fname);
 		foo->writeArcGIS(fname);
 		delete(foo);

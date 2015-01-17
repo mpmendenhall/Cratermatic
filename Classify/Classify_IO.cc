@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //
 // CRATERMATIC Topography Analysis Toolkit
-// Copyright (C) 2006 Michael Mendenhall
+// Copyright (C) 2006-2015 Michael Mendenhall
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -86,9 +86,9 @@ RGBImage* ClassifyImage::prettyoverlayimage(RGBImage* C) {
 	return C;
 };
 
-void ClassifyImage::loadarcgis(char* ifname) {
+void ClassifyImage::loadarcgis(const string& ifname) {
 	
-	FILE *ifp = fopen(ifname,"rb");
+	FILE *ifp = fopen(ifname.c_str(),"rb");
 	char* linebuffer = (char*)malloc(50005*sizeof(char));
 	char* wordptr;
 	
@@ -140,14 +140,14 @@ void ClassifyImage::loadarcgis(char* ifname) {
 	fclose(ifp);
 	
 	if(ndata<size) printf("### Warning: less data than indicated in file! ###\n");
-	printf("Done.\n",width,height,size);
-	sprintf(name,ifname);
+	printf("Done.\n");
+	name = ifname;
 	coords.lx=0; coords.ux=width-1;
 	coords.ly=0; coords.uy=height-1;
 };
 
-void ClassifyImage::writeArcGIS(char *ofname) { //write text data to file
-	FILE *ofp = fopen (ofname, "w");
+void ClassifyImage::writeArcGIS(const string& ofname) { //write text data to file
+	FILE *ofp = fopen(ofname.c_str(), "w");
 	fprintf(ofp,"ncols %i\nrows %i\nxllcorner 500\nyllcorner 500\ncellsize 500\nNODATA_value -9999",width,height);
 	for(int y=0; y<height; y++) {
 		fprintf(ofp,"\n");
@@ -156,13 +156,13 @@ void ClassifyImage::writeArcGIS(char *ofname) { //write text data to file
 	fclose(ofp);
 };
 
-void ClassifyImage::writeLowBitBMP(char *ofname) //write BMP with low bits of data
+void ClassifyImage::writeLowBitBMP(const string& ofname) //write BMP with low bits of data
 {
 	
-	fprintf (stdout, "Saving binary image (%i x %i) to %s \n",width,height,ofname);
+	fprintf (stdout, "Saving binary image (%i x %i) to %s \n",width,height,ofname.c_str());
 	bool* poodle = (bool*)malloc(width*sizeof(bool));
 	bool* padzer = (bool*)calloc(64,sizeof(bool));
-	FILE* ofp = fopen(ofname,"wb");
+	FILE* ofp = fopen(ofname.c_str(),"wb");
 	CratersBaseObject::writeBMPHeaders(ofp,1,width,height);
 	CratersBaseObject::writeBMPmonoColorPalette(ofp);
 	

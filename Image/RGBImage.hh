@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //
 // CRATERMATIC Topography Analysis Toolkit
-// Copyright (C) 2006 Michael Mendenhall
+// Copyright (C) 2006-2015 Michael Mendenhall
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -54,7 +54,7 @@ public:
 	RGBImage* overlay(Image* img, float r, float g, float b, float t);
 	RGBImage* drawmarks();
 	RGBImage* classifyoverlay(ClassifyImage* C, int andkey, int xorkey, float r, float g, float b);
-	void writeBMP(char* ofname);
+	void writeBMP(const string& ofname);
 	
 	static RGBImage* colorwheel(int r);
 	static RGBImage* fourierSpinner(int r, int k, float theta);

@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //
 // CRATERMATIC Topography Analysis Toolkit
-// Copyright (C) 2006 Michael Mendenhall
+// Copyright (C) 2006-2015 Michael Mendenhall
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -24,7 +24,7 @@
 //run example: ./craters l ut3gridA findcraters ut3a.txt lc ut3a.txt d ut3a.bmp
 
 extern bool domovie;
-extern char* moviebase;
+extern string moviebase;
 extern int movieframeadvance;
 extern int mergemethod;
 

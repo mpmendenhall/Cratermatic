@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //
 // CRATERMATIC Topography Analysis Toolkit
-// Copyright (C) 2006 Michael Mendenhall
+// Copyright (C) 2006-2015 Michael Mendenhall
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -300,7 +300,7 @@ Image* ClassifyImage::extractChunk(unsigned int n, Image* img, int l){
 		}
 	}
 	
-	sprintf(foo->name,"Classification region %i",n);
+	foo->name = "Classification region "+to_str(n);
 	
 	return foo;
 }
@@ -330,7 +330,7 @@ Image* ClassifyImage::extractMaskedChunk(unsigned int n, Image* img){
 		}
 	}
 	
-	sprintf(foo->name,"Classification region %i",n);
+	foo->name = "Classification region "+to_str(n);
 	
 	return foo;
 }
@@ -349,7 +349,7 @@ Image* ClassifyImage::extractChunkMask(unsigned int n, int l){
 		foo->data[nx+w*ny]=1;
 	}
 	
-	sprintf(foo->name,"Classification region %i mask",n);
+	foo->name = "Classification region "+to_str(n)+" mask";
 	
 	return foo;
 }

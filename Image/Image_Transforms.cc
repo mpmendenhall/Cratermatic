@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //
 // CRATERMATIC Topography Analysis Toolkit
-// Copyright (C) 2006 Michael Mendenhall
+// Copyright (C) 2006-2015 Michael Mendenhall
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -140,7 +140,7 @@ Image* Image::gaussianblur(float r)
 	int ns = pdd->size;
 	
 	float x,y,r2;
-	float n = 1/(2.0*PI*r*r*ns);
+	float n = 1/(2.0*M_PI*r*r*ns);
 	
 	for(int i=0; i<ns; i++) {
 		x=i%(nw);
@@ -164,7 +164,7 @@ Image* Image::gaussianblur(float r)
 	
 	rdat->trim_inplace((int)(2*r),(int)(2*r),(int)(2*r),(int)(2*r));
 	rdat->copyfromrr((RectRegion*)this);
-	sprintf(rdat->name,"%s blurred",name);
+	rdat->name = name+" blurred";
 	return rdat;
 };
 
@@ -185,10 +185,10 @@ Image* Image::deriv(bool xdirection) {
 	free(ckern);
 	delete(mp);
 	if(xdirection) {
-		sprintf(foo->name,"d/dx[%s]",name);
+		foo->name = "d/dx["+name+"]";
 		return foo->trim_inplace(2,1,2,1);
 	}
-	sprintf(foo->name,"d/dy[%s]",name);
+	foo->name = "d/dx["+name+"]";
 	return foo->trim_inplace(1,2,1,2);
 }
 
@@ -216,10 +216,10 @@ Image* Image::diagDeriv(bool posdirection)
 	}
 	
 	if(posdirection) {
-		sprintf(foo->name,"d/dx'[%s]",name);
+		foo->name = "d/dx'["+name+"]";
 		return foo;
 	}
-	sprintf(foo->name,"d/dy'[%s]",name);
+	foo->name = "d/dy'["+name+"]";
 	return foo;
 }
 
@@ -271,7 +271,7 @@ Image* Image::slope() {
 			foo->data[x+width*y]=zhi-zlo;
 		}
 	}
-	sprintf(foo->name,"%s Slope",name);
+	foo->name = name+" Slope";
 	return foo;
 }
 
@@ -338,7 +338,7 @@ Image* Image::htransform(int k)
 	delete(rdaty);
 	
 	rdatx->copyfromrr((RectRegion*)this);
-	sprintf(rdatx->name,"%s HTransformed",name);
+	rdatx->name = name+" HTransformed";
 	printf(" Done.\n");
 	return rdatx;
 	
@@ -402,7 +402,7 @@ Image* Image::smoothehtransform(float r0)
 	delete(rdaty);
 	
 	rdatx->copyfromrr((RectRegion*)this);
-	sprintf(rdatx->name,"%s HTransformed",name);
+	rdatx->name = name+" HTransformed";
 	printf(" Done.\n");
 	return rdatx;
 };
@@ -435,7 +435,7 @@ Image* Image::pseudo_profile_curvature()
 	delete(p); delete(q);
 	delete(dxy); delete(tmp);
 	
-	sprintf(foo->name,"%s Curvature",name);
+	foo->name = name+" Curvature";
 	return foo;
 };
 
@@ -467,7 +467,7 @@ Image* Image::pseudo_tangent_curvature()
 	delete(p); delete(q);
 	delete(dxy); delete(tmp);
 	
-	sprintf(foo->name,"%s Curvature",name);
+	foo->name = name+" Curvature";
 	return foo;
 };
 
@@ -476,7 +476,7 @@ Image* Image::squaredilation(int n) //dilate image by a square of the specified 
 	Image* J = linedilation(n,true);
 	Image* K = J->linedilation(n,false);
 	delete(J);
-	sprintf(K->name,"%s Square Dilated",name);
+	K->name = name+" Square Dilated";
 	K->copyfromrr((RectRegion*)this);
 	return K;
 };
@@ -510,7 +510,7 @@ Image* Image::circledilation(int r)
 	Image* foo = generaldilation(k);
 	delete(k);
 	foo->copyfromrr(this);
-	sprintf(foo->name,"%s Dilation",name);
+	foo->name = name+" Dilation";
 	return foo;
 }
 
@@ -522,7 +522,7 @@ Image* Image::circleerosion(int r)
 	mult(-1.0); foo->mult(-1.0);
 	delete(k);
 	foo->copyfromrr(this);
-	sprintf(foo->name,"%s Erosion",name);
+	foo->name = name+" Erosion";
 	return foo;
 }
 
@@ -532,7 +532,7 @@ Image* Image::circleclosing(int r)
 	Image* e = d->circledilation(r)->mult(-1.0);
 	delete(d);
 	e->copyfromrr(this);
-	sprintf(e->name,"%s Closed",name);
+	e->name = name+" Closed";
 	return e;
 }
 
@@ -544,7 +544,7 @@ Image* Image::circleopening(int r)
 	Image* e = d->circledilation(r);
 	delete(d);
 	e->copyfromrr(this);
-	sprintf(e->name,"%s Opened",name);
+	e->name = name+" Opened";
 	return e;
 }
 
@@ -569,6 +569,6 @@ Image* Image::removespikes() {
 	}
 	delete(bluri); delete(diff);
 	delete(Nb); delete(Ns); delete(Nbs);
-	sprintf(N->name,"%s Despiked",name);
+	N->name = name+" Despiked";
 	return N;
 };

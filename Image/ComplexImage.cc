@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //
 // CRATERMATIC Topography Analysis Toolkit
-// Copyright (C) 2006 Michael Mendenhall
+// Copyright (C) 2006-2015 Michael Mendenhall
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -26,7 +26,7 @@
 
 ComplexImage::ComplexImage (int w, int h) : RectRegion(w/2+1,h)
 {
-	sprintf(isaName,"ComplexImage");
+	isaName = "ComplexImage";
 	isaNum = COBJ_COMPLEXIMAGE;
 	origwidth=w;
 	origheight=h;

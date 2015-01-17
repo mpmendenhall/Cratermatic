@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //
 // CRATERMATIC Topography Analysis Toolkit
-// Copyright (C) 2006 Michael Mendenhall
+// Copyright (C) 2006-2015 Michael Mendenhall
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -23,9 +23,8 @@
 #include "Image.hh"
 #include "Classify.hh"
 
-RGBImage::RGBImage(int w, int h) : RectRegion(w,h)
-{
-	sprintf(isaName,"RGBImage");
+RGBImage::RGBImage(int w, int h) : RectRegion(w,h) {
+	isaName = "RGBImage";
 	isaNum = COBJ_RGBIMAGE;
 	R = new Image(w,h);
 	G = new Image(w,h);
@@ -34,7 +33,7 @@ RGBImage::RGBImage(int w, int h) : RectRegion(w,h)
 
 RGBImage::RGBImage(Image* img) : RectRegion(img->width, img->height)
 {
-	sprintf(isaName,"RGBImage");
+	isaName = "RGBImage";
 	isaNum = COBJ_RGBIMAGE;
 	copyfromrr((RectRegion*)img);
 	R = new Image(width,height); R->copyfromrr((RectRegion*)img);
@@ -45,7 +44,7 @@ RGBImage::RGBImage(Image* img) : RectRegion(img->width, img->height)
 
 RGBImage::RGBImage(Image* x, Image* y) : RectRegion(x->width, x->height)
 {
-	sprintf(isaName,"RGBImage");
+	isaName = "RGBImage";
 	isaNum = COBJ_RGBIMAGE;
 	copyfromrr((RectRegion*)x);
 	R = new Image((RectRegion*)x);
@@ -54,14 +53,14 @@ RGBImage::RGBImage(Image* x, Image* y) : RectRegion(x->width, x->height)
 	Image* m = x->copy()->quadratureadd(y)->flatHisto()->inormalized();
 	for(int i=0; i<size; i++)
 	{
-		hsv2rgb(atan2(y->data[i],x->data[i])+PI,1,m->data[i],R->data + i,G->data + i,B->data + i);
+		hsv2rgb(atan2(y->data[i],x->data[i])+M_PI,1,m->data[i],R->data + i,G->data + i,B->data + i);
 	}
 	delete(m);
 }
 
 RGBImage::RGBImage(RectRegion* RR) : RectRegion(RR->width,RR->height)
 {
-	sprintf(isaName,"RGBImage");
+	isaName = "RGBImage";
 	isaNum = COBJ_RGBIMAGE;
 	copyfromrr(RR);
 	R = new Image(width,height); R->copyfromrr(RR);
@@ -152,7 +151,7 @@ RGBImage* RGBImage::colorby(Image* img) {
 	Image* foo = img->normalized(0,1.0);
 	for(int i=0; i<size; i++) {
 		float z = foo->data[i];
-		hsv2rgb(19*PI/12*(1-z),1,1,R->data+i,G->data+i,B->data+i);
+		hsv2rgb(19*M_PI/12*(1-z),1,1,R->data+i,G->data+i,B->data+i);
 	}
 	delete(foo);
 	return this;
@@ -184,7 +183,7 @@ RGBImage* RGBImage::grayby(Image* img, float bp) {
 
 RGBImage* RGBImage::classifyoverlay(ClassifyImage* C, int andkey, int xorkey, float r, float g, float b)
 {
-	float z = 1/(1+max(max(r,g),b));
+	float z = 1/(1+std::max(std::max(r,g),b));
 	for(int i=0; i<size; i++)
 	{
 		if( (C->data[i] ^ xorkey) & andkey )
@@ -302,8 +301,8 @@ RGBImage* RGBImage::overlay(Image* img, float r, float g, float b, float t) {
 	return this;
 }
 
-void RGBImage::writeBMP(char* ofname) {
-	fprintf (stdout, "Saving RGB image (%i x %i) to %s \n",width,height,ofname);
+void RGBImage::writeBMP(const string& ofname) {
+	fprintf (stdout, "Saving RGB image (%i x %i) to %s \n",width,height,ofname.c_str());
 	drawmarks();
 	
 	//interleave color data
@@ -317,7 +316,7 @@ void RGBImage::writeBMP(char* ofname) {
 		inter[3*i+2] = R->data[i];
 	}
 	
-	FILE* ofp = fopen(ofname,"wb");
+	FILE* ofp = fopen(ofname.c_str(), "wb");
 	CratersBaseObject::writeBMPHeaders(ofp,24,width,height);
 	for(int i=height-1; i>=0; i--) //pad each line to 32-bit boundaries
 	{
@@ -340,7 +339,7 @@ RGBImage* RGBImage::colorwheel(int r)
 		x = (i%w)-r;
 		y = (i/w)-r;
 		if(x*x+y*y > r*r) continue;
-		hsv2rgb(atan2(y,x)+PI,(x*x+y*y)/(r*r),1,C->R->data+i,C->G->data+i,C->B->data+i);
+		hsv2rgb(atan2(y,x)+M_PI,(x*x+y*y)/(r*r),1,C->R->data+i,C->G->data+i,C->B->data+i);
 	}
 	return C;
 }

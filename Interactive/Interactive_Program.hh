@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //
 // CRATERMATIC Topography Analysis Toolkit
-// Copyright (C) 2006 Michael Mendenhall
+// Copyright (C) 2006-2015 Michael Mendenhall
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -48,9 +48,9 @@ public:
 	
 	void DoIt() {
 		CratersBaseObject* foo = mystack->get(0);
-		if(foo->isaNum == COBJ_CRATERSTRING) printf("%s\n",((CraterString*)mystack->get())->val);
+		if(foo->isaNum == COBJ_CRATERSTRING) printf("%s\n",((CraterString*)mystack->get())->val.c_str());
 		else if(foo->isaNum == COBJ_CFLOAT) printf("%g\n",mystack->getfloat(0));
-		else printf("%s\n",((CratersBaseObject*)mystack->get())->name);
+		else printf("%s\n",((CratersBaseObject*)mystack->get())->name.c_str());
 		
 		 if(foo->isaNum == COBJ_CRATERSTRING || foo->isaNum == COBJ_CFLOAT) mystack->drop();
 	}
@@ -234,15 +234,14 @@ class aUserDefined: public Action {
 public:
 	CMacro* mymacro;
 	
-	aUserDefined(char* name, CMacro* m) : Action(){
+	aUserDefined(const string& name, CMacro* m) : Action() {
 		description="User defined macro";
 		addname(name);
 		ninputs = 0;
 		mymacro = m->copy();
 	};
 	
-	~aUserDefined()
-	{
+	~aUserDefined() {
 		delete(mymacro);
 	}
 	

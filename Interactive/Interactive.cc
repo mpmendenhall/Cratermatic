@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //
 // CRATERMATIC Topography Analysis Toolkit
-// Copyright (C) 2006 Michael Mendenhall
+// Copyright (C) 2006-2015 Michael Mendenhall
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -20,6 +20,9 @@
 //-----------------------------------------------------------------------
 
 #include "Interactive.hh"
+#include "Utils.hh"
+#include <iostream>
+#include <sstream>
 
 //Error codes:
 // 0  too few stack items
@@ -32,23 +35,16 @@
 // 7  stack overflow
 // 8  bad argument value
 
-Action::Action()
-{
-	description = "Null action; it does NOTHING!";
-	ncommandnames=0;
+Action::Action(): description("Null action; it does NOTHING!") {
 	inputtypes = (int*)malloc((STACK_MAX_ITEMS+5)*sizeof(int));
 	ninputs = 0; //stack inputs
 	mystack = NULL;
 	myinteractor = NULL;
 };
 
-void Action::addname(char* c)
-{
-	if(ncommandnames > 14) return;
-	if(ncommandnames==0) sprintf(name,"%s",c);
-	commandnames[ncommandnames] = (char*)malloc((strlen(c)+1)*sizeof(char));
-	strcpy(commandnames[ncommandnames],c);
-	ncommandnames++;
+void Action::addname(const string& c) {
+	if(!commandnames.size()) name = c;
+	commandnames.push_back(c);
 }
 
 bool Action::validateinput() {
@@ -69,9 +65,9 @@ void Action::DoIt() {
 
 void Action::printinfo(int depth) {
 	for(int d=0; d<depth; d++) printf("\t");
-	printf("- %s",commandnames[0]);
-	for(int i=1; i < ncommandnames; i++) printf(", %s",commandnames[i]);
-	printf(": %s",description);
+	printf("- %s",commandnames[0].c_str());
+	for(int i=1; i < commandnames.size(); i++) printf(", %s",commandnames[i].c_str());
+	printf(": %s",description.c_str());
 	if(ninputs == 1) printf(" [1 argument]");
 	if(ninputs > 1) printf(" [%i arguments]",ninputs);
 	
@@ -94,8 +90,6 @@ void Action::printinfo(int depth) {
 
 Interactor::Interactor(Stack* s) {
 	tempchar = (char*)malloc(256*sizeof(char));
-	name = NULL;
-	description = NULL;
 	istop = false;
 	mystack = s;
 	nactions=0;
@@ -122,14 +116,12 @@ void Interactor::registerCategory(Interactor* I)
 	categories[ncategories-1]=I;
 }
 
-bool Interactor::knowstopic(char* c)
+bool Interactor::knowstopic(const string& c)
 {
-	if(!strcmp(c,name)) return true;
+	if(c==name) return true;
 	for(int i=0; i<nactions; i++) {
 		Action* a = actions[i];
-		for(int j=0; j<a->ncommandnames; j++) {
-			if(!strcmp(c,a->commandnames[j])) return true;
-		}
+		for(auto it = a->commandnames.begin(); it != a->commandnames.end(); it++) if(*it == c) return true;
 	}
 	for(int i=0; i<ncategories; i++) {
 		if(categories[i]->knowstopic(c)) return true;
@@ -144,22 +136,19 @@ int Interactor::nSubActions() //return the number of registered subactions in ca
 	return n;
 }
 
-void Interactor::printinfo()
-{
-	printf("+ %s [%i]: %s\n",name,nSubActions(),description);
+void Interactor::printinfo() {
+	printf("+ %s [%i]: %s\n", name.c_str(), nSubActions(), description.c_str());
 }
 
-void Interactor::printhelp(char* topic, int depth)
+void Interactor::printhelp(const string& topic, int depth)
 {
-	if(!strcmp(topic,"brief"))
-	{
+	if(topic == "brief") {
 		for(int i=0; i<depth; i++) printf("\t");
 		printinfo();
 		return;
 	}
 	
-	if(!strcmp(topic,name))
-	{
+	if(topic == name) {
 		for(int i=0; i<depth; i++) printf("\t");
 		printinfo();
 		for(int i=0; i<ncategories; i++) categories[i]->printhelp("brief",depth+1);
@@ -174,21 +163,18 @@ void Interactor::printhelp(char* topic, int depth)
 	for(int i=0; i<ncategories; i++) categories[i]->printhelp(topic,depth+1);
 	for(int i=0; i<nactions; i++) {
 		Action* a = actions[i];
-		for(int j=0; j<a->ncommandnames; j++) {
-			if(!strcmp(topic,a->commandnames[j])) a->printinfo(depth+1);
-		}
+		for(auto it = a->commandnames.begin(); it != a->commandnames.end(); it++) if(*it== topic) a->printinfo(depth+1);
 	}
 }
 
-void Interactor::rprinthelp(char* topic, int depth)
+void Interactor::rprinthelp(const string& topic, int depth)
 {
 	if(!knowstopic(topic)) return;
 	
 	for(int i=0; i<depth; i++) printf("\t");
 	printinfo();
 	
-	if(!strcmp(topic,name))
-	{
+	if(topic == name) {
 		for(int i=0; i<nactions; i++) actions[i]->printinfo(depth+1);
 		for(int i=0; i<ncategories; i++) categories[i]->rprinthelp(categories[i]->name,depth+1);
 		return;
@@ -197,19 +183,16 @@ void Interactor::rprinthelp(char* topic, int depth)
 	for(int i=0; i<nactions; i++)
 	{
 		Action* a = actions[i];
-		for(int j=0; j<a->ncommandnames; j++) if(!strcmp(a->commandnames[j],topic)) a->printinfo(depth+1);
+		for(int j=0; j<a->commandnames.size(); j++) if(a->commandnames[j] == topic) a->printinfo(depth+1);
 	}
 	for(int i=0; i<ncategories; i++) categories[i]->rprinthelp(topic,depth+1);
 }
 
-Action* Interactor::findaction(char* c)
+Action* Interactor::findaction(const string& c)
 {
 	for(int i=0; i<nactions; i++) {
 		Action* a = actions[i];
-		for(int j=0; j<a->ncommandnames; j++)
-		{
-			if(!strcmp(c,a->commandnames[j])) return a;
-		}
+		for(auto it = a->commandnames.begin(); it != a->commandnames.end(); it++) if(*it == c) return a;
 	}
 	for(int i=0; i<ncategories; i++) {
 		Action* a = categories[i]->findaction(c);
@@ -219,25 +202,22 @@ Action* Interactor::findaction(char* c)
 }
 
 void Interactor::processCommand(){ //iterate through commandstream
-	char* opt = NULL;
+	string opt;
 	
 	while(commandstream.size())
 	{
-		if(opt) free(opt);
-		opt = (char*)commandstream.front();
+		opt = commandstream.front();
 		commandstream.erase(commandstream.begin());
 		
 		//macro commands
-		if(!strcmp(opt,"["))
-		{
+		if(opt == "[") {
 			if(evallevel == 0) recordingmacro = new CMacro();
 			else recordingmacro->addtoken(opt);
 			++evallevel;
 			continue;
 		}
 		
-		if(!strcmp(opt,"]"))
-		{
+		if(opt == "]") {
 			if(!evallevel)
 			{
 				printf("\n** Unmatched ']' **\n** Aborting further input evaluation! **\n");
@@ -255,17 +235,14 @@ void Interactor::processCommand(){ //iterate through commandstream
 		if(evallevel) {recordingmacro->addtoken(opt); continue;}
 		
 		//special commands
-		if(istop && (!strcmp(opt,"quit") || !strcmp(opt,"q") || !strcmp(opt,"abort")
-					 || !strcmp(opt,"exit") || !strcmp(opt,"stop") || !strcmp(opt,"die") 
-					 || !strcmp(opt,"decease") || !strcmp(opt,"desist") || !strcmp(opt,"halt"))){
+		if(istop && (opt=="quit" || opt=="q" || opt=="abort" || opt=="exit" || opt=="stop"
+					 || opt=="die" || opt=="decease" || opt=="desist" || opt=="halt")){
 			haltinteract=true;
 			printf("\n Goodbye.\n");
 			break;
 		}
 		
-		if(istop && (!strcmp(opt,"help") || !strcmp(opt,"?") || !strcmp(opt,"commands")
-					 || !strcmp(opt,"about") || !strcmp(opt,"info")))
-		{
+		if(istop && (opt=="help" || opt=="?" || opt=="commands" || opt=="about" || opt=="info")) {
 			if(mystack->nitems && mystack->get()->isaNum == COBJ_CRATERSTRING && knowstopic(mystack->getstring(0)))
 			{
 				printf("\n");
@@ -273,8 +250,8 @@ void Interactor::processCommand(){ //iterate through commandstream
 				printf("\n");
 				mystack->drop();
 			} else {
-				printf("\nUse '.TOPIC help' for help on a particular command or category\n");
-				printf("Use '.TOPIC rhelp' for recursive listing of all commands in TOPIC\n");
+				printf("\nUse '.TOM_PIC help' for help on a particular command or category\n");
+				printf("Use '.TOM_PIC rhelp' for recursive listing of all commands in TOM_PIC\n");
 				printf("Use '.all rhelp' for the complete list of available commands\n\n");
 				printf("Command categories [%i commands total]:\n\n",nSubActions());
 				for(int i=0; i<ncategories; i++) categories[i]->printhelp("brief",1);
@@ -283,17 +260,14 @@ void Interactor::processCommand(){ //iterate through commandstream
 			continue;
 		}
 		
-		if(istop && !strcmp(opt,"rhelp"))
-		{
-			if(mystack->nitems && mystack->get()->isaNum == COBJ_CRATERSTRING && knowstopic(mystack->getstring(0)))
-			{
+		if(istop && opt=="rhelp") {
+			if(mystack->nitems && mystack->get()->isaNum == COBJ_CRATERSTRING && knowstopic(mystack->getstring(0))) {
 				printf("\n");
 				for(int i=0; i<ncategories; i++) categories[i]->rprinthelp(mystack->getstring(0),0);
 				printf("\n");
 				mystack->drop();
 			} 
-			else if(mystack->nitems && mystack->get()->isaNum == COBJ_CRATERSTRING && !strcmp(mystack->getstring(0),"all") )
-			{
+			else if(mystack->nitems && mystack->get()->isaNum == COBJ_CRATERSTRING && mystack->getstring(0) == "all") {
 				printf("\n");
 				for(int i=0; i<ncategories; i++) categories[i]->rprinthelp(categories[i]->name,0);
 				printf("\n");
@@ -302,12 +276,12 @@ void Interactor::processCommand(){ //iterate through commandstream
 			continue;
 		}
 		
-		if(istop && (!strcmp(opt,"license") || !strcmp(opt,"warranty")))
+		if(istop && (opt=="license" || opt=="warranty"))
 		{
 			printf("//-----------------------------------------------------------------------\n");
 			printf("//\n");
 			printf("// CRATERMATIC Topography Analysis Toolkit\n");
-			printf("// Copyright (C) 2006 Michael Mendenhall\n");
+			printf("// Copyright (C) 2006-2015 Michael Mendenhall\n");
 			printf("//\n");
 			printf("// This program is free software; you can redistribute it and/or\n");
 			printf("// modify it under the terms of the GNU General Public License\n");
@@ -327,68 +301,60 @@ void Interactor::processCommand(){ //iterate through commandstream
 			continue;
 		}
 		
-		if(istop && !strcmp(opt,"interactive")) {
+		if(istop && opt=="interactive") {
 			interactiveMode();
 			continue;
 		}
 		
-		if(!strcmp(opt,"")) { //null command
+		if(opt=="") { //null command
 			continue;
 		}
 		
 		//check for string types
-		if(opt[0] == '.')
-		{
-			mystack->push(new CraterString(opt+1));
+		if(opt[0] == '.') {
+			mystack->push(new CraterString(opt.c_str()+1));
 			continue;
 		}
 		
 		if(opt[0] == '"' || opt[0] == '%') {
-			char* foo = (char*)malloc(1024*sizeof(char));
-			char* bar = opt;
+			string foo;
+			string bar = opt;
 			foo[0]='\0'; //start with null termination
 			int i=0;
 			
-			while(commandstream.size())
-			{
+			while(commandstream.size()) {
 				if(i>0) {
-					if(i>1) free(bar);
 					bar = commandstream.front();
 					commandstream.erase(commandstream.begin());
 				}
 				
-				if(strlen(foo)+strlen(bar)<1000) {
-					if(i>0) strcat(foo," ");
-					strcat(foo,bar);
+				if(foo.size()+bar.size()<1000) {
+					if(i>0) foo += " ";
+					foo += bar;
 				}
 				else {
 					mystack->push(new CError("String input too long",4));
-					free(foo);
 					break;
 				}
 				
-				if((bar[strlen(bar)-1] == '"' || bar[strlen(bar)-1] == '%') && !(i==0 && strlen(bar)==1)) break;
+				if((bar[bar.size()-1] == '"' || bar[bar.size()-1] == '%') && !(i==0 && bar.size()==1)) break;
 				
 				++i;
 			}
-			if(i>1) free(bar);
 			
-			if(!(foo[strlen(foo)-1] == '"' || foo[strlen(foo)-1] == '%'))
-			{
+			if(!(foo[foo.size()-1] == '"' || foo[foo.size()-1] == '%')) {
 				mystack->push(new CError("Missing closing \" or % on string",3));
-				free(foo);
 				break;
 			}
 			   
-			foo[strlen(foo)-1]='\0';
-			mystack->push(new CraterString(foo+1));
-			free(foo);
+			foo.resize(foo.size()-1);
+			mystack->push(new CraterString(foo.c_str()+1));
 			continue;
 		}
 		
 		//check for numerical types
-		if(strspn(opt,"-0123456789.eE+") == strlen(opt) && strpbrk(opt,"0123456789")) {
-			mystack->push(new CFloat(atof(opt)));
+		if(strspn(opt.c_str(),"-0123456789.eE+") == opt.size() && strpbrk(opt.c_str(),"0123456789")) {
+			mystack->push(new CFloat(atof(opt.c_str())));
 			continue;
 		}
 		
@@ -396,73 +362,52 @@ void Interactor::processCommand(){ //iterate through commandstream
 		//check for action types
 		Action* a = findaction(opt);
 		if(!a) {
-			sprintf(tempchar,"Unrecognized command: %s",opt);
+			sprintf(tempchar,"Unrecognized command: %s",opt.c_str());
 			mystack->push(new CError(tempchar,2));
 			break;
 		}
 		
 		if(!a->checkngo()) break;
 	}
-	if(opt) free(opt);
 	
 	//error handling
 	int n=0;
 	while(mystack->nitems > 0 && mystack->get()->isaNum == COBJ_CERROR)
 	{
 		CError* E = (CError*)mystack->get();
-		printf("*** Error %i: %s\n",E->errnum,E->errname);
+		printf("*** Error %i: %s\n",E->errnum,E->errname.c_str());
 		mystack->drop();
 		n++;
 	}
 	if(n)
 	{
 		printf("*** Aborting further input evaluation.\n");
-		while(commandstream.size())
-		{
-			opt = (char*)commandstream.back();
-			free(opt);
+		while(commandstream.size()) {
+			opt = commandstream.back();
 			commandstream.pop_back();
 		}
 	}
 	
 }
 
-void Interactor::parseCommand(char* ib) //tokenize string and add to end of command stream; call processCommand
+void Interactor::parseCommand(const string& ib) //tokenize string and add to end of command stream; call processCommand
 {
-	char* foo;
-	char* tkn = strtok(ib," \t\n\r,");
-	while(tkn != NULL) {
-		foo = (char*)malloc((strlen(tkn)+5)*sizeof(char));
-		strcpy(foo,tkn);
-		commandstream.push_back(foo);
-		tkn = strtok(NULL," \t\n\r,");
-	}
-	processCommand();
+    vector<string> cmds = split(ib," \t\n\r,");
+    for(auto it = cmds.begin(); it != cmds.end(); it++) commandstream.push_back(*it);
+    processCommand();
 }
 
-void Interactor::prependCommand(char* ib) //tokenize string and prepend to command stream
+void Interactor::prependCommand(const string& ib) //tokenize string and prepend to command stream
 {
-	char* tkn = strtok(ib," \t\n\r,");
-	char* foo;
-	int i=0;
-	while(tkn != NULL) {
-		foo = (char*)malloc((strlen(tkn)+5)*sizeof(char));
-		strcpy(foo,tkn);
-		commandstream.insert(commandstream.begin()+i,foo);
-		tkn = strtok(NULL," \t\n\r,");
-		i++;
-	}
+    vector<string> cmds = split(ib," \t\n\r,");
+    for(auto it = cmds.rbegin(); it != cmds.rend(); it++) commandstream.push_front(*it);
+    processCommand();
+    
 }
 
 void Interactor::commandLineToCommandstream(int argc, char** argv) //add command line arguments to command stream; call processCommand
 {
-	char* foo;
-	for(int i=1; i<argc; i++)
-	{
-		foo = (char*)malloc((strlen(argv[i])+5)*sizeof(char));
-		strcpy(foo,argv[i]);
-		commandstream.push_back(foo);
-	}
+	for(int i=1; i<argc; i++) commandstream.push_back(argv[i]);
 	processCommand();
 }
 

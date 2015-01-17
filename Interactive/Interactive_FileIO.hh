@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //
 // CRATERMATIC Topography Analysis Toolkit
-// Copyright (C) 2006 Michael Mendenhall
+// Copyright (C) 2006-2015 Michael Mendenhall
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -30,7 +30,7 @@ public:
 	};
 	void DoIt() {
 		if(!mystack->checkReadable()) return;
-		char* c = mystack->getstring(0);
+		string c = mystack->getstring(0);
 		Image* I = new Image(0,0);
 		I->loadarcgis(c);
 		mystack->drop();
@@ -51,7 +51,7 @@ public:
 	};
 	void DoIt() {
 		if(!mystack->checkReadable()) return;
-		char* c = mystack->getstring(0);
+		string c = mystack->getstring(0);
 		mystack->push(Image::loadppm(c,0));
 		mystack->push(Image::loadppm(c,1));
 		mystack->push(Image::loadppm(c,2));
@@ -75,7 +75,7 @@ public:
 	};
 	void DoIt() {
 		if(!mystack->checkReadable()) return;
-		char* c = mystack->getstring(0);
+		string c = mystack->getstring(0);
 		Image* J = Image::loadrawbinary(c,mystack->getint(1),mystack->getint(2),mystack->getint(3));
 		mystack->drop();
 		mystack->drop();
@@ -101,8 +101,8 @@ public:
 	
 	void DoIt() {
 		if(!mystack->checkWritable()) return;
-		char* c = mystack->getstring(0);
-		printf("Saving image data to ascii file '%s'\n",c);
+		string c = mystack->getstring(0);
+		printf("Saving image data to ascii file '%s'\n",c.c_str());
 		CratersBaseObject* foo = mystack->get(1);
 		if(foo->isaNum == COBJ_IMAGE) ((Image*)foo)->writeArcGIS(c);
 		else if(foo->isaNum == COBJ_CLASSIFYIMAGE) ((ClassifyImage*)foo)->writeArcGIS(c);
@@ -125,8 +125,8 @@ public:
 	
 	void DoIt() {
 		if(!mystack->checkReadable()) return;
-		char* c = mystack->getstring(0);
-		printf("Saving image data to PGM file '%s'\n",c);
+		string c = mystack->getstring(0);
+		printf("Saving image data to PGM file '%s'\n",c.c_str());
 		((Image*)mystack->get(1))->writePGM1(c);
 		mystack->drop();
 	};
@@ -147,8 +147,8 @@ public:
 	
 	void DoIt() {
 		if(!mystack->checkWritable()) return;
-		char* c = mystack->getstring(0);
-		printf("Saving image data to raw binary format file '%s'\n",c);
+		string c = mystack->getstring(0);
+		printf("Saving image data to raw binary format file '%s'\n",c.c_str());
 		((Image*)mystack->get(2))->writerawbinary(c,mystack->getint(1));
 		mystack->drop();
 		mystack->drop();
@@ -170,7 +170,7 @@ public:
 	
 	void DoIt() {
 		if(!mystack->checkWritable()) return;
-		char* c = mystack->getstring(0);
+		string c = mystack->getstring(0);
 		CratersBaseObject* foo = mystack->get(1);
 		if(foo->isaNum == COBJ_IMAGE){
 			((Image*)foo)->writeBMP(c);
@@ -195,7 +195,7 @@ public:
 	};
 	void DoIt() {
 		if(!mystack->checkReadable()) return;
-		char* c = mystack->getstring(0);
+		string c = mystack->getstring(0);
 		((Image*)(mystack->get()))->loadcatalog(c);
 		mystack->drop();
 	}
@@ -214,7 +214,7 @@ public:
 	};
 	void DoIt() {
 		if(!mystack->checkWritable()) return;
-		char* c = mystack->getstring(0);
+		string c = mystack->getstring(0);
 		((Image*)(mystack->get()))->dumpcatalog(c);
 		mystack->drop();
 	}
@@ -233,7 +233,7 @@ public:
 	};
 	void DoIt() {
 		if(!mystack->checkReadable()) return;
-		char* c = mystack->getstring(0);
+		string c = mystack->getstring(0);
 		ClassifyImage* I = new ClassifyImage(0,0);
 		I->loadarcgis(c);
 		I->renumerate();

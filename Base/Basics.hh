@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //
 // CRATERMATIC Topography Analysis Toolkit
-// Copyright (C) 2006 Michael Mendenhall
+// Copyright (C) 2006-2015 Michael Mendenhall
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -24,7 +24,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include <string>
+using std::string;
 #include <ctype.h>
 #include <float.h>
 #include <cmath>
@@ -32,9 +33,6 @@
 #include <time.h>
 
 #define WITHFFTW
-#define min(a,b) (((a)<(b))?(a):(b))
-#define max(a,b) (((a)>(b))?(a):(b))
-#define PI 3.141592653589796
 
 enum CraterObjectType
 {
@@ -72,14 +70,14 @@ enum CraterObjectTypeFlag
 class CratersBaseObject
 {
 public:
-	char* isaName;
+	string isaName;
 	CraterObjectType isaNum;
-	char* name;
+	string name;
 	
 	static const int bytelength;
 	
 	CratersBaseObject();
-	~CratersBaseObject();
+	virtual ~CratersBaseObject() { }
 	
 	static void writeBinaryFromNormalizedFloat(float* fdat, int len, FILE* ofp, int nbits);
 	static void writeBinaryFromBool(bool* bdat, int len, FILE* ofp);
@@ -112,20 +110,17 @@ public:
 class CraterString : public CratersBaseObject
 {
 public:
-	char* val;
-	CraterString(char* c);
-	~CraterString();
+	string val;
+	CraterString(const string& c);
 	CraterString* copy();
-	operator char*() const;
 };
 
 class CError : public CratersBaseObject
 {
 public:
-	char* errname;
+	string errname;
 	int errnum;
-	CError(char* c, int i);
-	~CError();
+	CError(const string& c, int i);
 	CError* copy();
 };
 
@@ -133,12 +128,10 @@ class CMacro : public CratersBaseObject
 {
 public:
 	signed int maxlen;
-	char* stringval;
+	string stringval;
 	CMacro();
-	~CMacro();
 	CMacro* copy();
-	void addtoken(char* t);
-	operator char*() const;
+	void addtoken(const string& t);
 };
 
 class CraterSpec

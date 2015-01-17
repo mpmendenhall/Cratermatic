@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //
 // CRATERMATIC Topography Analysis Toolkit
-// Copyright (C) 2006 Michael Mendenhall
+// Copyright (C) 2006-2015 Michael Mendenhall
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -60,9 +60,8 @@ public:
 class aSetmovie: public Action {
 public:
 	aSetmovie() : Action(){
-		description=(char*)malloc(256*sizeof(char));
-		if(domovie) sprintf(description,"Toggle whether to save .bmp images of intermediate merge steps (default enabled)");
-		else sprintf(description,"Toggle whether to save .bmp images of intermediate merge steps (default disabled)");
+		if(domovie) description = "Toggle whether to save .bmp images of intermediate merge steps (default enabled)";
+		else description = "Toggle whether to save .bmp images of intermediate merge steps (default disabled)";
 		addname("setmovie");
 	};
 	
@@ -78,8 +77,7 @@ public:
 class aSetmovieframerate: public Action {
 public:
 	aSetmovieframerate() : Action(){
-		description=(char*)malloc(256*sizeof(char));
-		sprintf(description,"Set <interval> between intermediate merge stage saves (default %i)",movieframeadvance);
+		description = "Set <interval> between intermediate merge stage saves (default %i)"; // TODO ,movieframeadvance);
 		addname("setmovieframerate");
 		ninputs = 1;
 		inputtypes[0] = COF_CFLOAT;
@@ -95,18 +93,14 @@ public:
 class aSetmoviebase: public Action {
 public:
 	aSetmoviebase() : Action(){
-		description=(char*)malloc(256*sizeof(char));
-		sprintf(description,"Set <filename> for saving merge movies (default '%s')",moviebase);
+		description = "Set <filename> for saving merge movies (default '%s')"; // TODO ,moviebase);
 		addname("setmoviebase");
 		ninputs = 1;
 		inputtypes[0] = COF_CRATERSTRING;
 	};
 	
 	void DoIt() {
-		char* c = mystack->getstring(0);
-		if(moviebase) free(moviebase);
-		moviebase = (char*)malloc(512*sizeof(char));
-		sprintf(moviebase,"%s",c);
+		moviebase = mystack->getstring(0);
 		mystack->drop();
 	}
 };
@@ -409,11 +403,11 @@ public:
 		float xc = C->xcenter(C->pic[rgn], C->npic[rgn], NULL);
 		float yc = C->ycenter(C->pic[rgn], C->npic[rgn], NULL);
 		C->radialFourier(xc,yc,C->pic[rgn], C->npic[rgn], (float*)NULL, &xsft, &ysft, nterms);
-		C->fouriermark(xc,yc,xsft,ysft,nterms,50/min(nterms,50));
+		C->fouriermark(xc,yc,xsft,ysft,nterms,50/std::min(nterms,50));
 		xsft[0]*=0.95;
-		C->fouriermark(xc,yc,xsft,ysft,nterms,50/min(nterms,50));
+		C->fouriermark(xc,yc,xsft,ysft,nterms,50/std::min(nterms,50));
 		xsft[0]*=1.11;
-		C->fouriermark(xc,yc,xsft,ysft,nterms,50/min(nterms,50));
+		C->fouriermark(xc,yc,xsft,ysft,nterms,50/std::min(nterms,50));
 		for(int i=0; i<nterms; i++) printf("%+.3e\t%+.3e",xsft[i],ysft[i]);
 		printf("\n");
 		free(xsft);

@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //
 // CRATERMATIC Topography Analysis Toolkit
-// Copyright (C) 2006 Michael Mendenhall
+// Copyright (C) 2006-2015 Michael Mendenhall
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -21,23 +21,20 @@
 
 #include "Image.hh"
 
-Image::Image(int w, int h) : RectRegion(w,h)
-{
-	sprintf(isaName,"Image");
+Image::Image(int w, int h) : RectRegion(w,h) {
+	isaName = "Image";
 	isaNum = COBJ_IMAGE;
 	data = (float*)calloc(size,sizeof(float));
 };
 
-Image::Image(RectRegion* R) : RectRegion(R->width,R->height)
-{
-	sprintf(isaName,"Image");
+Image::Image(RectRegion* R) : RectRegion(R->width,R->height) {
+	isaName = "Image";
 	isaNum = COBJ_IMAGE;
 	copyfromrr(R);
 	data = (float*)calloc(size,sizeof(float));
 }
 
-Image::~Image ()
-{
+Image::~Image () {
 	free(data);
 };
 

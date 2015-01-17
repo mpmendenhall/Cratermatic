@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //
 // CRATERMATIC Topography Analysis Toolkit
-// Copyright (C) 2006 Michael Mendenhall
+// Copyright (C) 2006-2015 Michael Mendenhall
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -21,6 +21,25 @@
 
 #ifndef CRATERS_UTILS
 #define CRATERS_UTILS
+
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <vector>
+using std::string;
+using std::vector;
+using std::ifstream;
+
+/// utility function for converting to string
+template<typename T>
+string to_str(T x) {
+    std::stringstream ss;
+    ss << x;
+    return ss.str();
+}
+
+/// split string into components
+vector<string> split(const string& s, const string splitchars = " \t\n\r");
 
 #include "Basics.hh"
 

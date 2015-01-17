@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //
 // CRATERMATIC Topography Analysis Toolkit
-// Copyright (C) 2006 Michael Mendenhall
+// Copyright (C) 2006-2015 Michael Mendenhall
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -31,7 +31,7 @@ public:
 	
 	void DoIt() {
 		if(!mystack->checkFolder()) return;
-		char* c = mystack->getstring(0);
+		string c = mystack->getstring(0);
 		((Image*)mystack->get(1))->findcraters(c, NULL, NULL, 0.25, 0.10, 0.06, 0.02, 0.5, 0.33, 0.33);
 		mystack->drop();
 	}
@@ -56,7 +56,7 @@ public:
 	
 	void DoIt() {
 		if(!mystack->checkFolder()) return;
-		char* c = mystack->getstring(7);
+		string c = mystack->getstring(7);
 		((Image*)mystack->get(8))->findcraters(c, NULL, NULL, mystack->getfloat(6),
 											   mystack->getfloat(5), mystack->getfloat(4), mystack->getfloat(3), 
 											   mystack->getfloat(2), mystack->getfloat(1), mystack->getfloat(0));

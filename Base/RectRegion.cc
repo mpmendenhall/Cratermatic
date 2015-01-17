@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //
 // CRATERMATIC Topography Analysis Toolkit
-// Copyright (C) 2006 Michael Mendenhall
+// Copyright (C) 2006-2015 Michael Mendenhall
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -22,6 +22,7 @@
 #include "RectRegion.hh"
 #include "Utils.hh"
 #include "Image.hh"
+#include <climits>
 
 int comparebyradius(const void* entry1, const void* entry2) {
 	return  (int)( (*(CatalogEntry**)entry2)->radius - (*(CatalogEntry**)entry1)->radius );
@@ -42,8 +43,8 @@ bool* RectRegion::gennocds(int n) //table of nonnegative integer pairs with no c
 	return b;
 }
 
-CraterCatalog::CraterCatalog(char* infile) {
-	FILE* ifp = fopen(infile,"r");
+CraterCatalog::CraterCatalog(const string& infile) {
+	FILE* ifp = fopen(infile.c_str(),"r");
 	char* buf = (char*)malloc(1024*sizeof(char));
 	ncraters=0;
 	entries = (CatalogEntry**)malloc(sizeof(CatalogEntry*));
@@ -91,7 +92,7 @@ int* RectRegion::connectdy = makedy();
 
 RectRegion::RectRegion(int w,int h)
 {
-	sprintf(isaName,"RectRegion");
+	isaName = "RectRegion";
 	isaNum = COBJ_RECTREGION;
 	
 	width=w;
@@ -115,9 +116,7 @@ RectRegion::RectRegion(int w,int h)
 	connectr2[9]=9; connectr2[10]=9; connectr2[11]=9; connectr2[12]=9;
 }
 
-RectRegion::~RectRegion()
-{
-	if(name) {free(name); name=NULL;}
+RectRegion::~RectRegion() {
 	if(marks) {free(marks); marks=NULL;}
 	free(connectr2);
 	if(mycatalog) {free(mycatalog); mycatalog=NULL;}
@@ -134,7 +133,7 @@ void RectRegion::copyfromrr(RectRegion* R)
 	height = R->height;
 	size = width*height;
 	coords = R->coords;
-	sprintf(name,R->name);
+	name = R->name;
 }
 
 bool RectRegion::inrange(int p)
@@ -178,7 +177,7 @@ void RectRegion::fouriermark(float x0, float y0, float* xs, float* ys, unsigned 
 	float r2;
 	for(int j=0; j<2*nterms*ndivisions; j++)
 	{
-		angl2 = angl + PI/(nterms*ndivisions);
+		angl2 = angl + M_PI/(nterms*ndivisions);
 		r2 = invRadialFourier(angl2,xs,ys,nterms);
 		addmarkline(x0+r2*cos(angl2),y0+r2*sin(angl2),x0+r*cos(angl),y0+r*sin(angl));
 		angl = angl2;
@@ -290,11 +289,11 @@ void RectRegion::radialFourier(float x0, float y0, int* ps, unsigned int nps, Im
 
 float RectRegion::invRadialFourier(float angl, float* xs, float* ys, unsigned int nmoms)
 {
-	float r0 = sqrt(xs[0]/PI);
+	float r0 = sqrt(xs[0]/M_PI);
 	float rexp = r0;
 	for(int t=1; t<nmoms; t++)
 	{
-		rexp += (xs[t]*cos(t*angl) + ys[t]*sin(t*angl))/(PI*r0);
+		rexp += (xs[t]*cos(t*angl) + ys[t]*sin(t*angl))/(M_PI*r0);
 	}
 	return rexp;
 }
@@ -332,13 +331,13 @@ float RectRegion::ycenter(int* pts, unsigned int npts, float* wt)
 int RectRegion::fourierPoints(float x0, float y0, float* xs, float* ys, int nterms, int** pout) //return list of points enclosed by Fourier boundaries
 {
 	//find maximum radius and bounding box
-	float rmax = sqrt(xs[0]/PI);
+	float rmax = sqrt(xs[0]/M_PI);
 	for(int i=1; i<nterms; i++) rmax += sqrt(xs[i]*xs[i]+ys[i]*ys[i]);
 	BoundingBox bb;
-	bb.lx = (int)max(0,x0-rmax-2);
-	bb.ly = (int)max(0,y0-rmax-2);
-	bb.ux = (int)min(width,x0+rmax+2);
-	bb.uy = (int)min(height,y0+rmax+2);
+	bb.lx = (int)std::max((float)0., x0-rmax-2);
+	bb.ly = (int)std::max((float)0., y0-rmax-2);
+	bb.ux = (int)std::min((float)width,x0+rmax+2);
+	bb.uy = (int)std::min((float)height,y0+rmax+2);
 	
 	*pout = (int*)malloc((bb.ux-bb.lx+1)*(bb.uy-bb.ly+1)*sizeof(int));
 	int npts = 0;
@@ -442,7 +441,7 @@ BoundingBox RectRegion::expandbb(BoundingBox b, int l)
 	return b;
 }
 
-void RectRegion::loadcatalog(char* f){
+void RectRegion::loadcatalog(const string& f){
 	mycatalog = new CraterCatalog(f);
 	for(int i=0; i<mycatalog->ncraters; i++) addmark(1,(int)mycatalog->entries[i]->centerx,(int)mycatalog->entries[i]->centery,(int)mycatalog->entries[i]->radius);
 }

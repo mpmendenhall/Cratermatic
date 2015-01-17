@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //
 // CRATERMATIC Topography Analysis Toolkit
-// Copyright (C) 2006 Michael Mendenhall
+// Copyright (C) 2006-2015 Michael Mendenhall
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -23,6 +23,8 @@
 #define CRATERS_IMAGE
 
 #include "RectRegion.hh"
+#include <string>
+using std::string;
 
 class Image: public RectRegion
 {
@@ -31,19 +33,19 @@ public:
 	Image(int w, int h);
 	Image(RectRegion*);
 	~Image();
-	virtual void load(char *ifname);
-	static Image* loadppm(char *ifname, int n);
-	virtual void loadtexttable(char *ifname);
-	virtual void loadarcgis(char *ifname);
-	static Image* loadrawbinary(char* ifname, int w, int h, int nbits);
+	virtual void load(const string& ifname);
+	static Image* loadppm(const string& ifname, int n);
+	virtual void loadtexttable(const string& ifname);
+	virtual void loadarcgis(const string& ifname);
+	static Image* loadrawbinary(const string& ifname, int w, int h, int nbits);
 	static Image* loadrawbinary(FILE* ifp, int w, int h, int nbits, int ltoss, int rtoss);
-	void writerawbinary(char* ofname, int nbits);
+	void writerawbinary(const string& ofname, int nbits);
 	void writerawbinary(FILE* ofp, int nbits);
-	virtual void write(char *ofname);
-	virtual void writeArcGIS(char *ofname);
-	virtual void writeBMP(char *ofname);
-	virtual void writePGM2(char* ofname);
-	virtual void writePGM1(char* ofname);
+	virtual void write(const string& ofname);
+	virtual void writeArcGIS(const string& ofname);
+	virtual void writeBMP(const string& ofname);
+	virtual void writePGM2(const string& ofname);
+	virtual void writePGM1(const string& ofname);
 	
 	Image* copy();
 	Image* copyfrom(Image *img);
@@ -110,7 +112,7 @@ public:
 	Image* edgefinder(float r);
 	Image* craterFindingTransform(float r0, Image* mask);
 	static Image* craterFindingTransform(float r0, Image* gx, Image* gy);
-	int findcraters(char* basefolder, Image* msk, CraterSpec*** cspecs, float k1, float k2, float k3, float k4, float k5, float k6, float k7);
+	int findcraters(const string& basefolder, Image* msk, CraterSpec*** cspecs, float k1, float k2, float k3, float k4, float k5, float k6, float k7);
 	
 	Image* pseudo_profile_curvature();
 	Image* pseudo_tangent_curvature();
@@ -125,7 +127,7 @@ public:
 	Image* getregion(BoundingBox b);
 	void putregion(Image*, BoundingBox b);
 	
-	void dumpcatalog(char*);
+	void dumpcatalog(const string&);
 	Image* normalized(float mn, float mx);
 	Image* signedgamma(float g);
 	Image* rec709gamma();

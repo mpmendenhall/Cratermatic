@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //
 // CRATERMATIC Topography Analysis Toolkit
-// Copyright (C) 2006 Michael Mendenhall
+// Copyright (C) 2006-2015 Michael Mendenhall
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -22,7 +22,7 @@
 #include "Classify.hh"
 #include "Image.hh"
 #include "Utils.hh"
-
+#include <climits>
 
 ClassifyImage* ClassifyImage::gradSeg(Image* u, float r)
 {
@@ -76,7 +76,7 @@ ClassifyImage* ClassifyImage::watershed(Image* u)
 				}
 			}
 			fd[x+width*y]=besti;
-			if(besti = 4){
+			if(besti == 4){
 				//mark LOWER boundary points
 				for(int i=0; i<CI->connectn; i++) {
 					dx = connectdx[i];

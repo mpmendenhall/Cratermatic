@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //
 // CRATERMATIC Topography Analysis Toolkit
-// Copyright (C) 2006 Michael Mendenhall
+// Copyright (C) 2006-2015 Michael Mendenhall
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -21,7 +21,7 @@
 
 class aColorview: public Action {
 public:
-	aColorview() : Action(){
+	aColorview() : Action() {
 		description="Turn an <Image> into a colorized RGBImage";
 		addname("colorview");
 		ninputs = 1;

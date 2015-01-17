@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //
 // CRATERMATIC Topography Analysis Toolkit
-// Copyright (C) 2006 Michael Mendenhall
+// Copyright (C) 2006-2015 Michael Mendenhall
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -64,7 +64,7 @@ void Histogram::display()
 		for(int j=0; j<70*count[i+1]/maxc; j++) printf("*");
 		printf("\n");
 	}
-	printf("|%f\t<|\t%i\t|<%t\t\t|\n",binbounds[n],(int)count[n+1]);
+	printf("|%f\t<|\t%i\t|<\t\t|\n",binbounds[n],(int)count[n+1]);
 };
 
 float Histogram::uniformity()

@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //
 // CRATERMATIC Topography Analysis Toolkit
-// Copyright (C) 2006 Michael Mendenhall
+// Copyright (C) 2006-2015 Michael Mendenhall
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -20,6 +20,21 @@
 //-----------------------------------------------------------------------
 
 #include "Utils.hh"
+
+vector<string> split(const string& s, const string splitchars) {
+    vector<string> v;
+    size_t p = 0;
+    while(p<s.size()) {
+        size_t wstart = s.find_first_not_of(splitchars,p);
+        if(wstart == string::npos)
+            break;
+        p = s.find_first_of(splitchars,wstart);
+        if(p == string::npos)
+            p = s.size();
+        v.push_back(s.substr(wstart,p-wstart));
+    }
+    return v;
+}
 
 extern int floatcompare(const void* a, const void* b);
 
