@@ -1,0 +1,7 @@
+Cratermatic is the result of Michael Mendenhall's summer 2006 internship at the Lunar and Planetary Institute in Houston, TX.
+The goal of the internship research was to develop methods for automated characterization of craters from topography data
+(specifically, altimetry data from the MOLA instrument on the Mars Global Surveyor orbiter).
+Cratermatic is a set of C++ routines for manipulating topography datasets, accessible through either the command line or an interactive "image calculator" interface.
+
+This project was originally hosted at SourceForge: http://cratermatic.sourceforge.net/
+The move to Github was made January 2015, to permit easier future collaboration using the code.

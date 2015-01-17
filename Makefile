@@ -14,7 +14,7 @@ CC = cc
 CXX = g++
 
 CXXFLAGS = -std=c++03 -O3 -fPIC -I. -IBase -IClassify -IImage -IInteractive
-LDFLAGS =  -L/sw/lib/ -lfftw3
+LDFLAGS =  -L. -lCratermatic -L/sw/lib/ -lfftw3
 
 #
 # things to build

@@ -59,6 +59,7 @@
 		4C091D511A6AEBBA00C7B110 /* Interactive_TopInteractor.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Interactive_TopInteractor.cc; sourceTree = "<group>"; };
 		4C091D521A6AEBBA00C7B110 /* Interactive_Vis.hh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Interactive_Vis.hh; sourceTree = "<group>"; };
 		4C091D531A6AECFC00C7B110 /* Interactive_Stackops.hh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Interactive_Stackops.hh; sourceTree = "<group>"; };
+		4C091D541A6AEED400C7B110 /* README */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = README; path = ../../README; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -67,10 +68,11 @@
 			children = (
 				4C091D1F1A6AEBBA00C7B110 /* Base */,
 				4C091D2A1A6AEBBA00C7B110 /* Classify */,
-				4C091D331A6AEBBA00C7B110 /* craters.hh */,
 				4C091D341A6AEBBA00C7B110 /* Image */,
 				4C091D411A6AEBBA00C7B110 /* Interactive */,
+				4C091D331A6AEBBA00C7B110 /* craters.hh */,
 				4C091D0E1A6AE2BC00C7B110 /* craters.cpp */,
+				4C091D541A6AEED400C7B110 /* README */,
 				4C091D101A6AE2BC00C7B110 /* junk.cpp */,
 				4C091D111A6AE2BC00C7B110 /* LICENSE */,
 				4C091D121A6AE2BC00C7B110 /* Makefile */,
