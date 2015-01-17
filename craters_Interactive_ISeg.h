@@ -289,6 +289,21 @@ public:
 
 //-----------------------------
 
+class aToImage: public Action {
+public:
+	aToImage() : Action(){
+		description="Turn a <ClassifyImage> into an Image by classification number";
+		addname("toimage");
+		ninputs = 1;
+		inputtypes[0] = COF_CLASSIFYIMAGE;
+	};
+	
+	void DoIt() {
+		mystack->push(((ClassifyImage*)(mystack->get()))->dataToImage());
+	}
+};
+
+//-----------------------------
 class aBoundaryimage: public Action {
 public:
 	aBoundaryimage() : Action(){
@@ -367,6 +382,42 @@ public:
 		Image* foo = ((Image*)(mystack->get(1)))->getsubregion(mystack->getint(0),2.0);
 		if(foo) mystack->push(foo);
 		else printf("\n** Error loading subregion **\n\n");
+	}
+};
+
+//----------------------------
+
+class aFourierShape: public Action {
+public:
+	aFourierShape() : Action(){
+		description="Calculate and mark the <n> term series for the shape of region <r> of a <ClassifyImage>";
+		addname("fouriershape");
+		ninputs = 2;
+		inputtypes[0] = COF_CFLOAT;
+		inputtypes[1] = COF_CFLOAT;
+		inputtypes[2] = COF_CLASSIFYIMAGE;
+	};
+	void DoIt() {
+		int nterms = mystack->getint(0);
+		int rgn = mystack->getint(1);
+		mystack->drop();
+		mystack->drop();
+		ClassifyImage* C = (ClassifyImage*)mystack->get();
+		if(nterms < 0 || nterms > 100 || rgn < 0 || rgn >= C->nbasins) return;
+		float* xsft;
+		float* ysft;
+		float xc = C->xcenter(C->pic[rgn], C->npic[rgn], NULL);
+		float yc = C->ycenter(C->pic[rgn], C->npic[rgn], NULL);
+		C->radialFourier(xc,yc,C->pic[rgn], C->npic[rgn], (float*)NULL, &xsft, &ysft, nterms);
+		C->fouriermark(xc,yc,xsft,ysft,nterms,50/min(nterms,50));
+		xsft[0]*=0.95;
+		C->fouriermark(xc,yc,xsft,ysft,nterms,50/min(nterms,50));
+		xsft[0]*=1.11;
+		C->fouriermark(xc,yc,xsft,ysft,nterms,50/min(nterms,50));
+		for(int i=0; i<nterms; i++) printf("%+.3e\t%+.3e",xsft[i],ysft[i]);
+		printf("\n");
+		free(xsft);
+		free(ysft);
 	}
 };
 

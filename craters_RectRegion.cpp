@@ -172,17 +172,18 @@ void RectRegion::addmarkline(float x0, float y0, float x1, float y1)
 
 void RectRegion::fouriermark(float x0, float y0, float* xs, float* ys, unsigned int nterms, unsigned int ndivisions)
 {
-		float angl = atan2(ys[nterms],xs[nterms])/nterms;
-		float angl2;
-		for(int j=0; j<2*nterms*ndivisions; j++)
-		{
-			angl2 = angl + PI/(nterms*ndivisions);
-			float r = invRadialFourier(angl,xs,ys,nterms);
-			float r2 = invRadialFourier(angl2,xs,ys,nterms);
-			//addmarkline(x0-r*cos(angl),y0-r*sin(angl),x0+r*cos(angl),y0+r*sin(angl));
-			addmarkline(x0+r2*cos(angl2),y0+r2*sin(angl2),x0+r*cos(angl),y0+r*sin(angl));
-			angl = angl2;
-		}
+	float angl = atan2(ys[nterms],xs[nterms])/nterms;
+	float r = invRadialFourier(angl,xs,ys,nterms);
+	float angl2;
+	float r2;
+	for(int j=0; j<2*nterms*ndivisions; j++)
+	{
+		angl2 = angl + PI/(nterms*ndivisions);
+		r2 = invRadialFourier(angl2,xs,ys,nterms);
+		addmarkline(x0+r2*cos(angl2),y0+r2*sin(angl2),x0+r*cos(angl),y0+r*sin(angl));
+		angl = angl2;
+		r=r2;
+	}
 }
 
 void RectRegion::clearmarks() //clear all marks from image

@@ -215,8 +215,8 @@ int Image::findcraters(char* basefolder, Image* msk, CraterSpec*** cspecs, float
 		
 		combined->renumerateWithKey(0x01);
 		
+		//unexpanded regions output files
 		sprintf(tc,"%s/unexpand_%i_%03i.bmp",basefolder,size,r);
-		//combined->prettyImage()->overlay(topows->fourboundaryimage(),0,0,0,1)->writeBMP(tc);
 		combined->writeLowBitBMP(tc);
 		
 		printf("Narrowing down crater candidates from %i...\n");

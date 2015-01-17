@@ -95,6 +95,7 @@ RGBImage* RGBImage::drawmarks()
 	if(!marks) return this;
 	R->drawmarks(marks,nmarks,1.0);
 	B->drawmarks(marks,nmarks,1.0);
+	G->drawmarks(marks,nmarks,0.0);
 	return this;
 }
 

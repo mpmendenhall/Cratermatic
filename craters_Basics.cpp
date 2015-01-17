@@ -423,7 +423,7 @@ void CraterSpec::writeHeaders(FILE* ofp)
 
 void CraterSpec::writeToFile(FILE* ofp)
 {
-	fprintf(ofp,"%i\t%5.2f\t%5.2f\t%5.2f\t%6.4g\t%6.4g\t%6.4g\t%6.4g\n",idnum,x,y,r,depth,xsft[0],xsft[1]/xsft[0],ysft[1]/xsft[0]);
+	fprintf(ofp,"%i\t%5.2f\t%5.2f\t%5.2f\t%6.4g\t%6.4g\t%6.4g\t%6.4g\n",idnum,x,y,r,depth,xsft[0],xsft[2]/xsft[0],ysft[2]/xsft[0]);
 	fflush(ofp);
 }
 
