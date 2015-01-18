@@ -128,8 +128,7 @@ bool Interactor::knowstopic(const string& c)
 	return false;
 }
 
-int Interactor::nSubActions() //return the number of registered subactions in category
-{
+int Interactor::nSubActions() {
 	int n = nactions;
 	for(int i=0; i<ncategories; i++) n+=categories[i]->nSubActions();
 	return n;
@@ -200,7 +199,7 @@ Action* Interactor::findaction(const string& c)
 	return NULL;
 }
 
-void Interactor::processCommand(){ //iterate through commandstream
+void Interactor::processCommand() {
 	string opt;
 	
 	while(commandstream.size())
@@ -249,8 +248,8 @@ void Interactor::processCommand(){ //iterate through commandstream
 				printf("\n");
 				mystack->drop();
 			} else {
-				printf("\nUse '.TOM_PIC help' for help on a particular command or category\n");
-				printf("Use '.TOM_PIC rhelp' for recursive listing of all commands in TOM_PIC\n");
+				printf("\nUse '.TOPIC help' for help on a particular command or category\n");
+				printf("Use '.TOPIC rhelp' for recursive listing of all commands in TOPIC\n");
 				printf("Use '.all rhelp' for the complete list of available commands\n\n");
 				printf("Command categories [%i commands total]:\n\n",nSubActions());
 				for(int i=0; i<ncategories; i++) categories[i]->printhelp("brief",1);
@@ -388,23 +387,20 @@ void Interactor::processCommand(){ //iterate through commandstream
 	
 }
 
-void Interactor::parseCommand(const string& ib) //tokenize string and add to end of command stream; call processCommand
-{
+void Interactor::parseCommand(const string& ib) {
     vector<string> cmds = split(ib," \t\n\r,");
     for(auto it = cmds.begin(); it != cmds.end(); it++) commandstream.push_back(*it);
     processCommand();
 }
 
-void Interactor::prependCommand(const string& ib) //tokenize string and prepend to command stream
-{
+void Interactor::prependCommand(const string& ib) {
     vector<string> cmds = split(ib," \t\n\r,");
     for(auto it = cmds.rbegin(); it != cmds.rend(); it++) commandstream.push_front(*it);
     processCommand();
     
 }
 
-void Interactor::commandLineToCommandstream(int argc, char** argv) //add command line arguments to command stream; call processCommand
-{
+void Interactor::commandLineToCommandstream(int argc, char** argv) {
 	for(int i=1; i<argc; i++) commandstream.push_back(argv[i]);
 	processCommand();
 }

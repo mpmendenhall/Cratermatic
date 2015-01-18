@@ -1,8 +1,7 @@
 #include "Interactive.hh"
 #include "Utils.hh"
 
-bool Stack::checkReadable()
-{
+bool Stack::checkReadable() {
 	int foo = COF_CRATERSTRING;
 	if(!validateinput(&foo,1)) return false;
 	string c = ((CraterString*)get())->val;
@@ -15,8 +14,7 @@ bool Stack::checkReadable()
 	return true;
 }
 
-bool Stack::checkWritable()
-{
+bool Stack::checkWritable() {
 	int foo = COF_CRATERSTRING;
 	if(!validateinput(&foo,1)) return false;
 	string c = ((CraterString*)get())->val;
@@ -43,17 +41,6 @@ bool Stack::checkFolder()
 	//push(new CError(tempchar,6));
 	//return false;
 }
-
-Stack::Stack() {
-	ntotal = 0;
-	controller = NULL;
-	entrynum = (int*)malloc(STACK_MAX_ITEMS*sizeof(int));
-};
-
-Stack::~Stack() {
-	//while(items.size()) drop();
-	free(entrynum);
-};
 
 bool Stack::validateinput(int* t, unsigned int n) { //check type number flags t for n objects
 	if(n>items.size()) {
@@ -82,24 +69,19 @@ void Stack::disp() {
 }
 
 void Stack::push(CratersBaseObject* ptr) {
-	if(items.size() > STACK_MAX_ITEMS - 5)
-	{
+	if(items.size() > STACK_MAX_ITEMS - 5) {
 		//properly dispose of extra item
-		ntotal++;
-		entrynum[items.size()]=ntotal;
+		entrynum.push_back(++ntotal);
 		items.push_back(ptr);
 		drop();
 		
-		if(items.size() < STACK_MAX_ITEMS - 2)
-		{
-			ntotal++;
-			entrynum[items.size()]=ntotal;
+		if(items.size() < STACK_MAX_ITEMS - 2) {
+			entrynum.push_back(++ntotal);
 			items.push_back(new CError("Too many stack items!",7));
 		}
 		return;
 	}
-	ntotal++;
-	entrynum[items.size()]=ntotal;
+	entrynum.push_back(++ntotal);
 	items.push_back(ptr);
 };
 
@@ -173,7 +155,7 @@ void Stack::rot(int n) { //swap 2 items on the stack
 		entrynum[items.size()-i] = entrynum[items.size()-i+1];
 	}
 	items.back() = tempptr;
-	entrynum[items.size()-1] = tempentry;
+	entrynum.back() = tempentry;
 }
 
 void Stack::swap() { //swap 2 items on the stack

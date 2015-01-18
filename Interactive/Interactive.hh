@@ -36,7 +36,8 @@ using std::string;
 #include "Merger.hh"
 #include "RasterRegion.hh"
 
-#define STACK_MAX_ITEMS 256
+/// maximum number of items allowed on stack
+#define STACK_MAX_ITEMS 4096
 
 extern bool domovie;
 extern string moviebase;
@@ -45,94 +46,130 @@ extern int mergemethod;
 
 class Interactor;
 
+/// LIFO stack of objects for manipulation
 class Stack {
 public:
     /// Constructor
-	Stack();
-    /// Destructor
-	~Stack();
+	Stack(): ntotal(0), controller(NULL) { }
     
+    /// push object onto top of stack
 	void push(CratersBaseObject* ptr);
+    /// get and remove top object
 	CratersBaseObject* pop();
+    /// get top object without removal
 	CratersBaseObject* get();
+    /// get n^th-from-top object
 	CratersBaseObject* get(unsigned int);
+    /// get float value of n^th-from-top object
 	float getfloat(unsigned int);
+    /// get int value of n^th-from-top object
 	int getint(unsigned int);
+    /// get string value of n^th-from-top object
 	string getstring(unsigned int);
+    /// check whether top object matches specified type
 	bool istype(int t);
+    /// check whether top object has type flags attribute
 	bool istypef(int t);
-	bool istype(string);
+    /// display stack contents
 	void disp();
+    
 	bool validateinput(int*,unsigned int);
+    /// check whether named file is readable
 	bool checkReadable();
+    /// check whether named file is writeable
 	bool checkWritable();
+    /// check whether named folder exists
 	bool checkFolder();
-	void rot(int);
+    /// rotate top n items
+	void rot(int n);
+    /// swap top 2 items
 	void swap();
+    /// drop top item
 	void drop();
-	int* bitmask;
-	int* entrynum;
-	int ntotal;
-	vector<CratersBaseObject*> items;
-	Interactor* controller;
+    
+	int ntotal;							///< total number of items ever created on stack
+	vector<CratersBaseObject*> items;	///< items on stack
+    vector<int> entrynum;				///< entry numbers for items on stack
+	Interactor* controller;				///< Interactor manipulating stack
 };
 
-class Action : public CratersBaseObject
-{
+/// Action for manipulating stack items
+class Action : public CratersBaseObject {
 public:
-	string description;
-	vector<string> commandnames;
-	void addname(const string& c);
+    /// Constructor
+    Action();
+    /// subclass this action!
+    virtual void DoIt();
+    
+    /// check inputs are available, then run
+    virtual bool checkngo();
+    /// check whether proper inputs are available
+    virtual bool validateinput();
+    /// print help info
+    virtual void printinfo(int depth);
+    
+	string description;				///< help description of command
+	vector<string> commandnames;	///< list of names to call command
+	void addname(const string& c);	///< add name for command
 	
-	int ninputs;
-	int* inputtypes;
+	int ninputs;					///< number of inputs required
+	int* inputtypes;				///< types of each required input
 	
-	Stack* mystack;
-	Interactor* myinteractor;
-	
-	Action();
-	virtual void DoIt();
-	
-	virtual bool checkngo();
-	virtual bool validateinput();
-	virtual void printinfo(int depth);
+	Stack* mystack;					///< stack being manipulated
+	Interactor* myinteractor;		///< Interactor providing commands
 };
 
-class Interactor
-{
+/// Class for handling interactive command streams
+class Interactor {
 public:
-	string name;
-	string description;
-	bool haltinteract;
-	bool istop;
+    /// Constructor
+    Interactor(Stack* s);
+    
+    /// process each command in command stream
+    void processCommand();
+    /// tokenize string and add to end of command stream; call processCommand
+    void parseCommand(const string& ib);
+    /// tokenize string and prepend to command stream
+    void prependCommand(const string& ib);
+    /// add command line arguments to command stream; call processCommand
+    void commandLineToCommandstream(int argc, char** argv);
+    /// check whether named topic is available in hierarchy
+    bool knowstopic(const string& c);
+    /// return the number of registered subactions in category
+    int nSubActions();
+    void printinfo();
+    /// print help on specified topic
+    void printhelp(const string& topic, int depth);
+    /// recursively print help on topic and its sub-topics
+    void rprinthelp(const string& topic, int depth);
+    /// add an action to available commands list
+    void registerAction(Action*);
+    /// add a category for sub-commands
+    void registerCategory(Interactor*);
+    /// enter interactive processing mode
+    void interactiveMode();
+    /// locate action matching given name
+    Action* findaction(const string& c);
+    
+    string name;						///< display name of interactor
+    string description;					///< text help description
+	bool haltinteract;					///< whether to break interactive processing cycle
+	bool istop;							///< whether this is the top-level interaction process
 	unsigned int evallevel;
-	CMacro* recordingmacro;
+	CMacro* recordingmacro;				///< macro being recorded
 	Action** actions;
 	int nactions;
 	Interactor** categories;
 	int ncategories;
-	Stack* mystack;
-	std::deque<string> commandstream;
+    Stack* mystack;						///< stack being manipulated
+	std::deque<string> commandstream;	///< commands to process
 	
-	Interactor(Stack* s);
-	void processCommand();
-	void parseCommand(const string& ib);
-	void prependCommand(const string& ib);
-	void commandLineToCommandstream(int argc, char** argv);
-	bool knowstopic(const string& c);
-	int nSubActions();
-	void printinfo();
-	void printhelp(const string& topic, int depth);
-	void rprinthelp(const string& topic, int depth);
-	void registerAction(Action*);
-	void registerCategory(Interactor*);
-	void interactiveMode();
-	Action* findaction(const string& c);
 };
 
-class TopInteractor : public Interactor
-{
+/// Top-level Interactor
+class TopInteractor : public Interactor {
 public:
+    /// Constructor
 	TopInteractor();
 };
 
