@@ -1,4 +1,5 @@
 #include "Interactive.hh"
+#include "Utils.hh"
 
 bool Stack::checkReadable()
 {
@@ -7,8 +8,7 @@ bool Stack::checkReadable()
 	string c = ((CraterString*)get())->val;
 	FILE* f = fopen(c.c_str(),"r");
 	if(f==NULL) {
-		sprintf(tempchar,"File '%s' is unreadable",c.c_str());
-		push(new CError(tempchar,5));
+		push(new CError("File '"+c+"' is unreadable",5));
 		return false;
 	}
 	fclose(f);
@@ -22,8 +22,7 @@ bool Stack::checkWritable()
 	string c = ((CraterString*)get())->val;
 	FILE* f = fopen(c.c_str(), "a");
 	if(f==NULL) {
-		sprintf(tempchar,"File '%s' is unwritable",c.c_str());
-		push(new CError(tempchar,6));
+		push(new CError("File '"+c+"' is unwriteable",6));
 		return false;
 	}
 	fclose(f);
@@ -37,40 +36,33 @@ bool Stack::checkFolder()
 	string c = ((CraterString*)get())->val;
 	//sprintf(tempchar,"ls %s/",c);
 	//if(!system(tempchar)) return true; //folder exists already
-	sprintf(tempchar,"mkdir %s",c.c_str());
-	system(tempchar);
+	system(("mkdir "+c).c_str());
 	return true;
-	if(!system(tempchar)) return true; //folder can be created
-	sprintf(tempchar,"Folder '%s' is unwritable",c.c_str());
-	push(new CError(tempchar,6));
-	return false;
+	//if(!system(tempchar)) return true; //folder can be created
+	//sprintf(tempchar,"Folder '%s' is unwritable",c.c_str());
+	//push(new CError(tempchar,6));
+	//return false;
 }
 
 Stack::Stack() {
-	nitems = 0;
 	ntotal = 0;
 	controller = NULL;
-	ptrs = (CratersBaseObject**)malloc(STACK_MAX_ITEMS*sizeof(CratersBaseObject*));
 	entrynum = (int*)malloc(STACK_MAX_ITEMS*sizeof(int));
-	tempchar = (char*)malloc(512*sizeof(char));
 };
 
 Stack::~Stack() {
-	//while(nitems) drop();
-	free(ptrs);
+	//while(items.size()) drop();
 	free(entrynum);
-	free(tempchar);
 };
 
 bool Stack::validateinput(int* t, unsigned int n) { //check type number flags t for n objects
-	if(n>nitems) {
+	if(n>items.size()) {
 		push(new CError("Too few items in stack for requested operation",0));
 		return false;
 	}
 	for(int i=0; i<n; i++) {
 		if(!(t[i] & (1 << get(i)->isaNum))) {
-			sprintf(tempchar,"Stack item #%i is of the wrong type for this operation",i+1);
-			push(new CError(tempchar,1));
+			push(new CError("Stack item #"+to_str(i+1)+" is of the wrong type for this operation",1));
 			return false;
 		}
 	}
@@ -79,71 +71,73 @@ bool Stack::validateinput(int* t, unsigned int n) { //check type number flags t 
 
 void Stack::disp() {
 	printf("+---------------+\n");
-	for(int i=0; i<nitems; i++) {
-		CratersBaseObject* foo = get(nitems-1-i);
-		printf("|%i (%i): %s ",nitems-i,entrynum[i],foo->isaName.c_str());
+	for(int i=0; i<items.size(); i++) {
+		CratersBaseObject* foo = get(items.size()-1-i);
+		printf("|%zu (%i): %s ",items.size()-i,entrynum[i],foo->isaName.c_str());
 		printf("'%s' ",foo->name.c_str()); //item name
 		printf("\n");
 	}
-	if(nitems==0) printf("| <stack empty> |\n");
+	if(items.size()==0) printf("| <stack empty> |\n");
 	printf("+---------------+\n");
 }
 
 void Stack::push(CratersBaseObject* ptr) {
-	if(nitems > STACK_MAX_ITEMS - 5)
+	if(items.size() > STACK_MAX_ITEMS - 5)
 	{
 		//properly dispose of extra item
 		ntotal++;
-		entrynum[nitems]=ntotal;
-		ptrs[nitems++]=ptr;
+		entrynum[items.size()]=ntotal;
+		items.push_back(ptr);
 		drop();
 		
-		if(nitems < STACK_MAX_ITEMS - 2)
+		if(items.size() < STACK_MAX_ITEMS - 2)
 		{
 			ntotal++;
-			entrynum[nitems]=ntotal;
-			ptrs[nitems++] = new CError("Too many stack items!",7);
+			entrynum[items.size()]=ntotal;
+			items.push_back(new CError("Too many stack items!",7));
 		}
 		return;
 	}
 	ntotal++;
-	entrynum[nitems]=ntotal;
-	ptrs[nitems++]=ptr;
+	entrynum[items.size()]=ntotal;
+	items.push_back(ptr);
 };
 
 CratersBaseObject* Stack::pop() {
-	if(!nitems) {
+	if(!items.size()) {
 		push(new CError("Too few items in stack for 'pop'",0));
 		return NULL;
 	}
-	return ptrs[--nitems];
+    CratersBaseObject* o = items.back();
+    items.pop_back();
+	return o;
 };
 
 CratersBaseObject* Stack::get() { //get without removing from stack
-	if(!nitems) {
+	if(!items.size()) {
 		push(new CError("Too few items in stack for'get'",0));
 		return NULL;
 	}
-	return ptrs[nitems-1];
+	return items.back();
 }
 
 CratersBaseObject* Stack::get(unsigned int n) { //get nth item without removing from stack
-	if(nitems < n) {
+	if(items.size() < n) {
 		fprintf(stderr,"\n** Stack error: out of items! **\n\n");
 		return NULL;
 	}
-	return ptrs[nitems-n-1];
+	return items[items.size()-n-1];
 }
 
 float Stack::getfloat(unsigned int n) { //get nth item as a float
-	if(nitems < n) return 0;
+	if(items.size() < n) return 0;
 	if(get(n)->isaNum == COBJ_CFLOAT) return (float)*(CFloat*)get(n);
 	push(new CError("Requested number from non-numeric stack item",1));
 	return 0;
 }
 
 int Stack::getint(unsigned int n) { //get nth item as an int
-	if(nitems < n) return 0;
+	if(items.size() < n) return 0;
 	if(get(n)->isaNum == COBJ_CFLOAT)
 	{
 		float z = (float)*(CFloat*)get(n);
@@ -155,7 +149,7 @@ int Stack::getint(unsigned int n) { //get nth item as an int
 }
 
 string Stack::getstring(unsigned int n) { //get nth item as an int
-	if(nitems < n) return "";
+	if(items.size() < n) return "";
 	if(get(n)->isaNum == COBJ_CRATERSTRING) return ((CraterString*)get(n))->val;
 	return "";
 }
@@ -166,24 +160,24 @@ void Stack::rot(int n) { //swap 2 items on the stack
 		return;
 	}
 	
-	if(nitems<n) {
+	if(items.size()<n) {
 		push(new CError("Too few items in stack for requested operation",0));
 		return;
 	}
 	
-	CratersBaseObject* tempptr = ptrs[nitems-n];
-	int tempentry = entrynum[nitems-n];
+	CratersBaseObject* tempptr = items[items.size()-n];
+	int tempentry = entrynum[items.size()-n];
 	
 	for(int i=n; i>1; i--) {
-		ptrs[nitems-i] = ptrs[nitems-i+1];
-		entrynum[nitems-i] = entrynum[nitems-i+1];
+		items[items.size()-i] = items[items.size()-i+1];
+		entrynum[items.size()-i] = entrynum[items.size()-i+1];
 	}
-	ptrs[nitems-1] = tempptr;
-	entrynum[nitems-1] = tempentry;
+	items.back() = tempptr;
+	entrynum[items.size()-1] = tempentry;
 }
 
 void Stack::swap() { //swap 2 items on the stack
-	if(nitems<2) {
+	if(items.size()<2) {
 		push(new CError("Too few items in stack for requested operation",0));
 		return;
 	}
@@ -192,7 +186,7 @@ void Stack::swap() { //swap 2 items on the stack
 
 void Stack::drop()
 {
-	if(nitems == 0) {
+	if(items.size() == 0) {
 		push(new CError("No item in stack to drop",0));
 		return;
 	}
@@ -211,13 +205,13 @@ void Stack::drop()
 }
 
 bool Stack::istype(int t) {
-	if(!nitems) return false;
+	if(!items.size()) return false;
 	if(get()->isaNum != t) return false;
 	return true;
 };
 
 bool Stack::istypef(int typeflag) {
-	if(!nitems) return false;
+	if(!items.size()) return false;
 	if((1 << get()->isaNum) & typeflag) return true;
 	return false;
 };

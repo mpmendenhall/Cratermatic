@@ -89,7 +89,6 @@ void Action::printinfo(int depth) {
 
 
 Interactor::Interactor(Stack* s) {
-	tempchar = (char*)malloc(256*sizeof(char));
 	istop = false;
 	mystack = s;
 	nactions=0;
@@ -243,7 +242,7 @@ void Interactor::processCommand(){ //iterate through commandstream
 		}
 		
 		if(istop && (opt=="help" || opt=="?" || opt=="commands" || opt=="about" || opt=="info")) {
-			if(mystack->nitems && mystack->get()->isaNum == COBJ_CRATERSTRING && knowstopic(mystack->getstring(0)))
+			if(mystack->items.size() && mystack->get()->isaNum == COBJ_CRATERSTRING && knowstopic(mystack->getstring(0)))
 			{
 				printf("\n");
 				for(int i=0; i<ncategories; i++) categories[i]->printhelp(mystack->getstring(0),0);
@@ -261,13 +260,13 @@ void Interactor::processCommand(){ //iterate through commandstream
 		}
 		
 		if(istop && opt=="rhelp") {
-			if(mystack->nitems && mystack->get()->isaNum == COBJ_CRATERSTRING && knowstopic(mystack->getstring(0))) {
+			if(mystack->items.size() && mystack->get()->isaNum == COBJ_CRATERSTRING && knowstopic(mystack->getstring(0))) {
 				printf("\n");
 				for(int i=0; i<ncategories; i++) categories[i]->rprinthelp(mystack->getstring(0),0);
 				printf("\n");
 				mystack->drop();
 			} 
-			else if(mystack->nitems && mystack->get()->isaNum == COBJ_CRATERSTRING && mystack->getstring(0) == "all") {
+			else if(mystack->items.size() && mystack->get()->isaNum == COBJ_CRATERSTRING && mystack->getstring(0) == "all") {
 				printf("\n");
 				for(int i=0; i<ncategories; i++) categories[i]->rprinthelp(categories[i]->name,0);
 				printf("\n");
@@ -362,8 +361,7 @@ void Interactor::processCommand(){ //iterate through commandstream
 		//check for action types
 		Action* a = findaction(opt);
 		if(!a) {
-			sprintf(tempchar,"Unrecognized command: %s",opt.c_str());
-			mystack->push(new CError(tempchar,2));
+			mystack->push(new CError("Unrecognized command: '"+opt+"'",2));
 			break;
 		}
 		
@@ -372,7 +370,7 @@ void Interactor::processCommand(){ //iterate through commandstream
 	
 	//error handling
 	int n=0;
-	while(mystack->nitems > 0 && mystack->get()->isaNum == COBJ_CERROR)
+	while(mystack->items.size() > 0 && mystack->get()->isaNum == COBJ_CERROR)
 	{
 		CError* E = (CError*)mystack->get();
 		printf("*** Error %i: %s\n",E->errnum,E->errname.c_str());

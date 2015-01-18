@@ -141,7 +141,7 @@ public:
 	};
 	
 	void DoIt() {
-		while(mystack->nitems > 0) mystack->drop();
+		while(mystack->items.size() > 0) mystack->drop();
 	}
 };
 

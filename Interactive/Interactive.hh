@@ -52,7 +52,6 @@ public:
     /// Destructor
 	~Stack();
     
-	char* tempchar;
 	void push(CratersBaseObject* ptr);
 	CratersBaseObject* pop();
 	CratersBaseObject* get();
@@ -73,9 +72,8 @@ public:
 	void drop();
 	int* bitmask;
 	int* entrynum;
-	int nitems;
 	int ntotal;
-	CratersBaseObject** ptrs;
+	vector<CratersBaseObject*> items;
 	Interactor* controller;
 };
 
@@ -103,7 +101,6 @@ public:
 class Interactor
 {
 public:
-	char* tempchar;
 	string name;
 	string description;
 	bool haltinteract;
