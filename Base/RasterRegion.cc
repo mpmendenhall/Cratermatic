@@ -87,8 +87,7 @@ RasterRegion* RasterRegion::scanFromImage(Image* I, int x, int y)
 	R->data = (float*)malloc(I->size * sizeof(float));
 	R->lines = (float**)malloc((I->width+I->height) * sizeof(float*));
 	
-	float* d;
-	ImageDataScanner ids(I,x,y,&d);
+	ImageDataScanner ids(I,x,y);
 	int n;
 	int ntot=0;
 	R->maxwidth = 0;
@@ -119,8 +118,7 @@ RasterRegion* RasterRegion::scanFromClassify(ClassifyImage* C, int x, int y)
 	R->cdata = (int*)malloc(C->size * sizeof(int));
 	R->clines = (int**)malloc((C->width+C->height) * sizeof(int*));
 	
-	int* d;
-	ClassifyDataScanner cds(C,x,y,&d);
+	ClassifyDataScanner cds(C,x,y);
 	int n;
 	int ntot=0;
 	R->maxwidth = 0;
@@ -144,24 +142,20 @@ RasterRegion* RasterRegion::scanFromClassify(ClassifyImage* C, int x, int y)
 	return R;
 }
 
-RasterRegion* RasterRegion::updateImage(Image* I)
-{
-	float* d;
-	ImageDataScanner ids(I,myx,myy,&d);
+RasterRegion* RasterRegion::updateImage(Image* I) {
+	ImageDataScanner ids(I,myx,myy);
 	int ntot=0;
 	int n;
 	while( (n=ids.nextline(data+ntot)) ) ntot += n;
 	return this;
 }
 
-RasterRegion* RasterRegion::updateClassify(ClassifyImage* C)
-{
-	int* d;
-	ScanIterator si((RectRegion*)C, myx, myy, &d);
+RasterRegion* RasterRegion::updateClassify(ClassifyImage* C) {
+	ScanIterator si(C, myx, myy);
 	int ntot=0;
 	int n;
 	while( (n=si.nextline()) ) {
-		for(int i=0; i<n; i++) cdata[ntot+i] = C->data[d[i]];
+		for(int i=0; i<n; i++) cdata[ntot+i] = C->data[si.datp[i]];
 		ntot += n;
 	}
 	return this;
@@ -193,12 +187,10 @@ void RasterRegion::correctoffsets()
 	maxtotal -= offsetmin;	
 }
 
-Image* RasterRegion::putIntoImage(Image* I)
-{
+Image* RasterRegion::putIntoImage(Image* I) {
 	if(!I) I = new Image(origwidth, origheight);
 	
-	float* d;
-	ImageDataScanner ids(I,myx,myy,&d);
+	ImageDataScanner ids(I,myx,myy);
 	int n;
 	int ntot=0;
 	
@@ -213,13 +205,12 @@ Image* RasterRegion::putIntoImage(Image* I)
 ClassifyImage* RasterRegion::putIntoClassify(ClassifyImage* C)
 {
 	if(!C) C = new ClassifyImage(origwidth,origheight);
-	int* d;
-	ScanIterator si(C,myx,myy,&d);
+	ScanIterator si(C,myx,myy);
 	int n;
 	int ntot=0;
 	
 	while( (n=si.nextline()) ) {
-		for(int i=0; i<n; i++) C->data[d[i]] = cdata[ntot+i];
+		for(int i=0; i<n; i++) C->data[si.datp[i]] = cdata[ntot+i];
 		ntot+=n;
 	}
 	

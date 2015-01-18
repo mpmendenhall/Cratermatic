@@ -24,8 +24,7 @@
 
 #include "Basics.hh"
 
-class Histogram
-{
+class Histogram {
 public:
 	float* binbounds;
 	float* count;

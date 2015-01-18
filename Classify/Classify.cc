@@ -22,15 +22,13 @@
 #include "Classify.hh"
 #include "Utils.hh"
 
-SparseInt::SparseInt(int w, int h)
-{
+SparseInt::SparseInt(int w, int h) {
 	using namespace std;
 	width=w;
 	height=h;
 	rows = (vector<int>**)malloc(h*sizeof(vector<int>*));
 	rowdat = (vector<int>**)malloc(h*sizeof(vector<int>*));
-	for(int i=0; i<height; i++)
-	{
+	for(int i=0; i<height; i++) {
 		rows[i] = new vector<int>;
 		rows[i]->reserve(10);
 		rows[i]->push_back(-1); rows[i]->push_back(width+1);
@@ -40,8 +38,7 @@ SparseInt::SparseInt(int w, int h)
 	}
 }
 
-SparseInt::~SparseInt()
-{
+SparseInt::~SparseInt() {
 	for(int i=0; i<height; i++)
 	{
 		delete(rows[i]);
@@ -51,12 +48,10 @@ SparseInt::~SparseInt()
 	free(rowdat);
 }
 
-int SparseInt::get(int i,int j)
-{
+int SparseInt::get(int i,int j) {
 	if(i>=width || j>=height) return 0;
 	//slow dumb search for dat
-	for(int x=0; x < rows[j]->size(); x++)
-	{
+	for(int x=0; x < rows[j]->size(); x++) {
 		if((*rows[j])[x] == i) return (*rowdat[j])[x];
 		if((*rows[j])[x] > i) return 0;
 	}
@@ -73,23 +68,20 @@ void SparseInt::disprow(int row)
 	printf("}}\n");
 }
 
-int SparseInt::columnlist(int row, int*& output)
-{
+int SparseInt::columnlist(int row, int*& output) {
 	//disprow(row);
 	output = (int*)malloc((rows[row]->size()-2)*sizeof(int));
 	for(int i=1; i<rows[row]->size()-1; i++) output[i-1] = (*rows[row])[i];
 	return rows[row]->size()-2;
 }
 
-int SparseInt::columnvals(int row, int*& output)
-{
+int SparseInt::columnvals(int row, int*& output) {
 	output = (int*)malloc((rowdat[row]->size()-2)*sizeof(int));
 	for(int i=1; i<rowdat[row]->size()-1; i++) output[i-1] = (*rowdat[row])[i];
 	return rowdat[row]->size()-2;
 }
 
-void SparseInt::set(int i,int j, int v)
-{
+void SparseInt::set(int i,int j, int v) {
 	if(i>=width || j>=height) return;
 	//slow dumb search for dat
 	for(int x=0; x < rows[j]->size(); x++)
@@ -111,39 +103,6 @@ void SparseInt::set(int i,int j, int v)
 		}
 	}
 }
-
-//------------------------------------------------
-
-CraterPoints::CraterPoints()
-{
-	nfloorpts=0; floorpts=NULL;
-	nrimpts=0; rimpts=NULL;
-}
-
-CraterPoints::~CraterPoints()
-{
-	if(floorpts) free(floorpts);
-	floorpts=NULL;
-	if(rimpts) free(rimpts);
-	rimpts=NULL;
-}
-
-void CraterPoints::addfloor(int* d, int n)
-{
-	if(!floorpts) floorpts = (int*)malloc(n*sizeof(int));
-	else floorpts = (int*)realloc(floorpts,(nfloorpts+n)*sizeof(int));
-	for(int i=0; i<n; i++) floorpts[nfloorpts+i]=d[i];
-	nfloorpts+=n;
-}
-
-void CraterPoints::addrim(int* d, int n)
-{
-	if(!rimpts) rimpts = (int*)malloc(n*sizeof(int));
-	else rimpts = (int*)realloc(rimpts,(nrimpts+n)*sizeof(int));
-	for(int i=0; i<n; i++) rimpts[nrimpts+i]=d[i];
-	nrimpts+=n;
-}
-
 
 //------------------------------------------------
 
@@ -213,15 +172,12 @@ ClassifyImage* ClassifyImage::copy() //return a copy of this image
 	return foo;
 };
 
-//xor cdata values for specified points
-void ClassifyImage::xorPoints(int* d, unsigned int n, unsigned int xorkey)
-{
+void ClassifyImage::xorPoints(int* d, unsigned int n, unsigned int xorkey) {
 	for(int i=0; i<n; i++) data[d[i]] ^= xorkey;
 }
 
-//xor cdata values in specified region
-void ClassifyImage::xorRegion(unsigned int n, unsigned int xorkey)
-{
+
+void ClassifyImage::xorRegion(unsigned int n, unsigned int xorkey) {
 	if(n>=nbasins) return;
 	xorPoints(pic[n],npic[n],xorkey);
 }

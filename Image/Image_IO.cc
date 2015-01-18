@@ -21,14 +21,14 @@
 
 #include "Image.hh"
 
-void Image::load(const string& ifname) { //load raw float data
+void Image::load(const string& ifname) {
 	FILE *ifp = fopen(ifname.c_str(), "rb");
 	fread (data, size, sizeof(float), ifp);
 	coords.lx=0; coords.ux=width-1;
 	coords.ly=0; coords.uy=height-1;
 };
 
-Image* Image::loadrawbinary(const string& ifname, int w, int h, int nbits) { //load raw arbitrary bit depth (short) raster data
+Image* Image::loadrawbinary(const string& ifname, int w, int h, int nbits) {
 	FILE *ifp = fopen(ifname.c_str(), "rb");
 	Image* foo = Image::loadrawbinary(ifp,w,h,nbits,0,1);
 	fclose(ifp);
@@ -113,7 +113,7 @@ void Image::writerawbinary(FILE* ofp, int nbits) {
 }
 
 
-Image* Image::loadppm(const string& ifname, int n) { //import channel n of a 3-channel ppm file
+Image* Image::loadppm(const string& ifname, int n) {
 	
 	FILE *ifp = fopen(ifname.c_str(),"rb");
 	
@@ -314,7 +314,7 @@ void Image::loadarcgis(const string& ifname) {
 	coords.ly=0; coords.uy=height-1;
 };
 
-void Image::write(const string& ofname) { //write raw float data
+void Image::write(const string& ofname) {
 	FILE *ofp = fopen (ofname.c_str(), "wb");
 	fwrite (data, size, sizeof(float), ofp);
 };
@@ -329,7 +329,6 @@ void Image::writeArcGIS(const string& ofname) { //write text data to file
 	fclose(ofp);
 };
 
-//write data to a raw PGM format file (integers in range 0-65535)
 void Image::writePGM2(const string& ofname)
 {
 	Image* foo = rec709gamma()->mult(65535);
@@ -346,9 +345,8 @@ void Image::writePGM2(const string& ofname)
 	fclose(ofp);
 };
 
-//write data to a raw PGM format file (integers in range 0-255)
-void Image::writePGM1(const string& ofname)
-{
+
+void Image::writePGM1(const string& ofname) {
 	Image* foo = rec709gamma()->mult(255);
 	FILE *ofp = fopen (ofname.c_str(), "w");
 	fprintf(ofp,"P5\n%i\t%i\n255\n",width,height);
@@ -362,8 +360,7 @@ void Image::writePGM1(const string& ofname)
 	fclose(ofp);
 };
 
-void Image::dumpcatalog(const string& outpath) //dump sepatate image files for each item in catalog
-{
+void Image::dumpcatalog(const string& outpath) {
 	if(!mycatalog) return;
 	char* fname = (char*)malloc(1024*sizeof(char));
 	for(int i=0; i<mycatalog->ncraters; i++) {

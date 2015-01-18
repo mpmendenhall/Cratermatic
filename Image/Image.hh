@@ -26,35 +26,57 @@
 #include <string>
 using std::string;
 
-class Image: public RectRegion
-{
+/// Class for Image (2D float array) data
+class Image: public RectRegion {
 public:
-	float *data;
-	Image(int w, int h);
+	/// Constructor
+    Image(int w, int h);
+    /// Constructor from RectRegion
 	Image(RectRegion*);
+    /// Destructor
 	~Image();
+    
+    /// load raw float data
 	virtual void load(const string& ifname);
+    /// load channel n of a 3-channel ppm file
 	static Image* loadppm(const string& ifname, int n);
+    
 	virtual void loadtexttable(const string& ifname);
 	virtual void loadarcgis(const string& ifname);
+    /// load raw arbitrary bit depth (short) raster data
 	static Image* loadrawbinary(const string& ifname, int w, int h, int nbits);
 	static Image* loadrawbinary(FILE* ifp, int w, int h, int nbits, int ltoss, int rtoss);
 	void writerawbinary(const string& ofname, int nbits);
 	void writerawbinary(FILE* ofp, int nbits);
+    /// write raw float data
 	virtual void write(const string& ofname);
+    /// write ArcGIS text data format
 	virtual void writeArcGIS(const string& ofname);
+    /// write BMP image
 	virtual void writeBMP(const string& ofname);
+    /// write data to a raw PGM format file (integers in range 0-65535)
 	virtual void writePGM2(const string& ofname);
+    /// write data to a raw PGM format file (integers in range 0-255)
 	virtual void writePGM1(const string& ofname);
-	
+    /// dump sepatate image files for each item in catalog
+    void dumpcatalog(const string&);
+    
+    /// produce copy of this image
 	Image* copy();
+    /// copy data from another image
 	Image* copyfrom(Image *img);
 	
+    /// produce new image removing specified number of left, top, right, bottom pixel rows
 	Image* trimmed(int l, int t, int r, int b);
+    /// add specified number of left, top, right, bottom pixel rows
 	Image* padded(int l, int t, int r, int b);
+    /// pad data with r rows mirrored across edges
 	Image* mirrorpadded(int r);
+    /// trim this image in-place
 	Image* trim_inplace(int l, int t, int r, int b);
+    /// rotate image 90 degrees
 	Image* rotate();
+    
 	int linedata(int p0, int p1, float* d);
 		
 	Image* add(Image* I);
@@ -126,8 +148,7 @@ public:
 	Image* getsubregion(unsigned int,float);
 	Image* getregion(BoundingBox b);
 	void putregion(Image*, BoundingBox b);
-	
-	void dumpcatalog(const string&);
+    
 	Image* normalized(float mn, float mx);
 	Image* signedgamma(float g);
 	Image* rec709gamma();
@@ -151,10 +172,12 @@ public:
 	
 	int* sortImage();
 	Image* flatHisto();
+    
+    float *data;		///< data array
 };
 
-class MultiImage : public RectRegion
-{
+/// Grouped set of multiple images
+class MultiImage : public RectRegion {
 public:
 	MultiImage(int,int);
 	~MultiImage();
@@ -167,22 +190,28 @@ public:
 	Image** imgs;
 };
 
-class ImageDataScanner
-{
+/// Scanner for processing lines of pixels in image
+class ImageDataScanner {
 public:
-	ImageDataScanner(Image*, int, int, float**);
-	~ImageDataScanner();
-	Image* myImg;
-	ScanIterator* si;
-	float** dat;
-	int* datp;
-	int npts;
-	int nextline();
-	int nextline(float* dput);
-	int* getpositions();
-	void replacedata();
-	void replacedata(float* d);
-	int getoffset();
+    /// Constructor
+	ImageDataScanner(Image*, int, int);
+    
+    /// Load next line of image into *dat. Return number of points.
+    int nextline();
+    /// load next line of image data into dput; return number of points.
+    int nextline(float* dput);
+    /// get pixel positions array
+    int* getpositions() { return si.datp.data(); }
+    /// place modified line data back into image
+    void replacedata();
+    /// place modified line data at d back into image
+    void replacedata(float* d);
+    /// get current line starting offset
+    int getoffset() { return si.getoffset(); }
+    
+    Image* myImg;					///< image being scanned
+    ScanIterator si;				///< ScanIterator for selecting points
+	vector<float> dat;				///< data values along current line
 };
 
 #endif

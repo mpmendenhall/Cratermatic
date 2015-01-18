@@ -65,16 +65,13 @@ Image* Image::linedilation(int l, bool xdirection) //as per Soille pg. 89-90
 Image* Image::linedilation(int l, int x, int y) //line dilation in arbitrary direction
 {
 	Image* foo = copy();
-	float* d;
-	ImageDataScanner* DS = new ImageDataScanner(foo,x,y,&d);
+	ImageDataScanner DS(foo,x,y);
 	int n=1;
-	while(n)
-	{
-		n = DS->nextline();
-		lindilate(20,d,n);
-		DS->replacedata();
+	while(n) {
+		n = DS.nextline();
+		lindilate(20,DS.dat.data(),n);
+		DS.replacedata();
 	}
-	delete(DS);
 	return foo;
 }
 

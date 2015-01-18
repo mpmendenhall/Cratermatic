@@ -23,6 +23,8 @@
 #define CRATERS_RECTREGION
 
 #include "Basics.hh"
+#include <vector>
+using std::vector;
 
 class Image;
 
@@ -121,23 +123,28 @@ public:
 	int fourierPoints(float x0, float y0, float* xs, float* ys, int nterms, int** pout);
 };
 
-class ScanIterator
-{
+/// Class for scanning across arbitrarily-oriented pixel lines
+class ScanIterator {
 public:
+    /// Constructor
+    ScanIterator(RectRegion* R, int xa, int ya);
+    /// Destructor
+    ~ScanIterator();
+    
+    /// get next line; return number of points in line
+    int nextline();
+    /// get offset of current line
+    int getoffset() const { return offset; }
+    
 	int x,y,x0,y0;
 	int w, h;
 	int offset;
 	bool steep;
 	bool flipx;
 	bool buildout;
-	ScanIterator(RectRegion* R, int xa, int ya, int** dd);
-	~ScanIterator();
-	int* ys;
+	int* ys;			///< y coordinates of each scan point
 	int* bps;
-	int** d;
-	int nextline();
-	int getoffset();
+    vector<int> datp;	///< point locations on current line
 };
-
 
 #endif

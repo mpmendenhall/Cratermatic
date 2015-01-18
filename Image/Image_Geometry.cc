@@ -213,45 +213,28 @@ Image* Image::getsubregion(unsigned int n, float overreach) {
 	return foo;
 }
 
-ImageDataScanner::ImageDataScanner(Image* img, int x, int y, float** d)
-{
-	myImg = img;
-	si = new ScanIterator((RectRegion*)img,x,y,&datp);
-	dat = d;
-	npts=0;
-	(*dat) = NULL;
+ImageDataScanner::ImageDataScanner(Image* img, int x, int y):
+myImg(img), si((RectRegion*)img,x,y) { }
+
+
+void ImageDataScanner::replacedata() {
+	if(dat.size()==si.datp.size())
+        for(int i=0; i<si.datp.size(); i++)
+            myImg->data[si.datp[i]] = dat[i];
 }
 
-ImageDataScanner::~ImageDataScanner()
-{
-	if(*dat) {free(*dat); (*dat) = NULL;}
-	delete(si);
+void ImageDataScanner::replacedata(float* d) {
+	for(int i=0; i<si.datp.size(); i++) myImg->data[si.datp[i]] = d[i];
 }
 
-int* ImageDataScanner::getpositions() { return datp; }
-int ImageDataScanner::getoffset() {return si->getoffset();}
-
-void ImageDataScanner::replacedata()
-{
-	if(*dat) { for(int i=0; i<npts; i++) myImg->data[datp[i]] = (*dat)[i]; }
+int ImageDataScanner::nextline() {
+    dat.resize(si.nextline());
+	for(int i=0; i<si.datp.size(); i++) dat[i] = myImg->data[si.datp[i]];
+    return si.datp.size();
 }
 
-void ImageDataScanner::replacedata(float* d)
-{
-	for(int i=0; i<npts; i++) myImg->data[datp[i]] = d[i];
-}
-
-int ImageDataScanner::nextline()
-{
-	if(!(*dat)) (*dat) = (float*)malloc((myImg->width+myImg->height)*sizeof(float));
-	npts=si->nextline();
-	for(int i=0; i<npts; i++) (*dat)[i]=myImg->data[datp[i]];
-	return npts;
-}
-
-int ImageDataScanner::nextline(float* dput)
-{
-	npts=si->nextline();
-	for(int i=0; i<npts; i++) dput[i]=myImg->data[datp[i]];
-	return npts;
+int ImageDataScanner::nextline(float* dput) {
+	si.nextline();
+	for(int i=0; i<si.datp.size(); i++) dput[i] = myImg->data[si.datp[i]];
+    return si.datp.size();
 }

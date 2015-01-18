@@ -446,8 +446,7 @@ void RectRegion::loadcatalog(const string& f){
 	for(int i=0; i<mycatalog->ncraters; i++) addmark(1,(int)mycatalog->entries[i]->centerx,(int)mycatalog->entries[i]->centery,(int)mycatalog->entries[i]->radius);
 }
 
-ScanIterator::ScanIterator(RectRegion* R, int xa, int ya, int** dd)
-{
+ScanIterator::ScanIterator(RectRegion* R, int xa, int ya) {
 	steep = abs(ya)>abs(xa);
 	if(steep) {
 		if(ya>=0) {w = R->height; h = R->width; x=ya; y=-xa; flipx = false;}
@@ -459,8 +458,6 @@ ScanIterator::ScanIterator(RectRegion* R, int xa, int ya, int** dd)
 	}
 	
 	buildout = y<0;
-	d=dd;
-	(*d) = (int*)malloc(w*sizeof(int));
 	ys = (int*)malloc(w*sizeof(int));
 	bps = (int*)malloc(w*sizeof(int));
 	
@@ -488,19 +485,11 @@ ScanIterator::ScanIterator(RectRegion* R, int xa, int ya, int** dd)
 	else y0 = -k;
 }
 
-ScanIterator::~ScanIterator()
-{
+ScanIterator::~ScanIterator() {
 	free(ys); ys=NULL;
-	free(*d); d=NULL;
 }
 
-int ScanIterator::getoffset()
-{
-	return offset;
-}
-
-int ScanIterator::nextline()
-{
+int ScanIterator::nextline() {
 	if(buildout) {
 		if(y0 < h) x0=0; 
 		else {
@@ -515,21 +504,19 @@ int ScanIterator::nextline()
 	
 	offset  = x0;
 	
-	int npts = 0;
+    datp.clear();
 	int rx,ry;
-	while(x0<w && y0+ys[x0] >= 0 && y0+ys[x0] < h)
-	{
+	while(x0<w && y0+ys[x0] >= 0 && y0+ys[x0] < h) {
 		if(!flipx) { rx=x0; ry=y0+ys[x0]; }
 		else {rx = w-1-x0; ry = h-1-y0-ys[x0]; }
 		
-		if(!steep) (*d)[npts] = rx+w*ry;
-		else (*d)[npts] = (h-1-ry)+h*rx;
+		if(!steep) datp.push_back(rx+w*ry);
+		else datp.push_back((h-1-ry)+h*rx);
 		
-		++npts;
 		++x0;
 	}
 	
 	++y0;
-	return(npts);
+	return datp.size();
 }
 

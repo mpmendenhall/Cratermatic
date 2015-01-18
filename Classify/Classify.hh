@@ -31,22 +31,33 @@ class RGBImage;
 class Pointset;
 class Histogram;
 
-class SparseInt
-{
+/// Sparse integer-valued matrix (used for connectivity graph)
+class SparseInt {
 public:
+    /// Constructor
 	SparseInt(int w, int h);
-	int width;
-	int height;
-	~SparseInt();
+    /// Destructor
+    ~SparseInt();
+
+    /// get value at row,column
 	int get(int,int);
+    /// set value at row,column
 	void set(int,int, int);
-	std::vector<int>** rows;
-	std::vector<int>** rowdat;
+    
+    /// get list of columns filled in specified row
 	int columnlist(int row, int*& output);
+    /// get list of column values in specified row
 	int columnvals(int row, int*& output);
+    /// display specified row
 	void disprow(int row);
+    
+    int width;					///< array width
+    int height;					///< array height
+    std::vector<int>** rows;	///< columns assigned in each row
+    std::vector<int>** rowdat;	///< value assigned to each row's columns
 };
 
+/// Characterization information for a crater basin
 struct BasinStat {
 	int idnum;			//1
 	int npic;			//2
@@ -65,22 +76,8 @@ struct BasinStat {
 	int minloc;
 };
 
-class CraterPoints {
-public:
-	int nfloorpts;
-	int* floorpts;
-	int nrimpts;
-	int* rimpts;
-	
-	CraterPoints();
-	~CraterPoints();
-	
-	void addfloor(int* d, int n);
-	void addrim(int* d, int n);
-};
-
-class ClassifyImage: public RectRegion
-{
+/// Integer-valued image for point classification
+class ClassifyImage: public RectRegion {
 public:
 	int* npic;
 	int** pic;
@@ -91,21 +88,24 @@ public:
 	int** bounds;
 	Image* underlying;
 	bool hasboundaries;
-	SparseInt* cg;
-	bool hasconnectivity;
+	SparseInt* cg;			///< connectivity graph between basins
+	bool hasconnectivity;	///< whether connectivity graph is calculated
 	bool badimg;
-	bool isclassified;
+	bool isclassified;		///< whether classification is complete
 	
-	BasinStat** stats;
+	BasinStat** stats;		///< statistics for each crater basin
 	bool *markedregion;
-	int* poi; //"points of interest"
+	int* poi; 				///< "points of interest"
 	int npoi;
 	void addregiontopoi(int n);
 	void markedregionstopoi();
 	Image* markedregionstoimage();
 	
+    /// Constructor from RectRegion
 	ClassifyImage(RectRegion* R);
-	ClassifyImage(int w,int h);
+    /// Constructor from width, height
+	ClassifyImage(int w, int h);
+    /// Destructor
 	~ClassifyImage();
 	
 	void initialize();
@@ -113,11 +113,17 @@ public:
 	void renumerateWithKey(int andkey);
 	void cleardata();
 	
+    /// create copy of this ClassifyImage
 	ClassifyImage* copy();
+    /// load ArcGIS text file format
 	void loadarcgis(const string& ifname);
+    /// write ArcGIS text file format
 	void writeArcGIS(const string& ofname);
+    /// write least significant bits to BMP image
 	void writeLowBitBMP(const string& ofname);
+    /// produce Image from nbits least significant bits
 	Image* lowBitsToImage(int nbits);
+    /// produce Image from classify data
 	Image* dataToImage();
 	
 	void calcstats();
@@ -141,15 +147,20 @@ public:
 	Pointset* mutualboundary(int a, int b);
 	void getjoinpoints(int,int,int,Pointset*,Pointset*);
 	
+    /// produce "colorized" image from ((base*(data[i]/base))%modkey)
 	Image* recolorize(int base, int modkey);
 	Image* recolorize(float* c);
 	Image* scatterColor(unsigned int nbits);
 	Image* boundaryimage();
 	Image* tempstatimg();
+    /// produce image of four-connected boundaries between regions
 	Image* fourboundaryimage();
 	Image* markimage();
+    /// produce color "pretty image" visualization
 	RGBImage* prettyImage();
+    /// produce colored overlay on Image
 	RGBImage* prettyoverlayimage(Image*);
+    /// produce colored overlay on RGBImage
 	RGBImage* prettyoverlayimage(RGBImage* C);
 	RGBImage* colorbytemp();
 	void labelboundaries(int c);
@@ -160,14 +171,22 @@ public:
 	Image* extractChunkMask(unsigned int n, int l);
 	Image* extractChunkMask(unsigned int n);
 	void cutoutChunkMask(Image* msk, unsigned int n);
-		
+    
+    /// bitwise `and' data with other ClassifyImage
 	ClassifyImage* dat_and(ClassifyImage* b);
+    /// bitwise 'or' data with other ClassifyImage
 	ClassifyImage* dat_or(ClassifyImage* b);
+    /// bitwise 'xor' data with other ClassifyImage
 	ClassifyImage* dat_xor(ClassifyImage* b);
+    /// bitwise 'and' data with specified value
 	ClassifyImage* dat_and(int q);
+    /// bitwise 'or' data with specified value
 	ClassifyImage* dat_or(int q);
+    /// bitwise 'xor' data with specified value
 	ClassifyImage* dat_xor(int q);
+    /// xor cdata values for specified points
 	void xorPoints(int*, unsigned int, unsigned int);
+    /// xor cdata values in specified region
 	void xorRegion(unsigned int, unsigned int);
 	void andPoints(int*, unsigned int, unsigned int);
 	void andRegion(unsigned int, unsigned int);
@@ -199,63 +218,30 @@ public:
 	static ClassifyImage* gradSeg(Image* u, float r);
 	
 	void radialization(unsigned int n, Image* u);
-		
-	/* //old ClassifyImage stuff
-	void calcstats();
-	Image* suppressminima(float t);
-	float* averagelocation();
-	float averageradius(float x0, float y0);
-	float singleregionaverageradius(float x0, float y0, int n);
-	float radialvariance(float* d, int n);
-	float singleregionradialvariance(float* d, float ravg, int n);
-	void chainmergeslope(Image* u, float r);
-	static float radialvariance_wrapper(float* d, int n, void* parentobj); // for callbacks by minimizer; implemented as in www.newty.de/fpt/callback.html
-	float* find_equidistant(); */
 };
 
-/*
- //old BinaryImage stuffs
-	 ClassifyImage* homotopicthin(ClassifyImage* mask, bool prune);
-	 ClassifyImage* halfplanedilation(int x, int y);
-	 ClassifyImage* convexhull(int n);
-	 ClassifyImage* boundaries();
-	 ClassifyImage* generaldilation(ClassifyImage* k);
-	 ClassifyImage* boundarydilation(ClassifyImage* k);
-	 ClassifyImage* circledilation(int r);
-	 ClassifyImage* circleerosion(int r);
-	 ClassifyImage* circleclosing(int r);
-	 ClassifyImage* circleopening(int r);
-	 
-	 static ClassifyImage* filledcircleimage(int r);
-	 static int connectivity(RectRegion* R, int* d, unsigned int n);
-	 static bool* binlindil(int l, bool* d, int w);
-	 ClassifyImage* linedilation(int x, int y, int l);
-	 static bool* binlinero(int l, bool* d, int w);
-	 ClassifyImage* lineerosion(int x, int y, int l);
-	 ClassifyImage* lineopening(int x, int y, int l);
-	 ClassifyImage* lineclosing(int x, int y, int l);
-	 ClassifyImage* slineopening(int x, int y, int l);
-	 ClassifyImage* slineclosing(int x, int y, int l);
-	 ClassifyImage* srectopening(int x, int y, int lx, int ly);
-	 ClassifyImage* srectclosing(int x, int y, int lx, int ly);
-*/ 
-
-class ClassifyDataScanner
-{
+/// Line scanner for ClassifyImage
+class ClassifyDataScanner {
 public:
-	ClassifyDataScanner(ClassifyImage*, int, int, int**);
-	~ClassifyDataScanner();
-	ClassifyImage* myImg;
-	ScanIterator* si;
-	int** dat;
-	int* datp;
-	int npts;
+    /// Constructor
+	ClassifyDataScanner(ClassifyImage*, int, int);
+    
+    /// load next line of data into *dat
 	int nextline();
+    /// load next line of data into dput
 	int nextline(int* dput);
-	int* getpositions();
+    /// get current line positions array
+	int* getpositions() { return si.datp.data(); }
+    /// replace modified line data back into ClassifyImage
 	void replacedata();
+    /// place line data in d into ClassifyImage
 	void replacedata(int* d);
-	int getoffset();
+    /// get current line offset
+	int getoffset() { return si.getoffset(); }
+    
+    ClassifyImage* myImg;	///< ClassifyImage being scanned
+    ScanIterator si;		///< ScanIterator for selecting lines
+    vector<int> dat;		///< data points on current line
 };
 
 #endif

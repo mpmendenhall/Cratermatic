@@ -179,46 +179,27 @@ void ClassifyImage::writeLowBitBMP(const string& ofname) //write BMP with low bi
 	free(poodle);
 };
 
+//////////////////////////////////////////////////
 
-ClassifyDataScanner::ClassifyDataScanner(ClassifyImage* img, int x, int y, int** d)
-{
-	myImg = img;
-	si = new ScanIterator((RectRegion*)img,x,y,&datp);
-	dat = d;
-	npts=0;
-	(*dat) = NULL;
+ClassifyDataScanner::ClassifyDataScanner(ClassifyImage* img, int x, int y):
+myImg(img), si(img,x,y) { }
+
+void ClassifyDataScanner::replacedata() {
+	if(dat.size()==si.datp.size()) { for(int i=0; i<si.datp.size(); i++) myImg->data[si.datp[i]] = dat[i]; }
 }
 
-ClassifyDataScanner::~ClassifyDataScanner()
-{
-	if(*dat) {free(*dat); (*dat) = NULL;}
-	delete(si);
+void ClassifyDataScanner::replacedata(int* d) {
+	for(int i=0; i<si.datp.size(); i++) myImg->data[si.datp[i]] = d[i];
 }
 
-int* ClassifyDataScanner::getpositions() { return datp; }
-int ClassifyDataScanner::getoffset() {return si->getoffset();}
-
-void ClassifyDataScanner::replacedata()
-{
-	if(*dat) { for(int i=0; i<npts; i++) myImg->data[datp[i]] = (*dat)[i]; }
+int ClassifyDataScanner::nextline() {
+	dat.resize(si.nextline());
+	for(int i=0; i<si.datp.size(); i++) dat[i]=myImg->data[si.datp[i]];
+	return si.datp.size();
 }
 
-void ClassifyDataScanner::replacedata(int* d)
-{
-	for(int i=0; i<npts; i++) myImg->data[datp[i]] = d[i];
-}
-
-int ClassifyDataScanner::nextline()
-{
-	if(!(*dat)) (*dat) = (int*)malloc((myImg->width+myImg->height)*sizeof(int));
-	npts=si->nextline();
-	for(int i=0; i<npts; i++) (*dat)[i]=myImg->data[datp[i]];
-	return npts;
-}
-
-int ClassifyDataScanner::nextline(int* dput)
-{
-	npts=si->nextline();
-	for(int i=0; i<npts; i++) dput[i]=myImg->data[datp[i]];
-	return npts;
+int ClassifyDataScanner::nextline(int* dput) {
+	si.nextline();
+	for(int i=0; i<si.datp.size(); i++) dput[i]=myImg->data[si.datp[i]];
+	return si.datp.size();
 }

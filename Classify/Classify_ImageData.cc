@@ -208,7 +208,7 @@ Image* ClassifyImage::lowBitsToImage(int nbits)
 
 Image* ClassifyImage::recolorize(int base, int modkey) {
 	Image* foo = new Image(width,height);
-	for(int i=0; i<size; i++) foo->data[i]= ((base*(data[i]/base))%modkey);
+	for(int i=0; i<size; i++) foo->data[i] = ((base*(data[i]/base))%modkey);
 	return foo;
 };
 
