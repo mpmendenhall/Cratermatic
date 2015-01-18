@@ -272,14 +272,14 @@ void ClassifyImage::radialization(unsigned int n, Image* u)
 		if(drv[i] >= dmx) { dmx = drv[i]; imx = i; }
 		else if(drv[i] < dmx) break;
 	}
-	u->addmark(1,p0%width,p0/width,(int)radii[imx]);
+	u->addmark(ImageMark::MARK_CIRCLE, p0%width,p0/width,(int)radii[imx]);
 	
 	for(int i=imx+1; i<npts; i++)
 	{
 		if(drv[i] <= dmx) { dmx = drv[i]; imx = i; }
 		else if(drv[i] > dmx) break;
 	}
-	u->addmark(1,p0%width,p0/width,(int)radii[imx]);
+	u->addmark(ImageMark::MARK_CIRCLE, p0%width,p0/width,(int)radii[imx]);
 	
 
 	
@@ -351,11 +351,11 @@ ClassifyImage* ClassifyImage::removeUncircular(float th)
 
 Image* ClassifyImage::neatopic(int n)
 {
-	Image* foo = new Image(n,n);
-	bool* b = RectRegion::gennocds(n);
-	for(int i=0; i<n*n; i++) foo->data[i]=b[i];
-	free(b);
-	return foo;
+	//Image* foo = new Image(n,n);
+	//bool* b = RectRegion::gennocds(n);
+	//for(int i=0; i<n*n; i++) foo->data[i]=b[i];
+	//free(b);
+	return NULL;
 }
 
 /* int ClassifyImage::connectivity(RectRegion* R, int* d, unsigned int n) { //find the connectivity number (# of holes) in region

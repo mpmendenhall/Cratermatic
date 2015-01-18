@@ -124,6 +124,7 @@ public:
 	};
 	
 	void DoIt() {
+        return;
 		if(1) mystack->push(ClassifyImage::neatopic(100));
 		else mystack->push(ClassifyImage::simplepic());
 	}

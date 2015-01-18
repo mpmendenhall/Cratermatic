@@ -160,11 +160,17 @@ public:
 	Image* above(float);
 	Image* below(float);
 	
+    /// draw marks to image in color c
 	Image* drawmarks(float c);
-	Image* drawmarks(ImageMark* m, unsigned int nm, float c);
-	Image* crossmark(int,int,int, float c);
+    /// draw specified set of marks to image in color c
+	Image* drawmarks(const vector<ImageMark>& m, float c);
+    /// draw cross on image
+	Image* crossmark(int x0, int y0, int l, float c);
+    /// draw circle on image
 	Image* circle(int x0, int y0, int r, float c);
+    /// draw line from (x0,y0) to (x1,y1) on image
 	Image* line(int x0, int y0, int x1, int y1, float c);
+    /// draw line from point index p0 to p1 on image
 	Image* line(int p0, int p1, float c);
 	//Image* star(int,int,int);
 	void safeset(int,int,float);

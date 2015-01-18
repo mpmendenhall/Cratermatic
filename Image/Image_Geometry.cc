@@ -196,11 +196,11 @@ void Image::putregion(Image* foo, BoundingBox b)
 
 Image* Image::getsubregion(unsigned int n, float overreach) {
 	if(!mycatalog) return NULL;
-	if(n>mycatalog->ncraters-1) return NULL;
-	int y = height - mycatalog->entries[n]->centery;
-	int r = (int)(overreach*mycatalog->entries[n]->radius);
-	int xmin = std::max(0,mycatalog->entries[n]->centerx-r);
-	int xmax = std::min(width-1,mycatalog->entries[n]->centerx+r);
+	if(n>mycatalog->entries.size()-1) return NULL;
+	int y = height - mycatalog->entries[n].y;
+	int r = (int)(overreach*mycatalog->entries[n].r);
+	int xmin = std::max(0,(int)mycatalog->entries[n].x-r);
+	int xmax = std::min(width-1,(int)mycatalog->entries[n].x+r);
 	int ymin = std::max(0,y-r);
 	int ymax = std::min(height-1,y+r);
 	Image* foo = new Image(xmax-xmin+1,ymax-ymin+1);

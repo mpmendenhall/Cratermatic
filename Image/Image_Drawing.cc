@@ -22,18 +22,17 @@
 #include "Image.hh"
 #include "Utils.hh"
 
-Image* Image::drawmarks(ImageMark* m, unsigned int nm, float c) {
-	for(int i=0; i<nm; i++) {
-		if(m[i].type==0) crossmark((int)m[i].x0,(int)m[i].y0,(int)m[i].r,c);
-		if(m[i].type==1) circle((int)m[i].x0,(int)m[i].y0,(int)m[i].r,c);
-		if(m[i].type==3) line((int)m[i].x0,(int)m[i].y0,(int)m[i].x1,(int)m[i].y1,c);
+Image* Image::drawmarks(const vector<ImageMark>& m, float c) {
+	for(int i=0; i<m.size(); i++) {
+		if(m[i].type==ImageMark::MARK_CROSS) crossmark((int)m[i].x0,(int)m[i].y0,(int)m[i].r,c);
+		if(m[i].type==ImageMark::MARK_CIRCLE) circle((int)m[i].x0,(int)m[i].y0,(int)m[i].r,c);
+		if(m[i].type==ImageMark::MARK_LINE) line((int)m[i].x0,(int)m[i].y0,(int)m[i].x1,(int)m[i].y1,c);
 	}
 	return this;
 }
 
 Image* Image::drawmarks(float c) {
-	if(!marks) return this;
-	return drawmarks(marks,nmarks,c);
+	return drawmarks(marks,c);
 }
 
 Image* Image::crossmark(int x0, int y0, int l, float c){

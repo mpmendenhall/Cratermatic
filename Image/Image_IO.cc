@@ -76,8 +76,7 @@ void Image::writeBMP(const string& ofname) {
 	
 	fprintf (stdout, "Saving greyscale image (%i x %i) to %s \n",width,height,ofname.c_str());
 	Image* foo;
-	if(nmarks)
-	{
+	if(marks.size()) {
 		foo = normalized(0.2,1);
 		foo->drawmarks(0.0);
 	} else {
@@ -363,7 +362,7 @@ void Image::writePGM1(const string& ofname) {
 void Image::dumpcatalog(const string& outpath) {
 	if(!mycatalog) return;
 	char* fname = (char*)malloc(1024*sizeof(char));
-	for(int i=0; i<mycatalog->ncraters; i++) {
+	for(int i=0; i<mycatalog->entries.size(); i++) {
 		Image* foo = getsubregion(i,2.0);
 		sprintf(fname, outpath.c_str(), i);
 		printf("Saving %s ...\n",fname);

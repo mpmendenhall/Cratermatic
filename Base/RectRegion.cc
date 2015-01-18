@@ -23,49 +23,24 @@
 #include "Utils.hh"
 #include "Image.hh"
 #include <climits>
+#include <algorithm>
 
-int comparebyradius(const void* entry1, const void* entry2) {
-	return  (int)( (*(CatalogEntry**)entry2)->radius - (*(CatalogEntry**)entry1)->radius );
+bool comparebyradius(const Circle& entry1, const Circle& entry2) {
+    return entry1.r < entry2.r;
 };
-
-bool* RectRegion::gennocds(int n) //table of nonnegative integer pairs with no common divisors
-{
-	bool* b = (bool*)malloc(n*n*sizeof(bool));
-	for(int i=0; i<n*n; i++) b[i]=true;
-	
-	for(int j=2; j<n; j++)
-	{
-		for(int k=0; k<n; k+=j)
-		{
-			for(int l=0; l<n; l+=j) b[k+n*l]=false;
-		}
-	}
-	return b;
-}
 
 CraterCatalog::CraterCatalog(const string& infile) {
 	FILE* ifp = fopen(infile.c_str(),"r");
 	char* buf = (char*)malloc(1024*sizeof(char));
-	ncraters=0;
-	entries = (CatalogEntry**)malloc(sizeof(CatalogEntry*));
 	while(fgets(buf,300,ifp) && strlen(buf)>10) {
-		ncraters++;
-		entries = (CatalogEntry**)realloc(entries,ncraters*sizeof(CatalogEntry*));
-		entries[ncraters-1]=new CatalogEntry;
-		sscanf(buf,"%i %i %i %*f %*f\n",&(entries[ncraters-1]->radius),&(entries[ncraters-1]->centery),&(entries[ncraters-1]->centerx));
+        Circle C;
+		sscanf(buf,"%f %f %f %*f %*f\n", &C.r, &C.y, &C.x);
+        entries.push_back(C);
 	}
 	free(buf);
 	fclose(ifp);
-	qsort(entries,ncraters,sizeof(CatalogEntry*),comparebyradius);
+	std::sort(entries.begin(),entries.end(),comparebyradius);
 }
-
-CraterCatalog::~CraterCatalog() {
-	for(int i=0; i<ncraters; i++) free(entries[i]);
-	free(entries);
-}
-
-
-bool* RectRegion::nocomdivs = RectRegion::gennocds(40); //static member
 
 int* makedx()
 {
@@ -98,8 +73,6 @@ RectRegion::RectRegion(int w,int h)
 	width=w;
 	height=h;
 	size=w*h;
-	marks = NULL;
-	nmarks = 0;
 	mycatalog = NULL;
 	
 	coords.lx = 0; coords.ux = width-1;
@@ -117,18 +90,12 @@ RectRegion::RectRegion(int w,int h)
 }
 
 RectRegion::~RectRegion() {
-	if(marks) {free(marks); marks=NULL;}
 	free(connectr2);
 	if(mycatalog) {free(mycatalog); mycatalog=NULL;}
 }
 
-void RectRegion::copyfromrr(RectRegion* R)
-{
-	nmarks=R->nmarks;
-	if(nmarks) {
-		marks = (ImageMark*)malloc(nmarks*sizeof(ImageMark));
-		for(int i=0; i<nmarks; i++) marks[i]=R->marks[i];
-	}
+void RectRegion::copyfromrr(RectRegion* R) {
+    marks = R->marks;
 	width = R->width;
 	height = R->height;
 	size = width*height;
@@ -147,30 +114,26 @@ bool RectRegion::inrange(int x, int y)
 	return true;
 }
 
-void RectRegion::addmark(int t, int x, int y, int r){
-	nmarks++;
-	if(!marks) marks=(ImageMark*)malloc(sizeof(ImageMark));
-	else marks=(ImageMark*)realloc(marks,nmarks*sizeof(ImageMark));
-	marks[nmarks-1].type=t;
-	marks[nmarks-1].x0=x;
-	marks[nmarks-1].y0=y;
-	marks[nmarks-1].r=r;
+void RectRegion::addmark(ImageMark::markType t, int x, int y, int r){
+	ImageMark m;
+	m.type=t;
+	m.x0=x;
+	m.y0=y;
+	m.r=r;
+    marks.push_back(m);
 }
 
-void RectRegion::addmarkline(float x0, float y0, float x1, float y1)
-{
-	nmarks++;
-	if(!marks) marks=(ImageMark*)malloc(sizeof(ImageMark));
-	else marks=(ImageMark*)realloc(marks,nmarks*sizeof(ImageMark));
-	marks[nmarks-1].type=3;
-	marks[nmarks-1].x0=x0;
-	marks[nmarks-1].y0=y0;
-	marks[nmarks-1].x1=x1;
-	marks[nmarks-1].y1=y1;
+void RectRegion::addmarkline(float x0, float y0, float x1, float y1) {
+	ImageMark m;
+	m.type = ImageMark::MARK_LINE;
+	m.x0=x0;
+	m.y0=y0;
+	m.x1=x1;
+	m.y1=y1;
+    marks.push_back(m);
 }
 
-void RectRegion::fouriermark(float x0, float y0, float* xs, float* ys, unsigned int nterms, unsigned int ndivisions)
-{
+void RectRegion::fouriermark(float x0, float y0, float* xs, float* ys, unsigned int nterms, unsigned int ndivisions) {
 	float angl = atan2(ys[nterms],xs[nterms])/nterms;
 	float r = invRadialFourier(angl,xs,ys,nterms);
 	float angl2;
@@ -185,39 +148,8 @@ void RectRegion::fouriermark(float x0, float y0, float* xs, float* ys, unsigned 
 	}
 }
 
-void RectRegion::clearmarks() //clear all marks from image
-{
-	if(marks) {free(marks); marks=NULL; nmarks=0;}
-}
 
-float RectRegion::reallength(float l)
-{
-	return l*(coords.ux-coords.lx)/((float)width-1.0);
-}
-
-float RectRegion::realdx(float l)
-{
-	return l*(coords.ux-coords.lx)/(width - 1.0);
-}
-
-float RectRegion::realdy(float l)
-{
-	return l*(coords.uy-coords.ly)/(height - 1.0);
-}
-
-float RectRegion::realx(float l)
-{
-	return coords.lx + l*(coords.ux-coords.lx)/(width - 1.0);
-}
-
-float RectRegion::realy(float l)
-{
-	return coords.ly + l*(coords.uy-coords.ly)/(height - 1.0);
-}
-
-BoundingBox RectRegion::findboundingbox(int* p, int n)
-{
-	//find bounding box
+BoundingBox RectRegion::findboundingbox(int* p, int n) {
 	BoundingBox b;
 	b.lx=INT_MAX; b.ly=INT_MAX;
 	b.ux=0; b.uy=0;
@@ -230,9 +162,7 @@ BoundingBox RectRegion::findboundingbox(int* p, int n)
 	return b;
 }
 
-//distance squared between two points
-int RectRegion::dist2(int p, int q)
-{
+int RectRegion::dist2(int p, int q) const {
 	int dx = (p%width)-(q%width);
 	int dy = (p/width)-(q/width);
 	return dx*dx+dy*dy;
@@ -328,8 +258,7 @@ float RectRegion::ycenter(int* pts, unsigned int npts, float* wt)
 	return (float)accum/npts;
 }
 
-int RectRegion::fourierPoints(float x0, float y0, float* xs, float* ys, int nterms, int** pout) //return list of points enclosed by Fourier boundaries
-{
+int RectRegion::fourierPoints(float x0, float y0, float* xs, float* ys, int nterms, int** pout) {
 	//find maximum radius and bounding box
 	float rmax = sqrt(xs[0]/M_PI);
 	for(int i=1; i<nterms; i++) rmax += sqrt(xs[i]*xs[i]+ys[i]*ys[i]);
@@ -371,11 +300,10 @@ void RectRegion::fourierDeviations(float x0, float y0, int* pts, unsigned int np
 	float rexp, ract;
 	float angl;
 	
-	for(int k=1; k<=nterms; k++)
-	{
+	for(int k=1; k<=nterms; k++) {
+        
 		float nwrongsided = 0;
-		for(int x=bb.lx; x<=bb.ux; x++)
-		{
+		for(int x=bb.lx; x<=bb.ux; x++) {
 			for(int y=bb.ly; y<=bb.uy; y++)
 			{
 				if(!inrange(x,y)) continue;
@@ -388,8 +316,7 @@ void RectRegion::fourierDeviations(float x0, float y0, int* pts, unsigned int np
 			}
 		}
 		
-		for(int i=0; i<npts; i++)
-		{
+		for(int i=0; i<npts; i++) {
 			delx = pts[i]%width - x0;
 			dely = pts[i]/width - y0;
 			angl = atan2(dely,delx);
@@ -404,8 +331,7 @@ void RectRegion::fourierDeviations(float x0, float y0, int* pts, unsigned int np
 }
 
 
-Circle RectRegion::findboundingcirc(int* p, unsigned int n)
-{
+Circle RectRegion::findboundingcirc(int* p, unsigned int n) {
 	Circle c;
 	c.r = -1;
 	
@@ -432,8 +358,7 @@ Circle RectRegion::findboundingcirc(int* p, unsigned int n)
 	return c;
 }
 
-BoundingBox RectRegion::expandbb(BoundingBox b, int l)
-{
+BoundingBox RectRegion::expandbb(BoundingBox b, int l) {
 	if(b.lx-l>0) b.lx-=l; else b.lx=0;
 	if(b.ly-l>0) b.ly-=l; else b.ly=0;
 	if(b.ux+l<width) b.ux+=l; else b.ux = width-1;
@@ -443,7 +368,7 @@ BoundingBox RectRegion::expandbb(BoundingBox b, int l)
 
 void RectRegion::loadcatalog(const string& f){
 	mycatalog = new CraterCatalog(f);
-	for(int i=0; i<mycatalog->ncraters; i++) addmark(1,(int)mycatalog->entries[i]->centerx,(int)mycatalog->entries[i]->centery,(int)mycatalog->entries[i]->radius);
+	for(int i=0; i<mycatalog->entries.size(); i++) addmark(ImageMark::MARK_CIRCLE, (int)mycatalog->entries[i].x,(int)mycatalog->entries[i].y, (int)mycatalog->entries[i].r);
 }
 
 ScanIterator::ScanIterator(RectRegion* R, int xa, int ya) {

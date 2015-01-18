@@ -28,98 +28,112 @@ using std::vector;
 
 class Image;
 
+/// Specification for a mark on an image
 struct ImageMark {
-	int type;
-	float x0;
-	float y0;
-	float x1;
-	float y1;
-	float r;
+    /// mark type options
+	enum markType {
+        MARK_CROSS,		///< cross mark
+        MARK_CIRCLE,	///< circle mark
+        MARK_LINE		///< line mark
+    } type;				///< type of mark to produce
+    
+	float x0;			///< start or center x
+	float y0;			///< start or center y
+	float x1;			///< end x
+	float y1;			///< end y
+	float r;			///< radius
 };
 
-struct BoundingBox
-{
-	int lx; //lower x
-	int ly; //lower y
-	int ux; //upper x
-	int uy; //upper y
+/// Specification for a bounding box
+struct BoundingBox {
+    int lx;				///< lower x
+	int ly; 			///< lower y
+	int ux; 			///< upper x
+	int uy; 			///< upper y
 };
 
-struct ImageCoords {
-	float lx;
-	float ly;
-	float ux;
-	float uy;
+/// Specification for a circle
+struct Circle {
+	float x;			///< center x
+	float y;			///< center y
+	float r;			///< radius
 };
 
-struct Circle
-{
-	float x;
-	float y;
-	float r;
-};
-
-struct CatalogEntry {
-	int radius;
-	int centerx;
-	int centery;
-};
-
-class CraterCatalog //catalog of subcraters in larger region
-{
+/// catalog of subcraters in larger region
+class CraterCatalog {
 public:
-	int ncraters;
-	CatalogEntry** entries;
+	/// Constructor from file name to read
 	CraterCatalog(const string& infile);
-	~CraterCatalog();
+    vector<Circle> entries;		///< craters
 };
 
-class RectRegion : public CratersBaseObject
-{
+/// Base class with metadata for rectangular raster data region
+class RectRegion : public CratersBaseObject {
 public:
-	int width;
-	int height;
-	int size;
-	ImageMark* marks;
-	int nmarks;
+    
+    /// Constructor from width, height
+    RectRegion(int w, int h);
+    /// Destructor
+    ~RectRegion();
+    /// copy from another RectRegion
+    void copyfromrr(RectRegion* R);
+    
+	int width;					///< region width
+	int height;					///< region height
+	int size;					///< region size = width*height
+	vector<ImageMark> marks;	///< list of marks to draw
 	
-	int connectn;
-	static int* connectdx;
-	static int* connectdy;
-	int* connectr2;
-	static bool* nocomdivs;
-	static bool* gennocds(int n);
-		
-	CraterCatalog* mycatalog;
-	void loadcatalog(const string&);
-	ImageCoords coords;
-	RectRegion(int, int);
-	~RectRegion();
-	void copyfromrr(RectRegion* R);
-	
-	void addmark(int t, int x, int y, int r);
+	int connectn;				///< connectivity number (4 or 8)
+	static int* connectdx;		///< dx[] array for connectivity offsets
+	static int* connectdy;		///< dy[] array for connectivity offsets
+	int* connectr2;				///< r^2 = dx[i]^2+dy[1]^2 connectivity radius
+	BoundingBox coords;			///< "real space" coordinates for region
+	CraterCatalog* mycatalog;	///< catalog of identified craters
+    
+    /// load craters catalog
+	void loadcatalog(const string& fname);
+    
+    /// add specified mark to marks list
+	void addmark(ImageMark::markType t, int x, int y, int r);
+    /// add specified line mark to marks list
 	void addmarkline(float x0, float y0, float x1, float y1);
+    /// add specified Fourier series mark to marks list
 	void fouriermark(float x0, float y0, float* xs, float* ys, unsigned int nterms, unsigned int ndivisions);
 	
-	void clearmarks();
-	float reallength(float);
-	float realdx(float);
-	float realdy(float);
-	float realx(float);
-	float realy(float);
+    /// pixel distance squared between two points
+    int dist2(int p, int q) const;
+    /// physical length represented by pixel length l
+	float reallength(float l) const { return l*(coords.ux-coords.lx)/((float)width-1.0); }
+    /// physical dx represented by pixel dx l
+	float realdx(float l) const { return l*(coords.ux-coords.lx)/(width - 1.0); }
+    /// physical dy represented by pixel dy l
+	float realdy(float l) const { return l*(coords.uy-coords.ly)/(height - 1.0); }
+    /// physical coordinate represented by pixel x
+	float realx(float x) const { return coords.lx + x*(coords.ux-coords.lx)/(width - 1.0); }
+    /// physical coordinate represented by pixel y
+	float realy(float y) const { return coords.ly + y*(coords.uy-coords.ly)/(height - 1.0); }
 	bool inrange(int);
 	bool inrange(int,int);
+    /// find bounding box for specified array of points
 	BoundingBox findboundingbox(int* p, int n);
+    /// find bounding circle for specified array of points
 	Circle findboundingcirc(int* p, unsigned int n);
+    /// expand a bounding box by specified margin
 	BoundingBox expandbb(BoundingBox, int);
-	int dist2(int,int);
-	
+
+	/// find x center-of-mass of specified (weighted) points
 	float xcenter(int* pts, unsigned int npts, float* wt);
+    /// find y center-of-mass of specified (weighted) points
 	float ycenter(int* pts, unsigned int npts, float* wt);
+    /// determine raidal Fourier series for shape of points set
 	void radialFourier(float x0, float y0, int* ps, unsigned int nps, float* wt, float** xs, float** ys, unsigned int nmoms);
+    /// determine raidal Fourier series for shape of points set
 	void radialFourier(float x0, float y0, int* ps, unsigned int nps, Image* wtimg, float** xs, float** ys, unsigned int nmoms);
+    /// sum radial Fourier series at specified angle
 	float invRadialFourier(float angl, float* xs, float* ys, unsigned int nmoms);
+    ///
 	void fourierDeviations(float x0, float y0, int* pts, unsigned int npts, float* xs, float* ys, float** ds, int nterms);
+    /// return list of points enclosed by Fourier boundaries
 	int fourierPoints(float x0, float y0, float* xs, float* ys, int nterms, int** pout);
 };
 
