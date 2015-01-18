@@ -137,6 +137,7 @@ public:
     bool knowstopic(const string& c);
     /// return the number of registered subactions in category
     int nSubActions();
+    /// print one-line information
     void printinfo();
     /// print help on specified topic
     void printhelp(const string& topic, int depth);
@@ -157,10 +158,8 @@ public:
 	bool istop;							///< whether this is the top-level interaction process
 	unsigned int evallevel;
 	CMacro* recordingmacro;				///< macro being recorded
-	Action** actions;
-	int nactions;
-	Interactor** categories;
-	int ncategories;
+	vector<Action*> actions;			///< available actions
+    vector<Interactor*> categories;		///< available categories (sub-menus with several actions)
     Stack* mystack;						///< stack being manipulated
 	std::deque<string> commandstream;	///< commands to process
 	

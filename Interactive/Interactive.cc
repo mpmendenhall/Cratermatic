@@ -91,46 +91,33 @@ void Action::printinfo(int depth) {
 Interactor::Interactor(Stack* s) {
 	istop = false;
 	mystack = s;
-	nactions=0;
 	evallevel = 0;
 	recordingmacro = NULL;
-	actions = (Action**)malloc(0*sizeof(Action*));
-	ncategories=0;
-	categories = (Interactor**)malloc(0*sizeof(Interactor*));
 }
 
-void Interactor::registerAction(Action* A)
-{
-	nactions++;
-	actions = (Action**)realloc(actions,nactions*sizeof(Action*));
-	actions[nactions-1]=A;
+void Interactor::registerAction(Action* A) {
+	actions.push_back(A);
 	A->mystack = mystack;
 	A->myinteractor = this;
 }
 
-void Interactor::registerCategory(Interactor* I)
-{
-	ncategories++;
-	categories = (Interactor**)realloc(categories,ncategories*sizeof(Interactor*));
-	categories[ncategories-1]=I;
+void Interactor::registerCategory(Interactor* I) {
+	categories.push_back(I);
 }
 
 bool Interactor::knowstopic(const string& c)
 {
 	if(c==name) return true;
-	for(int i=0; i<nactions; i++) {
-		Action* a = actions[i];
-		for(auto it = a->commandnames.begin(); it != a->commandnames.end(); it++) if(*it == c) return true;
-	}
-	for(int i=0; i<ncategories; i++) {
-		if(categories[i]->knowstopic(c)) return true;
-	}
+	for(auto ita = actions.begin(); ita != actions.end(); ita++)
+		for(auto it = (*ita)->commandnames.begin(); it != (*ita)->commandnames.end(); it++)
+            if(*it == c) return true;
+	for(auto itc=categories.begin(); itc!=categories.end(); itc++) if((*itc)->knowstopic(c)) return true;
 	return false;
 }
 
 int Interactor::nSubActions() {
-	int n = nactions;
-	for(int i=0; i<ncategories; i++) n+=categories[i]->nSubActions();
+	int n = actions.size();
+	for(auto itc=categories.begin(); itc!=categories.end(); itc++) n += (*itc)->nSubActions();
 	return n;
 }
 
@@ -138,8 +125,7 @@ void Interactor::printinfo() {
 	printf("+ %s [%i]: %s\n", name.c_str(), nSubActions(), description.c_str());
 }
 
-void Interactor::printhelp(const string& topic, int depth)
-{
+void Interactor::printhelp(const string& topic, int depth) {
 	if(topic == "brief") {
 		for(int i=0; i<depth; i++) printf("\t");
 		printinfo();
@@ -149,8 +135,8 @@ void Interactor::printhelp(const string& topic, int depth)
 	if(topic == name) {
 		for(int i=0; i<depth; i++) printf("\t");
 		printinfo();
-		for(int i=0; i<ncategories; i++) categories[i]->printhelp("brief",depth+1);
-		for(int i=0; i<nactions; i++) actions[i]->printinfo(depth+1);
+		for(auto itc=categories.begin(); itc!=categories.end(); itc++) (*itc)->printhelp("brief",depth+1);
+		for(auto ita = actions.begin(); ita != actions.end(); ita++) (*ita)->printinfo(depth+1);
 		return;
 	}
 	
@@ -158,42 +144,37 @@ void Interactor::printhelp(const string& topic, int depth)
 	
 	for(int i=0; i<depth; i++) printf("\t");
 	printinfo();
-	for(int i=0; i<ncategories; i++) categories[i]->printhelp(topic,depth+1);
-	for(int i=0; i<nactions; i++) {
-		Action* a = actions[i];
-		for(auto it = a->commandnames.begin(); it != a->commandnames.end(); it++) if(*it== topic) a->printinfo(depth+1);
-	}
+	for(auto itc=categories.begin(); itc!=categories.end(); itc++) (*itc)->printhelp(topic,depth+1);
+	for(auto ita = actions.begin(); ita != actions.end(); ita++)
+		for(auto it = (*ita)->commandnames.begin(); it != (*ita)->commandnames.end(); it++)
+            if(*it == topic) (*ita)->printinfo(depth+1);
 }
 
-void Interactor::rprinthelp(const string& topic, int depth)
-{
+void Interactor::rprinthelp(const string& topic, int depth) {
 	if(!knowstopic(topic)) return;
 	
 	for(int i=0; i<depth; i++) printf("\t");
 	printinfo();
 	
 	if(topic == name) {
-		for(int i=0; i<nactions; i++) actions[i]->printinfo(depth+1);
-		for(int i=0; i<ncategories; i++) categories[i]->rprinthelp(categories[i]->name,depth+1);
+		for(auto ita = actions.begin(); ita != actions.end(); ita++) (*ita)->printinfo(depth+1);
+		for(auto itc=categories.begin(); itc!=categories.end(); itc++) (*itc)->rprinthelp((*itc)->name,depth+1);
 		return;
 	}
 	
-	for(int i=0; i<nactions; i++)
-	{
-		Action* a = actions[i];
-		for(int j=0; j<a->commandnames.size(); j++) if(a->commandnames[j] == topic) a->printinfo(depth+1);
-	}
-	for(int i=0; i<ncategories; i++) categories[i]->rprinthelp(topic,depth+1);
+	for(auto ita = actions.begin(); ita != actions.end(); ita++)
+		for(int j=0; j<(*ita)->commandnames.size(); j++)
+            if((*ita)->commandnames[j] == topic) (*ita)->printinfo(depth+1);
+	for(auto itc=categories.begin(); itc!=categories.end(); itc++) (*itc)->rprinthelp(topic,depth+1);
 }
 
 Action* Interactor::findaction(const string& c)
 {
-	for(int i=0; i<nactions; i++) {
-		Action* a = actions[i];
-		for(auto it = a->commandnames.begin(); it != a->commandnames.end(); it++) if(*it == c) return a;
-	}
-	for(int i=0; i<ncategories; i++) {
-		Action* a = categories[i]->findaction(c);
+	for(auto ita = actions.begin(); ita != actions.end(); ita++)
+		for(auto it = (*ita)->commandnames.begin(); it != (*ita)->commandnames.end(); it++)
+            if(*it == c) return *ita;
+	for(auto itc=categories.begin(); itc!=categories.end(); itc++) {
+		Action* a = (*itc)->findaction(c);
 		if(a) return a;
 	}
 	return NULL;
@@ -244,7 +225,7 @@ void Interactor::processCommand() {
 			if(mystack->items.size() && mystack->get()->isaNum == COBJ_CRATERSTRING && knowstopic(mystack->getstring(0)))
 			{
 				printf("\n");
-				for(int i=0; i<ncategories; i++) categories[i]->printhelp(mystack->getstring(0),0);
+				for(auto itc=categories.begin(); itc!=categories.end(); itc++) (*itc)->printhelp(mystack->getstring(0),0);
 				printf("\n");
 				mystack->drop();
 			} else {
@@ -252,7 +233,7 @@ void Interactor::processCommand() {
 				printf("Use '.TOPIC rhelp' for recursive listing of all commands in TOPIC\n");
 				printf("Use '.all rhelp' for the complete list of available commands\n\n");
 				printf("Command categories [%i commands total]:\n\n",nSubActions());
-				for(int i=0; i<ncategories; i++) categories[i]->printhelp("brief",1);
+				for(auto itc=categories.begin(); itc!=categories.end(); itc++) (*itc)->printhelp("brief",1);
 				printf("\n");
 			}
 			continue;
@@ -261,13 +242,13 @@ void Interactor::processCommand() {
 		if(istop && opt=="rhelp") {
 			if(mystack->items.size() && mystack->get()->isaNum == COBJ_CRATERSTRING && knowstopic(mystack->getstring(0))) {
 				printf("\n");
-				for(int i=0; i<ncategories; i++) categories[i]->rprinthelp(mystack->getstring(0),0);
+				for(auto itc=categories.begin(); itc!=categories.end(); itc++) (*itc)->rprinthelp(mystack->getstring(0),0);
 				printf("\n");
 				mystack->drop();
 			} 
 			else if(mystack->items.size() && mystack->get()->isaNum == COBJ_CRATERSTRING && mystack->getstring(0) == "all") {
 				printf("\n");
-				for(int i=0; i<ncategories; i++) categories[i]->rprinthelp(categories[i]->name,0);
+				for(auto itc=categories.begin(); itc!=categories.end(); itc++) (*itc)->rprinthelp((*itc)->name,0);
 				printf("\n");
 				mystack->drop();
 			}
