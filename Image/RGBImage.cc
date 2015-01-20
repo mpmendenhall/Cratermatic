@@ -325,7 +325,7 @@ void RGBImage::writeBMP(const string& ofname) {
 	fclose(ofp);
 	free(inter);
 	free(padzer);
-};
+}
 
 RGBImage* RGBImage::colorwheel(int r)
 {

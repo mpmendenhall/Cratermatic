@@ -125,10 +125,9 @@ ClassifyImage* ClassifyImage::watershed(Image* u)
 	CI->renumerate();
 	printf("Watershedding into %i basins complete.\n",CI->nbasins);
 	return CI;
-};
+}
 
-struct crawler
-{
+struct crawler {
 	int pos;
 	int own;
 	short distance;
@@ -202,13 +201,13 @@ void ClassifyImage::watershedMinimaRecursor(int x, int y, int x0, int y0, int* f
 		if(data[x1+width*y1]!=-1) continue; //already been claimed
 		watershedMinimaRecursor(x1,y1,x0,y0,fd);
 	}
-};
+}
 
 int ClassifyImage::watershedFlowRecursor(int x, int y, int* fd) {
 	if(data[x+width*y]!=-1) return data[x+width*y]; //already know way to terminus
 	data[x+width*y]=watershedFlowRecursor(x+connectdx[fd[x+width*y]],y+connectdy[fd[x+width*y]],fd);
 	return data[x+width*y];
-};
+}
 
 /* ClassifyImage* ClassifyImage::subregions(ClassifyImage* w)
 {

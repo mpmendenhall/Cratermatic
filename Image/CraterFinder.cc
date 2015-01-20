@@ -27,6 +27,7 @@
 #include "Utils.hh"
 #include "RasterRegion.hh"
 
+#include <string.h>
 #include <string>
 using std::string;
 
@@ -34,7 +35,7 @@ int comparestatbytemp(const void* a, const void* b) { //for qsort by average z
 	float at = (*(BasinStat**)a)->temp;
 	float bt = (*(BasinStat**)b)->temp;
 	return (int)(bt < at) - (int)(at < bt);
-};
+}
 
 struct crawler
 {
@@ -522,7 +523,7 @@ Image* Image::craterFindingTransform(float r0, Image* gx, Image* gy) {
     iout->name = "Crater Transform";
 	delete(pb);
 	return iout;
-};
+}
 
 
 Image* Image::craterFindingTransform(float r0, Image* mask) {
@@ -534,4 +535,4 @@ Image* Image::craterFindingTransform(float r0, Image* mask) {
 	delete(bgx);
 	delete(bgy);
 	return ct;	
-};
+}

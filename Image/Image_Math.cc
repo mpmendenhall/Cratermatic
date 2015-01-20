@@ -31,7 +31,7 @@ Image* Image::add(Image* I) //add image data of the same dimensions to this imag
 	for(int z=0; z<size; z++) data[z]+=I->data[z];
 	name = "["+name+"]+["+I->name+"]";
 	return this;
-};
+}
 
 Image* Image::lesser(Image* I)
 {
@@ -39,7 +39,7 @@ Image* Image::lesser(Image* I)
 	for(int z=0; z<size; z++) if(I->data[z] < data[z]) data[z] = I->data[z];
 	name = "min(["+name+"],["+I->name+"])";
 	return this;
-};
+}
 
 Image* Image::greater(Image* I)
 {
@@ -47,14 +47,14 @@ Image* Image::greater(Image* I)
 	for(int z=0; z<size; z++) if(I->data[z] > data[z]) data[z] = I->data[z];
 	name = "max(["+name+"],["+I->name+"])";
 	return this;
-};
+}
 
 Image* Image::add(float c) //add a constant to this image's data
 {
 	for(int z=0; z<size; z++) data[z]+=c;
 	name = "["+name+"]"+to_str(c);
 	return this;
-};
+}
 
 Image* Image::quadratureadd(Image* I) //RMS add image data of the same dimensions to this image's data
 {
@@ -62,7 +62,7 @@ Image* Image::quadratureadd(Image* I) //RMS add image data of the same dimension
 	for(int z=0; z<size; z++) data[z]= sqrt(I->data[z]*I->data[z]+data[z]*data[z]);
     name = "sqrt(["+name+"]^2+["+I->name+"]^2)";
 	return this;
-};
+}
 
 Image* Image::mult(Image* I) //multiply this image's data by image data of the same dimensions
 {
@@ -70,7 +70,7 @@ Image* Image::mult(Image* I) //multiply this image's data by image data of the s
 	for(int z=0; z<size; z++) data[z] *= I->data[z];
     name = "["+name+"]*["+I->name+"]";
 	return this;
-};
+}
 
 
 Image* Image::mult(float c) //multiply this image's data by a constant
@@ -78,7 +78,7 @@ Image* Image::mult(float c) //multiply this image's data by a constant
 	for(int z=0; z<size; z++) data[z] *= c;
 	name = "["+name+"]*"+to_str(c);
     return this;
-};
+}
 
 Image* Image::divide(Image* I) //divide this image's data by image data of the same dimensions
 {
@@ -89,29 +89,28 @@ Image* Image::divide(Image* I) //divide this image's data by image data of the s
 	}
     name = "["+name+"]/["+I->name+"]";
 	return this;
-};
-
+}
 
 Image* Image::sq_rt() //replace this image's data by its square root
 {
 	for(int z=0; z<size; z++) data[z] = sqrt(data[z]);
 	name = "sqrt(["+name+"])";
     return this;
-};
+}
 
 Image* Image::absval() //replace this image's data by its abs()
 {
 	for(int z=0; z<size; z++) data[z] = fabs(data[z]);
 	name = "|["+name+"]|";
     return this;
-};
+}
 
 Image* Image::reciprocal() //replace this image's data 1/data
 {
 	for(int z=0; z<size; z++) data[z] = 1/data[z];
 	name = "1/["+name+"]";
     return this;
-};
+}
 
 Image* Image::normalized(float mn, float mx) //return an image normalized to range [mn,mx]
 {
@@ -122,7 +121,8 @@ Image* Image::normalized(float mn, float mx) //return an image normalized to ran
 	if(mnmx[1]-mnmx[0] != 0) {for (int i=0; i<size; i++) foo->data[i]=mn+(data[i]-mnmx[0])*(mx-mn)/(mnmx[1]-mnmx[0]);}
 	free(mnmx);
 	return foo;
-};
+}
+
 Image* Image::normalized(float mn, float mx, float sd) //return an image normalized to range [mn,mx] after kill_outliers
 {
 	Image* foo = kill_outliers(sd);
@@ -131,7 +131,7 @@ Image* Image::normalized(float mn, float mx, float sd) //return an image normali
 	delete(foo); delete(bar);
 	baz->name = name+" Normalized";
 	return baz;
-};
+}
 
 Image* Image::inormalized() //normalize an image in place to [0,1]
 {
@@ -139,21 +139,21 @@ Image* Image::inormalized() //normalize an image in place to [0,1]
 	if(mnmx[1]-mnmx[0]) {for (int i=0; i<size; i++) data[i] = (data[i]-mnmx[0])/(mnmx[1]-mnmx[0]);}
 	free(mnmx);
 	return this;
-};
+}
 
 Image* Image::above(float x) //black-and-white image for above/below threshold
 {
 	Image* foo = new Image(this);
 	for(int i=0; i<size; i++) foo->data[i] = (float)(foo->data[i]>x);
 	return foo;
-};
+}
 
 Image* Image::below(float x) //black-and-white image for above/below threshold
 {
 	Image* foo = new Image(this);
 	for(int i=0; i<size; i++) foo->data[i] = (float)(foo->data[i] < x);
 	return foo;
-};
+}
 
 Image* Image::complement() //return the complement of a normalized image
 {
@@ -161,20 +161,20 @@ Image* Image::complement() //return the complement of a normalized image
 	foo->name = name+" Complement";
 	for (int i=0; i<size; i++) foo->data[i]=1-data[i];
 	return foo;
-};
+}
 
 Image* Image::icomplement() //return the inplace complement of a normalized image
 {
 	for (int i=0; i<size; i++) data[i]=1-data[i];
 	return this;
-};
+}
 
 Image* Image::threshold(float t) //threshold this image's data
 {
 	for (int i=0; i<size; i++) {if(data[i]<t) data[i]=t;}
     name = name+" threshold "+to_str(t);
 	return this;
-};
+}
 
 Image* Image::kill_outliers(float sd) //chop data down to \pm sd standard deviations
 {
@@ -186,7 +186,7 @@ Image* Image::kill_outliers(float sd) //chop data down to \pm sd standard deviat
 	}
 	free(ms);
 	return foo;
-};
+}
 
 Image* Image::signedgamma(float g)
 {
@@ -218,7 +218,7 @@ Image* Image::rec709gamma() //return an image normalized to range [0,1] with ITU
 	}
 	free(mnmx);
 	return foo;
-};
+}
 
 Image* Image::rec709gammaInverse() //return an image normalized to range [0,1] with ITU-R BT.709 gamma transfer function
 {
@@ -234,7 +234,7 @@ Image* Image::rec709gammaInverse() //return an image normalized to range [0,1] w
 	}
 	free(mnmx);
 	return foo;
-};
+}
 
 int* Image::sortImage()
 {

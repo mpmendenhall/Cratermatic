@@ -92,7 +92,7 @@ int floatcompare(const void* a, const void* b) { //for qsort by average z
 	float at = *(float*)a;
 	float bt = *(float*)b;
 	return (int)(at > bt) - (int)(at < bt);
-};
+}
 
 void ClassifyImage::underlyingmedian(Image* u){ //calculate region median over underlying image
 	if(!stats) calcstats();
@@ -150,7 +150,7 @@ void ClassifyImage::normalizebasins(Image* foo) {
 
 Histogram* ClassifyImage::regionhisto(Image* I, Image* wt, unsigned int n, float mn, float mx, int nbins)
 {
-	if(n>=nbasins) return NULL;
+	if((int)n>=nbasins) return NULL;
 	
 	float* d = (float*)malloc(npic[n]*sizeof(float));
 	for(int i=0; i<npic[n]; i++) d[i]=I->data[pic[n][i]];
@@ -196,7 +196,7 @@ Image* ClassifyImage::dataToImage()
 	Image* foo = new Image((RectRegion*)this);
 	for(int i=0; i<size; i++) foo->data[i] = data[i];
 	return foo;
-};
+}
 
 Image* ClassifyImage::lowBitsToImage(int nbits)
 {
@@ -204,19 +204,19 @@ Image* ClassifyImage::lowBitsToImage(int nbits)
 	Image* foo = new Image((RectRegion*)this);
 	for(int i=0; i<size; i++) foo->data[i] = (data[i] & bitm);
 	return foo;
-};
+}
 
 Image* ClassifyImage::recolorize(int base, int modkey) {
 	Image* foo = new Image(width,height);
 	for(int i=0; i<size; i++) foo->data[i] = ((base*(data[i]/base))%modkey);
 	return foo;
-};
+}
 
 Image* ClassifyImage::recolorize(float* c) {
 	Image* foo = new Image(width,height);
 	for(int i=0; i<size; i++) foo->data[i]= c[data[i] >> shift];
 	return foo;
-};
+}
 
 Image* ClassifyImage::scatterColor(unsigned int nbits)
 {
@@ -225,7 +225,7 @@ Image* ClassifyImage::scatterColor(unsigned int nbits)
 	for(int i=0; i<size; i++) foo->data[i] = (float)sn[data[i]%(1<<nbits)];
 	free(sn);
 	return foo;
-};
+}
 
 Image* ClassifyImage::boundaryimage() {
 	Image* foo = new Image(width,height);
@@ -251,7 +251,7 @@ Image* ClassifyImage::boundaryimage() {
 		}
 	}
 	return foo;
-};
+}
 
 Image* ClassifyImage::tempstatimg() {
 	if(!stats) calcstats();
@@ -288,7 +288,7 @@ Image* ClassifyImage::fourboundaryimage()
 
 //extract basin n chunk from img
 Image* ClassifyImage::extractChunk(unsigned int n, Image* img, int l){
-	if(n>=nbasins) return new Image(0,0);
+	if((int)n>=nbasins) return new Image(0,0);
 	
 	BoundingBox bb = findboundingbox(pic[n],npic[n]);
 	bb = expandbb(bb,l);
@@ -311,7 +311,7 @@ Image* ClassifyImage::extractChunk(unsigned int n, Image* img){
 
 //extract basin n chunk from img
 Image* ClassifyImage::extractMaskedChunk(unsigned int n, Image* img){
-	if(n>=nbasins) return new Image(0,0);
+	if((int)n>=nbasins) return new Image(0,0);
 	if(!stats) calcstats();
 	BoundingBox bb = findboundingbox(pic[n],npic[n]);
 	int w=1+bb.ux-bb.lx; int h=1+bb.uy-bb.ly;
@@ -325,7 +325,7 @@ Image* ClassifyImage::extractMaskedChunk(unsigned int n, Image* img){
 	Image* foo = new Image(w, h);
 	for(int x=0; x<w; x++) {
 		for(int y=0; y<h; y++) {
-			if(data[x+bb.lx+width*(y+bb.ly)] >> shift == n) foo->data[x+w*y]=img->data[x+bb.lx+width*(y+bb.ly)];
+			if(data[x+bb.lx+width*(y+bb.ly)] >> shift == (int)n) foo->data[x+w*y]=img->data[x+bb.lx+width*(y+bb.ly)];
 			else foo->data[x+w*y] = zmax;
 		}
 	}
@@ -336,7 +336,7 @@ Image* ClassifyImage::extractMaskedChunk(unsigned int n, Image* img){
 }
 
 Image* ClassifyImage::extractChunkMask(unsigned int n, int l){
-	if(n>=nbasins) return new Image(0,0);
+	if((int)n>=nbasins) return new Image(0,0);
 	
 	BoundingBox bb = findboundingbox(pic[n],npic[n]);
 	bb=expandbb(bb,l);
@@ -356,7 +356,7 @@ Image* ClassifyImage::extractChunkMask(unsigned int n, int l){
 
 void ClassifyImage::cutoutChunkMask(Image* msk, unsigned int n)
 {
-	if(n>=nbasins) return;
+	if((int)n>=nbasins) return;
 	for(int i=0; i<npic[n]; i++) msk->data[pic[n][i]] = 0.0;
 }
 

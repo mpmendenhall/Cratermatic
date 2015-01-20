@@ -1,5 +1,6 @@
 #include "Interactive.hh"
 #include "Utils.hh"
+#include <cassert>
 
 bool Stack::checkReadable() {
 	int foo = COF_CRATERSTRING;
@@ -34,7 +35,7 @@ bool Stack::checkFolder()
 	string c = ((CraterString*)get())->val;
 	//sprintf(tempchar,"ls %s/",c);
 	//if(!system(tempchar)) return true; //folder exists already
-	system(("mkdir "+c).c_str());
+	assert(!system(("mkdir -p "+c).c_str()));
 	return true;
 	//if(!system(tempchar)) return true; //folder can be created
 	//sprintf(tempchar,"Folder '%s' is unwritable",c.c_str());
@@ -47,7 +48,7 @@ bool Stack::validateinput(int* t, unsigned int n) { //check type number flags t 
 		push(new CError("Too few items in stack for requested operation",0));
 		return false;
 	}
-	for(int i=0; i<n; i++) {
+	for(unsigned int i=0; i<n; i++) {
 		if(!(t[i] & (1 << get(i)->isaNum))) {
 			push(new CError("Stack item #"+to_str(i+1)+" is of the wrong type for this operation",1));
 			return false;
@@ -58,7 +59,7 @@ bool Stack::validateinput(int* t, unsigned int n) { //check type number flags t 
 
 void Stack::disp() {
 	printf("+---------------+\n");
-	for(int i=0; i<items.size(); i++) {
+	for(size_t i=0; i<items.size(); i++) {
 		CratersBaseObject* foo = get(items.size()-1-i);
 		printf("|%zu (%i): %s ",items.size()-i,entrynum[i],foo->isaName.c_str());
 		printf("'%s' ",foo->name.c_str()); //item name
@@ -83,7 +84,7 @@ void Stack::push(CratersBaseObject* ptr) {
 	}
 	entrynum.push_back(++ntotal);
 	items.push_back(ptr);
-};
+}
 
 CratersBaseObject* Stack::pop() {
 	if(!items.size()) {
@@ -93,7 +94,7 @@ CratersBaseObject* Stack::pop() {
     CratersBaseObject* o = items.back();
     items.pop_back();
 	return o;
-};
+}
 
 CratersBaseObject* Stack::get() { //get without removing from stack
 	if(!items.size()) {
@@ -142,7 +143,7 @@ void Stack::rot(int n) { //swap 2 items on the stack
 		return;
 	}
 	
-	if(items.size()<n) {
+	if((int)items.size()<n) {
 		push(new CError("Too few items in stack for requested operation",0));
 		return;
 	}
@@ -190,10 +191,10 @@ bool Stack::istype(int t) {
 	if(!items.size()) return false;
 	if(get()->isaNum != t) return false;
 	return true;
-};
+}
 
 bool Stack::istypef(int typeflag) {
 	if(!items.size()) return false;
 	if((1 << get()->isaNum) & typeflag) return true;
 	return false;
-};
+}

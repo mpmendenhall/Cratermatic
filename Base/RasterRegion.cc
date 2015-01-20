@@ -493,7 +493,7 @@ int samesignsegclass(float* d, int* c, int n, int peakn)
 	{
 		//find lowest relative pt and split region
 		float reldepth = 1.1;
-		int lowestrel;
+		int lowestrel = 0;
 		for(int p=0; p<np-1; p++)
 		{
 			float ht;
@@ -599,7 +599,7 @@ RasterRegion* RasterRegion::midPointer() //divide into UPWARD and DOWNWARD regio
 		for(int i=0; i<n; i++)
 		{
 			claimer[i] = peakn*0x100 + curvtyp;
-			if(i>0 && i<n-1 && (dx[i] > dx[i-1] xor dx[i] < dx[i+1]))
+			if(i>0 && i<n-1 && ((dx[i] > dx[i-1]) xor (dx[i] < dx[i+1])))
 			{
 				if(dx[i] > dx[i-1]) curvtyp = 0x02; //local maximum => upcoming peak
 				else curvtyp = 0x01; //local minimum => upcoming basin
@@ -758,7 +758,7 @@ float* RasterRegion::gausskernel(int s, float r)
 	//normalize
 	for(int i=0; i<2*s+1; i++) d[i]/=n;
 	return d;
-};
+}
 
 OrthoIterator::OrthoIterator(RasterRegion* RR, float** dd, int p)
 {

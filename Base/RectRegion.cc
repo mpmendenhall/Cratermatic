@@ -24,10 +24,11 @@
 #include "Image.hh"
 #include <climits>
 #include <algorithm>
+#include <string.h>
 
 bool comparebyradius(const Circle& entry1, const Circle& entry2) {
     return entry1.r < entry2.r;
-};
+}
 
 CraterCatalog::CraterCatalog(const string& infile) {
 	FILE* ifp = fopen(infile.c_str(),"r");
@@ -138,7 +139,7 @@ void RectRegion::fouriermark(float x0, float y0, float* xs, float* ys, unsigned 
 	float r = invRadialFourier(angl,xs,ys,nterms);
 	float angl2;
 	float r2;
-	for(int j=0; j<2*nterms*ndivisions; j++)
+	for(unsigned int j=0; j<2*nterms*ndivisions; j++)
 	{
 		angl2 = angl + M_PI/(nterms*ndivisions);
 		r2 = invRadialFourier(angl2,xs,ys,nterms);
@@ -179,12 +180,12 @@ void RectRegion::radialFourier(float x0, float y0, int* ps, unsigned int nps, fl
 	if(!wt)
 	{
 		w = (float*)malloc(nps*sizeof(float));
-		for(int i=0; i<nps; i++) w[i] = 1.0;
+		for(unsigned int i=0; i<nps; i++) w[i] = 1.0;
 	}
 	
 	//calculate 0th order term
 	float wsum = 0;
-	for(int i=0; i<nps; i++) wsum += w[i];
+	for(unsigned int i=0; i<nps; i++) wsum += w[i];
 	(*xs)[0] = wsum;
 	(*ys)[0] = 0;
 	
@@ -192,11 +193,11 @@ void RectRegion::radialFourier(float x0, float y0, int* ps, unsigned int nps, fl
 	float xterm;
 	float yterm;
 	float angl;
-	for(int t=1; t<nmoms; t++)
+        for(unsigned int t=1; t<nmoms; t++)
 	{
 		xterm = 0;
 		yterm = 0;
-		for(int i=0; i<nps; i++)
+		for(unsigned int i=0; i<nps; i++)
 		{
 			angl = atan2((ps[i]/width)-y0, (ps[i]%width)-x0);
 			xterm += w[i]*cos(t*angl);
@@ -212,7 +213,7 @@ void RectRegion::radialFourier(float x0, float y0, int* ps, unsigned int nps, fl
 void RectRegion::radialFourier(float x0, float y0, int* ps, unsigned int nps, Image* wt, float** xs, float** ys, unsigned int nmoms)
 {
 	float* w = (float*)malloc(nps*sizeof(float));
-	for(int i=0; i<nps; i++) w[i] = wt->data[ps[i]];
+	for(unsigned int i=0; i<nps; i++) w[i] = wt->data[ps[i]];
 	radialFourier(x0, y0, ps, nps, w, xs, ys, nmoms);
 	free(w);
 }
@@ -221,7 +222,7 @@ float RectRegion::invRadialFourier(float angl, float* xs, float* ys, unsigned in
 {
 	float r0 = sqrt(xs[0]/M_PI);
 	float rexp = r0;
-	for(int t=1; t<nmoms; t++)
+        for(unsigned int t=1; t<nmoms; t++)
 	{
 		rexp += (xs[t]*cos(t*angl) + ys[t]*sin(t*angl))/(M_PI*r0);
 	}
@@ -233,10 +234,10 @@ float RectRegion::xcenter(int* pts, unsigned int npts, float* wt)
 	float accum = 0;
 	float w = 0;
 	if(wt) {
-		for(int i=0; i<npts; i++) { accum += wt[i] * (pts[i]%width); w+=wt[i]; }
+		for(unsigned int i=0; i<npts; i++) { accum += wt[i] * (pts[i]%width); w+=wt[i]; }
 		return accum / w;
 	} else {
-		for(int i=0; i<npts; i++) accum += pts[i]%width;
+		for(unsigned int i=0; i<npts; i++) accum += pts[i]%width;
 		return accum/npts;
 	}
 	
@@ -248,10 +249,10 @@ float RectRegion::ycenter(int* pts, unsigned int npts, float* wt)
 	float accum = 0;
 	float w = 0;
 	if(wt) {
-		for(int i=0; i<npts; i++) { accum += wt[i] * (pts[i]/width); w+=wt[i]; }
+            for(unsigned int i=0; i<npts; i++) { accum += wt[i] * (pts[i]/width); w+=wt[i]; }
 		return accum / w;
 	} else {
-		for(int i=0; i<npts; i++) accum += pts[i]/width;
+            for(unsigned int i=0; i<npts; i++) accum += pts[i]/width;
 		return accum/npts;
 	}
 	
@@ -316,7 +317,7 @@ void RectRegion::fourierDeviations(float x0, float y0, int* pts, unsigned int np
 			}
 		}
 		
-		for(int i=0; i<npts; i++) {
+		for(unsigned int i=0; i<npts; i++) {
 			delx = pts[i]%width - x0;
 			dely = pts[i]/width - y0;
 			angl = atan2(dely,delx);
@@ -338,7 +339,7 @@ Circle RectRegion::findboundingcirc(int* p, unsigned int n) {
 	//center-of-mass
 	c.x=0;
 	c.y=0;
-	for(int i=0; i<n; i++) {
+        for(unsigned int i=0; i<n; i++) {
 		c.x += p[i]%width;
 		c.y += p[i]/width;
 	}
@@ -347,7 +348,7 @@ Circle RectRegion::findboundingcirc(int* p, unsigned int n) {
 	
 	//find radius from center-of-mass
 	float r=0;
-	for(int i=0; i<n; i++) {
+        for(unsigned int i=0; i<n; i++) {
 		float x = (float)(p[i]%width);
 		float y = (float)(p[i]/width);
 		float d = (x-c.x)*(x-c.x)+(y-c.y)*(y-c.y);
@@ -368,7 +369,7 @@ BoundingBox RectRegion::expandbb(BoundingBox b, int l) {
 
 void RectRegion::loadcatalog(const string& f){
 	mycatalog = new CraterCatalog(f);
-	for(int i=0; i<mycatalog->entries.size(); i++) addmark(ImageMark::MARK_CIRCLE, (int)mycatalog->entries[i].x,(int)mycatalog->entries[i].y, (int)mycatalog->entries[i].r);
+	for(size_t i=0; i<mycatalog->entries.size(); i++) addmark(ImageMark::MARK_CIRCLE, (int)mycatalog->entries[i].x,(int)mycatalog->entries[i].y, (int)mycatalog->entries[i].r);
 }
 
 ScanIterator::ScanIterator(RectRegion* R, int xa, int ya) {

@@ -21,6 +21,7 @@
 
 #include "Classify.hh"
 #include "Utils.hh"
+#include <string.h>
 
 SparseInt::SparseInt(int w, int h) {
 	using namespace std;
@@ -51,7 +52,7 @@ SparseInt::~SparseInt() {
 int SparseInt::get(int i,int j) {
 	if(i>=width || j>=height) return 0;
 	//slow dumb search for dat
-	for(int x=0; x < rows[j]->size(); x++) {
+	for(size_t x=0; x < rows[j]->size(); x++) {
 		if((*rows[j])[x] == i) return (*rowdat[j])[x];
 		if((*rows[j])[x] > i) return 0;
 	}
@@ -61,30 +62,30 @@ int SparseInt::get(int i,int j) {
 void SparseInt::disprow(int row)
 {
 	printf("{\t");
-	for(int i=0; i<rows[row]->size(); i++) printf("%i\t",(*rows[row])[i]);
+	for(size_t i=0; i<rows[row]->size(); i++) printf("%i\t",(*rows[row])[i]);
 	printf("}\n");
 	printf("{{\t");
-	for(int i=0; i<rows[row]->size(); i++) printf("%i\t",(*rowdat[row])[i]);
+	for(size_t i=0; i<rows[row]->size(); i++) printf("%i\t",(*rowdat[row])[i]);
 	printf("}}\n");
 }
 
 int SparseInt::columnlist(int row, int*& output) {
 	//disprow(row);
 	output = (int*)malloc((rows[row]->size()-2)*sizeof(int));
-	for(int i=1; i<rows[row]->size()-1; i++) output[i-1] = (*rows[row])[i];
+	for(size_t i=1; i<rows[row]->size()-1; i++) output[i-1] = (*rows[row])[i];
 	return rows[row]->size()-2;
 }
 
 int SparseInt::columnvals(int row, int*& output) {
 	output = (int*)malloc((rowdat[row]->size()-2)*sizeof(int));
-	for(int i=1; i<rowdat[row]->size()-1; i++) output[i-1] = (*rowdat[row])[i];
+	for(size_t i=1; i<rowdat[row]->size()-1; i++) output[i-1] = (*rowdat[row])[i];
 	return rowdat[row]->size()-2;
 }
 
 void SparseInt::set(int i,int j, int v) {
 	if(i>=width || j>=height) return;
 	//slow dumb search for dat
-	for(int x=0; x < rows[j]->size(); x++)
+	for(size_t x=0; x < rows[j]->size(); x++)
 	{
 		if((*rows[j])[x] == i) {
 			if(v) {
@@ -109,13 +110,13 @@ void SparseInt::set(int i,int j, int v) {
 ClassifyImage::ClassifyImage(int w, int h) : RectRegion(w,h)
 {
 	initialize();
-};
+}
 
 ClassifyImage::ClassifyImage(RectRegion* R) : RectRegion(R->width,R->height)
 {
 	copyfromrr(R);
 	initialize();
-};
+}
 
 void ClassifyImage::initialize() {
 	isaName = "ClassifyImage";
@@ -136,7 +137,7 @@ void ClassifyImage::initialize() {
 	markedregion = NULL;
 	poi = NULL; npoi=0;
 	stats = NULL;
-};
+}
 
 ClassifyImage::~ClassifyImage()
 {
@@ -152,7 +153,7 @@ ClassifyImage::~ClassifyImage()
 		free(bounds); bounds=NULL;
 		free(nbounds); nbounds=NULL;
 	}
-};
+}
 
 ClassifyImage* ClassifyImage::copy() //return a copy of this image
 {
@@ -170,28 +171,28 @@ ClassifyImage* ClassifyImage::copy() //return a copy of this image
 		memcpy(foo->pic[i],pic[i],npic[i]*sizeof(int));
 	}
 	return foo;
-};
+}
 
 void ClassifyImage::xorPoints(int* d, unsigned int n, unsigned int xorkey) {
-	for(int i=0; i<n; i++) data[d[i]] ^= xorkey;
+	for(unsigned int i=0; i<n; i++) data[d[i]] ^= xorkey;
 }
 
 
 void ClassifyImage::xorRegion(unsigned int n, unsigned int xorkey) {
-	if(n>=nbasins) return;
+	if((int)n>=nbasins) return;
 	xorPoints(pic[n],npic[n],xorkey);
 }
 
 //and cdata values for specified points
 void ClassifyImage::andPoints(int* d, unsigned int n, unsigned int andkey)
 {
-	for(int i=0; i<n; i++) data[d[i]] &= andkey;
+	for(unsigned int i=0; i<n; i++) data[d[i]] &= andkey;
 }
 
 //and cdata values in specified region
 void ClassifyImage::andRegion(unsigned int n, unsigned int andkey)
 {
-	if(n>=nbasins) return;
+	if((int)n>=nbasins) return;
 	andPoints(pic[n],npic[n],andkey);
 }
 
@@ -216,7 +217,7 @@ void ClassifyImage::findObjectsByLowBits(int nbits) {
 	memset(nudata,0xFF,size*sizeof(int));
 	
 	for(int i=0; i<size; i++) {
-		if(nudata[i] != 0xFFFFFFFF) continue; //already been claimed
+		if(nudata[i] != (int)0xFFFFFFFF) continue; //already been claimed
 		npic = (int*)realloc(npic,(nbasins+1)*sizeof(int));
 		pic = (int**)realloc(pic,(nbasins+1)*sizeof(int*));
 		npic[nbasins] = seedFillByMaskedBits(i,&(pic[nbasins]),(1<<nbits)-1,bitmask,nbasins<<shift,nudata);
@@ -241,7 +242,7 @@ void ClassifyImage::findObjectsByHigherBits(int nbits) {
 	memset(nudata,0xFF,size*sizeof(int));
 	
 	for(int i=0; i<size; i++) {
-		if(nudata[i] != 0xFFFFFFFF) continue; //already been claimed
+		if(nudata[i] != (int)0xFFFFFFFF) continue; //already been claimed
 		npic = (int*)realloc(npic,(nbasins+1)*sizeof(int));
 		pic = (int**)realloc(pic,(nbasins+1)*sizeof(int*));
 		npic[nbasins] = seedFillByMaskedBits(i,&(pic[nbasins]),bitmask,bitmask,nbasins<<shift,nudata);
@@ -255,7 +256,7 @@ int ClassifyImage::seedFillByMaskedBits(int startp, int** pout, int searchmask, 
 	
 	using namespace std;
 	setnum &= setmask; //make sure we don't set unmasked bits
-	unsigned int ptype = data[startp] & searchmask; //point type we are searching for
+        int ptype = data[startp] & searchmask; //point type we are searching for
 	nudata[startp] = (data[startp] & ~setmask) | setnum; //mark starting point
 	
 	vector <int> points;
@@ -276,7 +277,7 @@ int ClassifyImage::seedFillByMaskedBits(int startp, int** pout, int searchmask, 
 			if(!inrange(x0+dx,y0+dy)) continue;
 			
 			int p1 = x0+dx+width*(y0+dy);
-			if(nudata[p1] != 0xFFFFFFFF) continue; //someone got there first
+			if(nudata[p1] != (int)0xFFFFFFFF) continue; //someone got there first
 			if((data[p1] & searchmask) != ptype) continue; //not of same type
 			
 			points.push_back(p1);
@@ -387,7 +388,7 @@ void ClassifyImage::joinregions(int a, int b, bool dobounds) { //merge region b 
 	pic[a]=(int*)realloc(pic[a],(npic[a]+npic[b])*sizeof(int));
 	for(int i=0; i<npic[b]; i++) {
 		pic[a][npic[a]+i]=pic[b][i];
-		data[pic[b][i]] = (a << shift) + (data[pic[b][i]] & (1<<shift)-1); //preserve b low bits
+		data[pic[b][i]] = (a << shift) + (data[pic[b][i]] & ((1<<shift)-1)); //preserve b low bits
 	}
 	npic[a]=npic[a]+npic[b];
 	npic[b]=0;
@@ -511,10 +512,9 @@ void ClassifyImage::findboundaries() {
 	hasboundaries=true;
 	calcstats();
 	printf("Done.\n");
-};
+}
 
-union bstofarr
-{
+union bstofarr {
 	BasinStat b;
 	float a[14];
 };
@@ -583,7 +583,7 @@ void ClassifyImage::labelboundaries(int c) {
 			data[bounds[i][j]] = c << shift;
 		}
 	}
-};
+}
 
 void ClassifyImage::renumerate() 
 {
@@ -606,12 +606,12 @@ void ClassifyImage::renumerate()
 	nbasins=0;
 	for(int i=0; i<size; i++){
 		if(renum[data[i] >> shift]!=-1) { 
-			data[i] = (renum[data[i] >> shift] << shift) + (data[i] & (1<<shift)-1);
+			data[i] = (renum[data[i] >> shift] << shift) + (data[i] & ((1<<shift)-1));
 			npic[data[i] >> shift]++;
 			continue; 
 		}
 		renum[data[i] >> shift] = nbasins;
-		data[i] = (nbasins << shift) + (data[i] & (1<<shift)-1);
+		data[i] = (nbasins << shift) + (data[i] & ((1<<shift)-1));
 		npic[nbasins++]++;
 	}
 	free(renum); renum=NULL;
@@ -634,7 +634,7 @@ void ClassifyImage::renumerate()
 	hasconnectivity=false;
 	cleardata();
 	markedregion = (bool*)calloc(nbasins,sizeof(bool));
-};
+}
 
 void ClassifyImage::renumerateWithKey(int andkey) 
 {
@@ -660,17 +660,17 @@ void ClassifyImage::renumerateWithKey(int andkey)
 	for(int i=0; i<size; i++){
 		if(!(data[i] & andkey))
 		{
-			data[i] = 0x0 + (data[i] & (1<<shift)-1);
+			data[i] = 0x0 + (data[i] & ((1<<shift)-1));
 			npic[0]++;
 			continue;
 		}
 		if(renum[data[i] >> shift]!=-1) { 
-			data[i] = (renum[data[i] >> shift] << shift) + (data[i] & (1<<shift)-1);
+			data[i] = (renum[data[i] >> shift] << shift) + (data[i] & ((1<<shift)-1));
 			npic[data[i] >> shift]++;
 			continue; 
 		}
 		renum[data[i] >> shift] = nbasins;
-		data[i] = (nbasins << shift) + (data[i] & (1<<shift)-1);
+		data[i] = (nbasins << shift) + (data[i] & ((1<<shift)-1));
 		npic[nbasins++]++;
 	}
 	free(renum); renum=NULL;
@@ -693,7 +693,7 @@ void ClassifyImage::renumerateWithKey(int andkey)
 	hasconnectivity=false;
 	cleardata();
 	markedregion = (bool*)calloc(nbasins,sizeof(bool));
-};
+}
 
 void ClassifyImage::addregiontopoi(int n){
 	if(!poi) {
@@ -702,4 +702,4 @@ void ClassifyImage::addregiontopoi(int n){
 	} else poi=(int*)realloc(poi,(npoi+npic[n])*sizeof(int));
 	for(int i=0; i<npic[n]; i++) poi[npoi+i]=pic[n][i];
 	npoi+=npic[n];
-};
+}
