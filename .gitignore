@@ -1,2 +1,4 @@
 XCode/
 Cratermatic
+*.o
+*.a
