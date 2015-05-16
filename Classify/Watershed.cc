@@ -123,7 +123,7 @@ ClassifyImage* ClassifyImage::watershed(Image* u)
 	free(df); df=NULL;
 	
 	CI->renumerate();
-	printf("Watershedding into %i basins complete.\n",CI->nbasins);
+	printf("Watershedding into %zu basins complete.\n", CI->pic.size());
 	return CI;
 };
 
@@ -215,17 +215,17 @@ int ClassifyImage::watershedFlowRecursor(int x, int y, int* fd) {
 	ClassifyImage* foo = copy();
 	Image* bi = w->boundaryimage();
 	int classn=1;
-	for(int i=0; i<nbasins; i++)
+	for(int i=0; i<pic.size(); i++)
 	{
 		//check if all in same region of w
 		int p;
-		for(p=1; p<npic[i]; p++) if(bi->data[pic[i][p]] == 1) break;
-		if(p == npic[i])
+		for(p=1; p<pic[i].size(); p++) if(bi->data[pic[i][p]] == 1) break;
+		if(p == pic[i].size())
 		{
-			for(p=0; p<npic[i]; p++) foo->data[pic[i][p]] = classn;
+			for(p=0; p<pic[i].size(); p++) foo->data[pic[i][p]] = classn;
 			classn++;
 		} else {
-			for(p=0; p<npic[i]; p++) foo->data[pic[i][p]] = 0;
+			for(p=0; p<pic[i].size(); p++) foo->data[pic[i][p]] = 0;
 		}
 	}
 	delete(bi);
@@ -239,16 +239,16 @@ int ClassifyImage::watershedFlowRecursor(int x, int y, int* fd) {
 	int s=0;
 	Image *foo = new Image(width,height);
 	if(!hasboundaries) findboundaries();
-	for(int i=0; i<nbasins; i++) {
-		if(stats[i]->boundsmin-stats[i]->basinmin<=t) {
-			for(int j=0; j<npic[i]; j++) {
-				if(underlying->data[pic[i][j]]>stats[i]->boundsmin) foo->data[pic[i][j]]=underlying->data[pic[i][j]];
-				else foo->data[pic[i][j]]=stats[i]->boundsmin;
+	for(int i=0; i<pic.size(); i++) {
+		if(stats[i].boundsmin-stats[i].basinmin<=t) {
+			for(int j=0; j<pic[i].size(); j++) {
+				if(underlying->data[pic[i][j]]>stats[i].boundsmin) foo->data[pic[i][j]]=underlying->data[pic[i][j]];
+				else foo->data[pic[i][j]]=stats[i].boundsmin;
 			}
 			s++;
 			continue;
 		}
-		for(int j=0; j<npic[i]; j++) foo->data[pic[i][j]]=underlying->data[pic[i][j]];
+		for(int j=0; j<pic[i].size(); j++) foo->data[pic[i][j]]=underlying->data[pic[i][j]];
 	}
 	printf("Suppressed %i minima.\n",s);
 	return foo;
@@ -257,9 +257,9 @@ int ClassifyImage::watershedFlowRecursor(int x, int y, int* fd) {
 /* void ClassifyImage::plotminima() {
 	float zbest;
 	int pbest;
-	for(int i=0; i<nbasins; i++) {
+	for(int i=0; i<pic.size(); i++) {
 		zbest=FLT_MAX;
-		for(int j=0; j<npic[i]; j++) {
+		for(int j=0; j<pic[i].size(); j++) {
 			if(underlying->data[pic[i][j]]<zbest) {
 				zbest=underlying->data[pic[i][j]];
 				pbest=pic[i][j];

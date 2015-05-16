@@ -63,27 +63,6 @@ public:
 	void calcsderivs();
 };
 
-class Pointset
-{
-public:
-	int nitems;
-	Pointset();
-	~Pointset();
-	int getitem(int);
-	void additem(int);
-	void additem_unchecked(int);
-	void additems(int*,int);
-	void removeitem(int);
-	void merge(Pointset*);
-	bool checkitem(int);
-	void intersect(Pointset*);
-	void addset(Pointset*);
-	void addset_unchecked(Pointset*);
-	int whereis(int);
-	int maxitems;
-	int* items;
-};
-
 class LineIterator
 {
 public:

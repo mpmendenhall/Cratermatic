@@ -60,23 +60,23 @@ void ClassifyImage::chainmergeslope(Image* u, float r)
 	
 	if(!cg) connectivitygraph();
 	if(!hasboundaries) findboundaries();
-	if(!stats) calcstats();
+	if(stats.size() != pic.size()) calcstats();
 	
 	//calculate region average dx, dy
-	float* mdx = (float*)malloc(nbasins*sizeof(float));
-	float* mdy = (float*)malloc(nbasins*sizeof(float));
-	float* slp = (float*)malloc(nbasins*sizeof(float));
-	float* bx = (float*)malloc(nbasins*sizeof(float));
-	float* by = (float*)malloc(nbasins*sizeof(float));
+	float* mdx = (float*)malloc(pic.size()*sizeof(float));
+	float* mdy = (float*)malloc(pic.size()*sizeof(float));
+	float* slp = (float*)malloc(pic.size()*sizeof(float));
+	float* bx = (float*)malloc(pic.size()*sizeof(float));
+	float* by = (float*)malloc(pic.size()*sizeof(float));
 	
-	for(int i=0; i<nbasins; i++) bx[(int)(stats[i]->idnum)]=(stats[i]->xsum)/((float)npic[(int)(stats[i]->idnum)]);
-	for(int i=0; i<nbasins; i++) by[(int)(stats[i]->idnum)]=(stats[i]->ysum)/((float)npic[(int)(stats[i]->idnum)]);
+	for(int i=0; i<pic.size(); i++) bx[(int)(stats[i].idnum)]=(stats[i].xsum)/((float)npic[(int)(stats[i].idnum)]);
+	for(int i=0; i<pic.size(); i++) by[(int)(stats[i].idnum)]=(stats[i].ysum)/((float)npic[(int)(stats[i].idnum)]);
 	
 	underlyingavg(dx);
-	for(int i=0; i<nbasins; i++) mdx[(int)(stats[i]->idnum)]=stats[i]->temp;
+	for(int i=0; i<pic.size(); i++) mdx[(int)(stats[i].idnum)]=stats[i].temp;
 	underlyingavg(dy);
-	for(int i=0; i<nbasins; i++) mdy[(int)(stats[i]->idnum)]=stats[i]->temp;
-	for(int i=0; i<nbasins; i++) slp[i]=sqrt(mdx[i]*mdx[i]+mdy[i]*mdy[i]);
+	for(int i=0; i<pic.size(); i++) mdy[(int)(stats[i].idnum)]=stats[i].temp;
+	for(int i=0; i<pic.size(); i++) slp[i]=sqrt(mdx[i]*mdx[i]+mdy[i]*mdy[i]);
 	
 	float* slopedat = (float*)malloc(size*sizeof(float));
 	for(int i=0; i<size; i++) slopedat[i] = sqrt(dx->data[i]*dx->data[i]+dy->data[i]*dy->data[i]);
@@ -84,15 +84,15 @@ void ClassifyImage::chainmergeslope(Image* u, float r)
 	
 	RGBImage* C;
 	
-	BasinStat*** rankings = (BasinStat***)calloc(nbasins,sizeof(BasinStat**));
-	int* nranks = (int*)calloc(nbasins,sizeof(int));
+	BasinStat*** rankings = (BasinStat***)calloc(pic.size(),sizeof(BasinStat**));
+	int* nranks = (int*)calloc(pic.size(),sizeof(int));
 	
 	int* connectedrs=NULL;
 	int* connectedvs=NULL;
 	int nnbrs;
 	
 	
-	for(int p=0; p<nbasins; p++)
+	for(int p=0; p<pic.size(); p++)
 	{
 		nnbrs = cg->columnlist(p,connectedrs);
 		cg->columnvals(p,connectedvs);
@@ -135,7 +135,7 @@ void ClassifyImage::chainmergeslope(Image* u, float r)
 		//sort by rank
 		qsort(rankings[p],2*nnbrs,sizeof(BasinStat*),comparestatbytemp);
 		
-		if(p%(nbasins/100)==0)
+		if(p%(pic.size()/100)==0)
 		{
 			printf("%i: < ",p);
 			for(int q=0; q<2*nnbrs; q++) printf("%.3g ",rankings[p][q]->temp);
@@ -152,7 +152,7 @@ void ClassifyImage::chainmergeslope(Image* u, float r)
 	
 	//mark agreeing neighbors for merging
 	int nmarked=0;
-	for(int p=0; p<nbasins; p++)
+	for(int p=0; p<pic.size(); p++)
 	{
 		if(nranks[p]<1) continue;
 		do {
@@ -179,7 +179,7 @@ void ClassifyImage::chainmergeslope(Image* u, float r)
 	printf("Marked %i for merging.\n",nmarked);
 	
 	//merge marked
-	for(int i=0; i<nbasins; i++) {
+	for(int i=0; i<pic.size(); i++) {
 		nnbrs = cg->columnlist(i,connectedrs);
 		cg->columnvals(i,connectedvs);
 		for(int j=0; j<nnbrs; j++) {
@@ -205,15 +205,15 @@ return r/npoi;
 };
 
 float ClassifyImage::singleregionaverageradius(float x0, float y0, int n) {
-	if(!npic[n]) return 0.0;
+	if(!pic[n].size()) return 0.0;
 	float r=0;
 	int x,y;
-	for(int i=0; i<npic[n]; i++) {
+	for(int i=0; i<pic[n].size(); i++) {
 		x=pic[n][i]%width;
 		y=pic[n][i]/width;
 		r += sqrt((float)((x-x0)*(x-x0)+(y-y0)*(y-y0)));
 	}
-	return r/npic[n];
+	return r/pic[n].size();
 };
 
 float ClassifyImage::singleregionradialvariance(float* d, float ravg, int n) {
@@ -223,13 +223,13 @@ float ClassifyImage::singleregionradialvariance(float* d, float ravg, int n) {
 	float rv = 0;
 	int x,y;
 	float z;
-	for(int i=0; i<npic[n]; i++) {
+	for(int i=0; i<pic[n].size(); i++) {
 		x=pic[n][i]%width;
 		y=pic[n][i]/width;
 		z = sqrt((float)((x-x0)*(x-x0)+(y-y0)*(y-y0)))-ravg;
 		rv += z*z;
 	}
-	return rv/npic[n];
+	return rv/pic[n].size();
 };
 
 float ClassifyImage::radialvariance(float* d, int n) {

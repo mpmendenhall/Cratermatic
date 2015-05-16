@@ -21,6 +21,7 @@
 
 #include "Classify.hh"
 #include "Image.hh"
+#include <cassert>
 
 // connectivity:
 //
@@ -117,9 +118,7 @@ Image* ClassifyImage::simplepic()
 }
 
 
-//create a 1-bit data ClassifyImage from Image data zeros
-ClassifyImage* ClassifyImage::fromzeros(Image* I)
-{
+ClassifyImage* ClassifyImage::fromzeros(Image* I){
 	ClassifyImage* foo = new ClassifyImage((RectRegion*)I);
 	foo->shift = 1;
 	for(int i=0; i<I->size; i++) foo->data[i] = (int)(I->data[i] == 0);
@@ -127,9 +126,8 @@ ClassifyImage* ClassifyImage::fromzeros(Image* I)
 	return foo;
 }
 
-//create a 1-bit data ClassifyImage from Image uniform positive curvature regions
-ClassifyImage* ClassifyImage::fromCurvature(Image* I)
-{
+
+ClassifyImage* ClassifyImage::fromCurvature(Image* I) {
 	ClassifyImage* combined = new ClassifyImage((RectRegion*)I);
 	Image* ctdx = I->deriv(true); Image* ctdxdx = ctdx->deriv(true); delete(ctdx);
 	Image* ctdy = I->deriv(false); Image* ctdydy = ctdy->deriv(false); delete(ctdy);
@@ -184,10 +182,9 @@ ClassifyImage* ClassifyImage::dat_xor(int q)
 	return this;
 }
 
-ClassifyImage* ClassifyImage::getPoints(int* d, unsigned int n, unsigned int pad)
-{
+ClassifyImage* ClassifyImage::getPoints(int* d, unsigned int n, unsigned int pad) {
 	BoundingBox bb = findboundingbox(d,n);
-	ClassifyImage* bi = new ClassifyImage(bb.ux-bb.lx+2*pad+1,bb.uy-bb.ly+2*pad+1);
+	ClassifyImage* bi = new ClassifyImage(bb.ux-bb.lx + 2*pad + 1, bb.uy-bb.ly + 2*pad + 1);
 	bi->shift = shift;
 	for(int i=0; i<n; i++) {
 		int p = d[i];
@@ -198,15 +195,15 @@ ClassifyImage* ClassifyImage::getPoints(int* d, unsigned int n, unsigned int pad
 	return bi;
 }
 
-ClassifyImage* ClassifyImage::getObject(unsigned int n, unsigned int pad)
-{
-	return getPoints(pic[n],npic[n],pad);
+ClassifyImage* ClassifyImage::getObject(unsigned int n, unsigned int pad) {
+    assert(n < pic.size());
+	return getPoints(pic[n].data(), pic[n].size(), pad);
 }
 
 Image* ClassifyImage::getImageObject(Image* u, unsigned int n, unsigned int pad)
 {
-	if(n>=nbasins) return NULL;
-	BoundingBox bb = findboundingbox(pic[n],npic[n]);
+	if(n>=pic.size()) return NULL;
+	BoundingBox bb = findboundingbox(pic[n].data(),pic[n].size());
 	int w = bb.ux-bb.lx+2*pad+1;
 	int h = bb.uy-bb.ly+2*pad+1;
 	Image* bi = new Image(w,h);
@@ -218,10 +215,10 @@ Image* ClassifyImage::getImageObject(Image* u, unsigned int n, unsigned int pad)
 
 Image* ClassifyImage::getImageMaskObject(unsigned int n, unsigned int pad)
 {
-	if(n>=nbasins) return NULL;
-	BoundingBox bb = findboundingbox(pic[n],npic[n]);
+	if(n>=pic.size()) return NULL;
+	BoundingBox bb = findboundingbox(pic[n].data(),pic[n].size());
 	Image* bi = new Image(bb.ux-bb.lx+2*pad+1,bb.uy-bb.ly+2*pad+1);
-	for(int i=0; i<npic[n]; i++) {
+	for(int i=0; i<pic[n].size(); i++) {
 		int p = pic[n][i];
 		int nx = p%width - bb.lx + pad;
 		int ny = p/width - bb.ly + pad;
@@ -232,13 +229,13 @@ Image* ClassifyImage::getImageMaskObject(unsigned int n, unsigned int pad)
 
 void ClassifyImage::radialization(unsigned int n, Image* u)
 {
-	if(n>=nbasins) return;
-	int p0 = stats[n]->minloc;
+	if(n>=pic.size()) return;
+	int p0 = stats[n].minloc;
 	int* rn = (int*)calloc(100,sizeof(int));
 	float* rs = (float*)calloc(100,sizeof(float));
 	
 	int r;
-	for(int i=0; i<npic[n]; i++)
+	for(int i=0; i<pic[n].size(); i++)
 	{
 		r = (int)(2*sqrt((float)dist2(p0,pic[n][i])));
 		if(r>=100) continue;
@@ -246,7 +243,7 @@ void ClassifyImage::radialization(unsigned int n, Image* u)
 		rs[r] += u->data[pic[n][i]];
 	}
 	
-	for(int i=0; i<npic[n]; i++)
+	for(int i=0; i<pic[n].size(); i++)
 	{
 		r = (int)(2*sqrt((float)dist2(p0,pic[n][i])));
 		if(r>=100) continue;
@@ -289,40 +286,40 @@ void ClassifyImage::radialization(unsigned int n, Image* u)
 
 ClassifyImage* ClassifyImage::putObject(unsigned int n, ClassifyImage* bi, unsigned int pad)
 {
-	BoundingBox bb = findboundingbox(pic[n],npic[n]);
+	BoundingBox bb = findboundingbox(pic[n].data(),pic[n].size());
 	for(int i=0; i<bi->size; i++) {
 		int nx = bb.lx + i%bi->width - pad;
 		int ny = bb.ly + i/bi->width - pad;
 		if(!inrange(nx,ny)) continue;
 		if(bi->data[i] & 1<<shift) data[nx+width*ny] = (n<<shift) + (bi->data[i] & ((1 << shift) -1));
-		
 	}
 	isclassified = false;
 	return this;
 }
 
-ClassifyImage* ClassifyImage::fillHoles(int flagmark)
-{
-	for(int b=1; b<nbasins; b++)
-	{
+ClassifyImage* ClassifyImage::fillHoles(int flagmark) {
+    printf("Filling holes in %zu regions with mark %i... ", pic.size(), flagmark); fflush(stdout);
+	for(int b = 1; b < pic.size(); b++) {
 		ClassifyImage* foo = getObject(b,1);
+        //printf("%zu/%i\t", pic[b].size(), foo->size); fflush(stdout);
 		foo->findObjectsByHigherBits(shift);
-		for(int i=0; i<foo->npic[0]; i++) foo->data[foo->pic[0][i]] = 0;
-		for(int i=0; i<foo->npic[1]; i++) foo->data[foo->pic[1][i]] = (1<<shift) | (foo->data[foo->pic[1][i]] & ((1<<shift)-1));
-		for(int j=2; j<foo->nbasins; j++) for(int i=0; i<foo->npic[j]; i++) foo->data[foo->pic[j][i]] = (1<<shift) | flagmark;
+        assert(foo->pic.size() >= 2);
+		for(auto it = foo->pic[0].begin(); it != foo->pic[0].end(); it++) foo->data[*it] = 0;
+		for(auto it = foo->pic[1].begin(); it != foo->pic[1].end(); it++) foo->data[*it] = (1<<shift) | (foo->data[*it] & ((1<<shift)-1));
+		for(int j=2; j<foo->pic.size(); j++) for(auto it = foo->pic[j].begin(); it != foo->pic[j].end(); it++) foo->data[*it] = (1<<shift) | flagmark;
 		putObject(b,foo,1);
 		delete(foo);
 	}
 	isclassified = false;
+    printf(" Done.\n");
 	return this;
 }
 
-ClassifyImage* ClassifyImage::removeSmall(int s)
-{
+ClassifyImage* ClassifyImage::removeSmall(int s) {
 	if(!isclassified) findObjectsByLowBits(1);
-	for(int i=0; i<nbasins; i++)
+	for(int i=0; i<pic.size(); i++)
 	{
-		if(data[pic[i][0]] & 0x1 && npic[i]<s) xorRegion(i,0x1);
+		if(data[pic[i][0]] & 0x1 && pic[i].size()<s) xorRegion(i,0x1);
 	}
 	isclassified = false;
 	return this;
@@ -330,9 +327,9 @@ ClassifyImage* ClassifyImage::removeSmall(int s)
 
 ClassifyImage* ClassifyImage::constrainSize(int s1, int s2)
 {
-	for(int i=1; i<nbasins; i++)
+	for(int i=1; i<pic.size(); i++)
 	{
-		if(npic[i]<s1 || npic[i]>s2) andRegion(i,0x0);
+		if(pic[i].size()<s1 || pic[i].size()>s2) andRegion(i,0x0);
 	}
 	isclassified = false;
 	return this;
@@ -340,10 +337,10 @@ ClassifyImage* ClassifyImage::constrainSize(int s1, int s2)
 
 ClassifyImage* ClassifyImage::removeUncircular(float th)
 {
-	for(int i=1; i<nbasins; i++)
+	for(int i=1; i<pic.size(); i++)
 	{
-		Circle c = findboundingcirc(pic[i],npic[i]);
-		if(npic[i] < 3.14159*th*c.r*c.r) andRegion(i,0x0);
+		Circle c = findboundingcirc(pic[i].data(), pic[i].size());
+		if(pic[i].size() < 3.14159*th*c.r*c.r) andRegion(i,0x0);
 	}
 	isclassified = false;
 	return this;
@@ -368,7 +365,7 @@ Image* ClassifyImage::neatopic(int n)
 		bi->bdata[nx+(bi->width)*ny] = true;
 	}
 	bi->findobjects();
-	int cn = bi->nbasins - 2; //additional objects are holes
+	int cn = bi->pic.size() - 2; //additional objects are holes
 	delete(bi);
 	return cn;
 }
@@ -632,15 +629,15 @@ int* ClassifyImage::whichregion(ClassifyImage* w)
 {
 	//count craters
 	int ncrat = 0;
-	for(int i=0; i<nbasins; i++) ncrat += bdata[pic[i][0]];
+	for(int i=0; i<pic.size(); i++) ncrat += bdata[pic[i][0]];
 	
 	int* foo = (int*)malloc(ncrat*sizeof(int));
 	ncrat=0;
-	for(int i=0; i<nbasins; i++)
+	for(int i=0; i<pic.size(); i++)
 	{
 		if(!bdata[pic[i][0]]) continue;
 		foo[ncrat] = (int)w->data[pic[i][0]];
-		for(int j=0; j<npic[i]; j++)
+		for(int j=0; j<pic[i].size(); j++)
 		{
 			if(foo[ncrat] != (int)w->data[pic[i][j]])
 			{
@@ -658,10 +655,10 @@ int ClassifyImage::writecat(char* cname) //append crater records to a catalog
 	FILE* of = fopen(cname,"a");
 	printf("Appending craters to %s...\n",cname);
 	int ncr=0;
-	for(int i=0; i<nbasins; i++)
+	for(int i=0; i<pic.size(); i++)
 	{
 		if(!bdata[pic[i][0]]) continue; //black region
-		Circle c = findboundingcirc(pic[i],npic[i]);
+		Circle c = findboundingcirc(pic[i],pic[i].size());
 		printf("\tCrater found! %i @ (%i,%i)\n",(int)reallength(c.r),(int)realx(c.x),(int)realy(c.y));
 		fprintf(of,"%i\t%i\t%i\t0.0\t0.0\n",(int)reallength(c.r),(int)realy(c.y+0.5),(int)realx(c.x+0.5));
 		ncr++;

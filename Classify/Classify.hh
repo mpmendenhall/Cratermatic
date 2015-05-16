@@ -25,10 +25,13 @@
 #include "RectRegion.hh"
 #include <string>
 using std::string;
+#include <vector>
+using std::vector;
+#include <set>
+using std::set;
 
 class Image;
 class RGBImage;
-class Pointset;
 class Histogram;
 
 /// Sparse integer-valued matrix (used for connectivity graph)
@@ -79,27 +82,19 @@ struct BasinStat {
 /// Integer-valued image for point classification
 class ClassifyImage: public RectRegion {
 public:
-	int* npic;
-	int** pic;
-	int* data;
-	int shift;
-	int nbasins;
-	int* nbounds;
-	int** bounds;
-	Image* underlying;
-	bool hasboundaries;
-	SparseInt* cg;			///< connectivity graph between basins
-	bool hasconnectivity;	///< whether connectivity graph is calculated
-	bool badimg;
-	bool isclassified;		///< whether classification is complete
+    vector< vector<int> > pic;		///< data points in each enumerated category
+    vector<int> data;				///< integer-valued classification for each pixel
+    int shift = 0;					///< bit shift to main classification
+    vector< vector<int> > bounds;	///< boundary points of each category
+	Image* underlying = NULL;		///< underlying image data being classified
+	bool hasboundaries = false;		///< whether boundaries are calculated
+	SparseInt* cg = NULL;			///< connectivity graph between basins
+	bool hasconnectivity = false;	///< whether connectivity graph is calculated
+	bool isclassified = false;		///< whether classification is complete
 	
-	BasinStat** stats;		///< statistics for each crater basin
-	bool *markedregion;
-	int* poi; 				///< "points of interest"
-	int npoi;
-	void addregiontopoi(int n);
-	void markedregionstopoi();
-	Image* markedregionstoimage();
+	vector<BasinStat> stats;		///< statistics for each crater basin
+	vector<int> poi; 				///< "points of interest"
+    void addregiontopoi(int n);		///< add enumerated class to POI
 	
     /// Constructor from RectRegion
 	ClassifyImage(RectRegion* R);
@@ -143,9 +138,7 @@ public:
 	void findboundaries();
 	void connectivitygraph();
 	void joinregions(int a, int b, bool dobounds);
-	Pointset* boundswho(int p);
-	Pointset* mutualboundary(int a, int b);
-	void getjoinpoints(int,int,int,Pointset*,Pointset*);
+	set<int> boundswho(int p);
 	
     /// produce "colorized" image from ((base*(data[i]/base))%modkey)
 	Image* recolorize(int base, int modkey);
@@ -155,13 +148,12 @@ public:
 	Image* tempstatimg();
     /// produce image of four-connected boundaries between regions
 	Image* fourboundaryimage();
-	Image* markimage();
     /// produce color "pretty image" visualization
 	RGBImage* prettyImage();
     /// produce colored overlay on Image
-	RGBImage* prettyoverlayimage(Image*);
+	RGBImage* prettyoverlayimage(Image*, bool shadebound = false);
     /// produce colored overlay on RGBImage
-	RGBImage* prettyoverlayimage(RGBImage* C);
+	RGBImage* prettyoverlayimage(RGBImage* C, bool shadebound = false);
 	RGBImage* colorbytemp();
 	void labelboundaries(int c);
 	
@@ -185,26 +177,35 @@ public:
     /// bitwise 'xor' data with specified value
 	ClassifyImage* dat_xor(int q);
     /// xor cdata values for specified points
-	void xorPoints(int*, unsigned int, unsigned int);
+	void xorPoints(vector<int>& d, unsigned int);
     /// xor cdata values in specified region
 	void xorRegion(unsigned int, unsigned int);
-	void andPoints(int*, unsigned int, unsigned int);
+	void andPoints(vector<int>& d, unsigned int);
 	void andRegion(unsigned int, unsigned int);
 	
+    /// create a 1-bit data ClassifyImage from Image data zeros
 	static ClassifyImage* fromzeros(Image* I);
+    /// create a 1-bit data ClassifyImage from Image uniform positive curvature regions
 	static ClassifyImage* fromCurvature(Image* I);
-	static const bool* is8simple;
+	
+    static const bool* is8simple;
 	static Image* neatopic(int n);
 	static Image* simplepic();
+    
 	void findObjectsByLowBits(int nbits);
 	void findObjectsByHigherBits(int nbits);
-	int seedFillByMaskedBits(int startp, int** pout, int searchmask, int setmask, int setnum, int* nudata);
-	ClassifyImage* upShift(int nbits);
+    
+    /// starting at startp, find all connected points matching a searchmask bit; record point locations to pout.
+    /// set nudata[p] = (data[p] & ~setmask) | setnum;
+	void seedFillByMaskedBits(int startp, vector<int>& pout, int searchmask, int setmask, int setnum, vector<int>& nudata);
+	
+    ClassifyImage* upShift(int nbits);
 	ClassifyImage* getPoints(int* d, unsigned int n, unsigned int pad);
 	ClassifyImage* getObject(unsigned int n, unsigned int pad);
 	Image* getImageObject(Image* u, unsigned int n, unsigned int pad);
 	Image* getImageMaskObject(unsigned int n, unsigned int pad);
 	ClassifyImage* putObject(unsigned int n, ClassifyImage* bi, unsigned int pad);
+    /// Fill "holes" in each point class
 	ClassifyImage* fillHoles(int flagmark);
 	ClassifyImage* removeSmall(int s);
 	ClassifyImage* constrainSize(int s1, int s2);
@@ -213,7 +214,6 @@ public:
 	void watershedFloodplainFill(int* fd, int* distance);
 	void watershedMinimaRecursor(int x, int y, int x0, int y0, int* fd);
 	int watershedFlowRecursor(int x, int y, int* fd);
-	Pointset* watershedDownBoundsWho(int p);
 	static ClassifyImage* watershed(Image* u);
 	static ClassifyImage* gradSeg(Image* u, float r);
 	

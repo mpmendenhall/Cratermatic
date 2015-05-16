@@ -24,6 +24,7 @@
 #include "Image.hh"
 #include <climits>
 #include <algorithm>
+#include <cassert>
 
 bool comparebyradius(const Circle& entry1, const Circle& entry2) {
     return entry1.r < entry2.r;
@@ -152,13 +153,14 @@ void RectRegion::fouriermark(float x0, float y0, float* xs, float* ys, unsigned 
 BoundingBox RectRegion::findboundingbox(int* p, int n) {
 	BoundingBox b;
 	b.lx=INT_MAX; b.ly=INT_MAX;
-	b.ux=0; b.uy=0;
+	b.ux=-1; b.uy=-1;
 	for(int i=0; i<n; i++) {
 		if(p[i]%width < b.lx) b.lx = p[i]%width;
 		if(p[i]%width > b.ux) b.ux = p[i]%width;
 		if(p[i]/width < b.ly) b.ly = p[i]/width;
 		if(p[i]/width > b.uy) b.uy = p[i]/width;
 	}
+    assert(b.ux > -1 && b.uy > -1 && b.lx < INT_MAX && b.ly < INT_MAX);
 	return b;
 }
 

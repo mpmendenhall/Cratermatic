@@ -398,7 +398,7 @@ void RasterRegion::linearCraterMerger(int* cd, int npts, int ncls, int* ul)
 			typ[i] = 0x101 + (lcg[i]*0x100);
 			typ[rcg[i]] = 0x101 + (lcg[i]*0x100);
 			sum[lcg[i]]+=sum[i]+sum[rcg[i]];
-			npic[lcg[i]] += npic[i]+npic[rcg[i]];
+			npic[lcg[i]] += npic[i] + npic[rcg[i]];
 			if(rcg[rcg[i]] != -1) lcg[rcg[rcg[i]]] = lcg[i];
 			rcg[lcg[i]] = rcg[rcg[i]];
 			
@@ -408,13 +408,13 @@ void RasterRegion::linearCraterMerger(int* cd, int npts, int ncls, int* ul)
 		{
 			if(!(typ[i] & 0x01)) continue; //not a local minimum
 			if(rcg[i]==-1 || lcg[i]==-1) continue; //missing neighbors (e.g. edge)
-			if(sum[i]<npic[i]) continue; //not completely whited over
+			if(sum[i] < npic[i]) continue; //not completely whited over
 			
 			nmerged++;
 			typ[i] = 0x102 + (lcg[i]*0x100);
 			typ[rcg[i]] = 0x102 + (lcg[i]*0x100);
 			sum[lcg[i]] += sum[i]+sum[rcg[i]];
-			npic[lcg[i]] += npic[i]+npic[rcg[i]];
+			npic[lcg[i]] += npic[i] + npic[rcg[i]];
 			if(rcg[rcg[i]] != -1) lcg[rcg[rcg[i]]] = lcg[i];
 			rcg[lcg[i]] = rcg[rcg[i]];
 		}

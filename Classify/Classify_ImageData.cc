@@ -27,40 +27,40 @@
 void ClassifyImage::underlyingstats(Image* foo)
 {
 	if(underlying == foo) return; //already done this!
-	if(!stats) calcstats();
+	if(stats.size() != pic.size()) calcstats();
 	underlying = foo;
 	
-	for(int i=0; i<nbasins; i++) {
+	for(int i=0; i<pic.size(); i++) {
 		
-		stats[i]->basinmin = FLT_MAX;
-		stats[i]->minloc = 0;
-		stats[i]->basinmax = -FLT_MAX;
-		stats[i]->boundsmin=FLT_MAX;
-		stats[i]->zsum = 0;
-		stats[i]->zzsum = 0;
-		stats[i]->boundsavg=0;
+		stats[i].basinmin = FLT_MAX;
+		stats[i].minloc = 0;
+		stats[i].basinmax = -FLT_MAX;
+		stats[i].boundsmin=FLT_MAX;
+		stats[i].zsum = 0;
+		stats[i].zzsum = 0;
+		stats[i].boundsavg=0;
 		
 		float z;
 		
 		
-		for(int j=0; j<npic[i]; j++) {
+		for(int j=0; j<pic[i].size(); j++) {
 			z = foo->data[pic[i][j]];
-			stats[i]->zsum += z;
-			stats[i]->zzsum += z*z;
-			if(foo->data[pic[i][j]]<stats[i]->basinmin) {
-				stats[i]->basinmin=foo->data[pic[i][j]];
-				stats[i]->minloc = pic[i][j];
+			stats[i].zsum += z;
+			stats[i].zzsum += z*z;
+			if(foo->data[pic[i][j]]<stats[i].basinmin) {
+				stats[i].basinmin=foo->data[pic[i][j]];
+				stats[i].minloc = pic[i][j];
 			}
-			if(foo->data[pic[i][j]]>stats[i]->basinmax) stats[i]->basinmax=foo->data[pic[i][j]];
+			if(foo->data[pic[i][j]]>stats[i].basinmax) stats[i].basinmax=foo->data[pic[i][j]];
 		}
 		
 		if(hasboundaries)
 		{
-			for(int j=0; j<nbounds[i]; j++) {
-				if(foo->data[bounds[i][j]] < stats[i]->boundsmin) stats[i]->boundsmin = foo->data[bounds[i][j]];
-				stats[i]->boundsavg += foo->data[bounds[i][j]];
+			for(int j=0; j<bounds[i].size(); j++) {
+				if(foo->data[bounds[i][j]] < stats[i].boundsmin) stats[i].boundsmin = foo->data[bounds[i][j]];
+				stats[i].boundsavg += foo->data[bounds[i][j]];
 			}
-			stats[i]->boundsavg /= nbounds[i];
+			stats[i].boundsavg /= bounds[i].size();
 	
 		}
 	}
@@ -68,21 +68,21 @@ void ClassifyImage::underlyingstats(Image* foo)
 
 
 void ClassifyImage::underlyingavg(Image* u){ //calculate region average over underlying image
-	if(!stats) calcstats();
+	if(stats.size() != pic.size()) calcstats();
 	if(underlying != u) underlyingstats(u);
-	for(int i=0; i<nbasins; i++) {
-		stats[i]->temp = stats[i]->zsum/npic[i];
+	for(int i=0; i<pic.size(); i++) {
+		stats[i].temp = stats[i].zsum/pic[i].size();
 	}
 }
 
 void ClassifyImage::underlyingmin(Image* u){ //calculate region average over underlying image
-	if(!stats) calcstats();
+	if(stats.size() != pic.size()) calcstats();
 	if(underlying != u) underlyingstats(u);
 	settempstat(3);
 }
 
 void ClassifyImage::underlyingmax(Image* u){ //calculate region average over underlying image
-	if(!stats) calcstats();
+	if(stats.size() != pic.size()) calcstats();
 	if(underlying != u) underlyingstats(u);
 	settempstat(4);
 }
@@ -95,33 +95,33 @@ int floatcompare(const void* a, const void* b) { //for qsort by average z
 };
 
 void ClassifyImage::underlyingmedian(Image* u){ //calculate region median over underlying image
-	if(!stats) calcstats();
-	for(int i=0; i<nbasins; i++) {
-		float* ur = (float*)malloc(npic[i]*sizeof(float));
-		for(int j=0; j<npic[i]; j++) ur[j]=u->data[pic[i][j]];
-		qsort(ur,npic[i],sizeof(float),floatcompare);
-		stats[i]->temp = ur[npic[i]/2];
+	if(stats.size() != pic.size()) calcstats();
+	for(int i=0; i<pic.size(); i++) {
+		float* ur = (float*)malloc(pic[i].size()*sizeof(float));
+		for(int j=0; j<pic[i].size(); j++) ur[j]=u->data[pic[i][j]];
+		qsort(ur,pic[i].size(),sizeof(float),floatcompare);
+		stats[i].temp = ur[pic[i].size()/2];
 		free(ur);
 	}
 }
 
 void ClassifyImage::underlyingRadialCorrelation(Image* u)
 {
-	if(!stats) calcstats();
+	if(stats.size() != pic.size()) calcstats();
 	float x0,y0,x1,y1;
 	int q;
 	float* r;
 	float* s;
 	float a,b,corr;
 	
-	for(int i=0; i<nbasins; i++)
+	for(int i=0; i<pic.size(); i++)
 	{
-		r = (float*)malloc(npic[i]*sizeof(float));
-		s = (float*)malloc(npic[i]*sizeof(float));
-		x0 = ((float)stats[i]->xsum)/((float)npic[i]);
-		y0 = ((float)stats[i]->ysum)/((float)npic[i]);
+		r = (float*)malloc(pic[i].size()*sizeof(float));
+		s = (float*)malloc(pic[i].size()*sizeof(float));
+		x0 = ((float)stats[i].xsum)/((float)pic[i].size());
+		y0 = ((float)stats[i].ysum)/((float)pic[i].size());
 		
-		for(int p=0; p<npic[i]; p++)
+		for(int p=0; p<pic[i].size(); p++)
 		{
 			q=pic[i][p];
 			x1 = (float)(q%width) - x0;
@@ -130,19 +130,19 @@ void ClassifyImage::underlyingRadialCorrelation(Image* u)
 			s[p] = u->data[q];
 		}
 		
-		CratersBaseObject::lsrl(r, s, NULL, npic[i], &a, &b, &corr);
-		stats[i]->temp = corr;
+		CratersBaseObject::lsrl(r, s, NULL, pic[i].size(), &a, &b, &corr);
+		stats[i].temp = corr;
 		free(r); free(s);
-		//printf(" >> %i %i %g\n",i,npic[i],corr);
+		//printf(" >> %i %i %g\n",i,pic[i].size(),corr);
 	}
 }
 
 void ClassifyImage::normalizebasins(Image* foo) {
 	printf("Normalizing image by basin...\n");
 	underlyingstats(foo);
-	for(int i=0; i<nbasins; i++) {
-		for(int j=0; j<npic[i]; j++) {
-			foo->data[pic[i][j]] = (foo->data[pic[i][j]]-stats[i]->basinmin)/(stats[i]->basinmax - stats[i]->basinmin);
+	for(int i=0; i<pic.size(); i++) {
+		for(int j=0; j<pic[i].size(); j++) {
+			foo->data[pic[i][j]] = (foo->data[pic[i][j]]-stats[i].basinmin)/(stats[i].basinmax - stats[i].basinmin);
 			if(foo->data[pic[i][j]]>1) foo->data[pic[i][j]]=1;
 		}
 	}
@@ -150,44 +150,31 @@ void ClassifyImage::normalizebasins(Image* foo) {
 
 Histogram* ClassifyImage::regionhisto(Image* I, Image* wt, unsigned int n, float mn, float mx, int nbins)
 {
-	if(n>=nbasins) return NULL;
+	if(n>=pic.size()) return NULL;
 	
-	float* d = (float*)malloc(npic[n]*sizeof(float));
-	for(int i=0; i<npic[n]; i++) d[i]=I->data[pic[n][i]];
+	float* d = (float*)malloc(pic[n].size()*sizeof(float));
+	for(int i=0; i<pic[n].size(); i++) d[i]=I->data[pic[n][i]];
 	float* w=NULL;
 	if(wt){
-		w = (float*)malloc(npic[n]*sizeof(float));
-		for(int i=0; i<npic[n]; i++) w[i]=wt->data[pic[n][i]];
+		w = (float*)malloc(pic[n].size()*sizeof(float));
+		for(int i=0; i<pic[n].size(); i++) w[i]=wt->data[pic[n][i]];
 	}
 	
 	if(mn==0 && mx==0) //autorange
 	{
 		underlyingstats(I);
-		mn = stats[n]->basinmin;
-		mx = stats[n]->basinmax;
+		mn = stats[n].basinmin;
+		mx = stats[n].basinmax;
 	}
 	
 	if(nbins==0)
 	{
-		if(npic[n]<49) nbins = (int)sqrt((float)npic[n]);
-		else if(npic[n] < 140) nbins = npic[n]/7;
+		if(pic[n].size()<49) nbins = (int)sqrt((float)pic[n].size());
+		else if(pic[n].size() < 140) nbins = pic[n].size()/7;
 		else nbins = 20;
 	}
 	
-	Histogram* foo = new Histogram(d,npic[n],w,mn,mx,nbins);
-	return foo;
-}
-
-
-
-Image* ClassifyImage::markedregionstoimage()
-{
-	Image* foo = new Image(this);
-	for(int i=0; i<nbasins; i++) {
-		if(markedregion[i]) {
-			for(int j=0; j<npic[i]; j++) foo->data[pic[i][j]] = 1.0;
-		}
-	}
+	Histogram* foo = new Histogram(d,pic[n].size(),w,mn,mx,nbins);
 	return foo;
 }
 
@@ -231,8 +218,8 @@ Image* ClassifyImage::boundaryimage() {
 	Image* foo = new Image(width,height);
 	if(hasboundaries)
 	{
-		for(int i=0; i<nbasins; i++){
-			for(int j=0; j<nbounds[i]; j++) {
+		for(int i=0; i<pic.size(); i++){
+			for(int j=0; j<bounds[i].size(); j++) {
 				foo->data[bounds[i][j]]= 1.0;
 			}
 		}
@@ -254,11 +241,11 @@ Image* ClassifyImage::boundaryimage() {
 };
 
 Image* ClassifyImage::tempstatimg() {
-	if(!stats) calcstats();
+	if(stats.size() != pic.size()) calcstats();
 	Image* foo = new Image(this);
-	for(int i=0; i<nbasins; i++){
-		for(int j=0; j<npic[i]; j++) {
-			foo->data[pic[i][j]] = stats[i]->temp;
+	for(int i=0; i<pic.size(); i++){
+		for(int j=0; j<pic[i].size(); j++) {
+			foo->data[pic[i][j]] = stats[i].temp;
 		}
 	}
 	return foo;
@@ -288,9 +275,9 @@ Image* ClassifyImage::fourboundaryimage()
 
 //extract basin n chunk from img
 Image* ClassifyImage::extractChunk(unsigned int n, Image* img, int l){
-	if(n>=nbasins) return new Image(0,0);
+	if(n>=pic.size()) return new Image(0,0);
 	
-	BoundingBox bb = findboundingbox(pic[n],npic[n]);
+	BoundingBox bb = findboundingbox(pic[n].data(), pic[n].size());
 	bb = expandbb(bb,l);
 	int w=1+bb.ux-bb.lx; int h=1+bb.uy-bb.ly;
 	Image* foo = new Image(w, h);
@@ -311,13 +298,13 @@ Image* ClassifyImage::extractChunk(unsigned int n, Image* img){
 
 //extract basin n chunk from img
 Image* ClassifyImage::extractMaskedChunk(unsigned int n, Image* img){
-	if(n>=nbasins) return new Image(0,0);
-	if(!stats) calcstats();
-	BoundingBox bb = findboundingbox(pic[n],npic[n]);
+	if(n>=pic.size()) return new Image(0,0);
+	if(stats.size() != pic.size()) calcstats();
+	BoundingBox bb = findboundingbox(pic[n].data(), pic[n].size());
 	int w=1+bb.ux-bb.lx; int h=1+bb.uy-bb.ly;
 	
 	float zmax=img->data[pic[n][0]];
-	for(int i=0; i<npic[n]; i++)
+	for(int i=0; i<pic[n].size(); i++)
 	{
 		if(img->data[pic[n][i]] > zmax) zmax  = img->data[pic[n][i]];
 	}
@@ -336,13 +323,13 @@ Image* ClassifyImage::extractMaskedChunk(unsigned int n, Image* img){
 }
 
 Image* ClassifyImage::extractChunkMask(unsigned int n, int l){
-	if(n>=nbasins) return new Image(0,0);
+	if(n>=pic.size()) return new Image(0,0);
 	
-	BoundingBox bb = findboundingbox(pic[n],npic[n]);
+	BoundingBox bb = findboundingbox(pic[n].data(), pic[n].size());
 	bb=expandbb(bb,l);
 	int w=1+bb.ux-bb.lx; int h=1+bb.uy-bb.ly;
 	Image* foo = new Image(w, h);
-	for(int i=0; i<npic[n]; i++) {
+	for(int i=0; i<pic[n].size(); i++) {
 		int p = pic[n][i];
 		int nx = p%width-bb.lx;
 		int ny = p/width-bb.ly;
@@ -356,8 +343,8 @@ Image* ClassifyImage::extractChunkMask(unsigned int n, int l){
 
 void ClassifyImage::cutoutChunkMask(Image* msk, unsigned int n)
 {
-	if(n>=nbasins) return;
-	for(int i=0; i<npic[n]; i++) msk->data[pic[n][i]] = 0.0;
+	if(n>=pic.size()) return;
+	for(int i=0; i<pic[n].size(); i++) msk->data[pic[n][i]] = 0.0;
 }
 
 Image* ClassifyImage::extractChunkMask(unsigned int n)

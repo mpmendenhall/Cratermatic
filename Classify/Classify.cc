@@ -21,6 +21,9 @@
 
 #include "Classify.hh"
 #include "Utils.hh"
+#include <cassert>
+#include <map>
+using std::map;
 
 SparseInt::SparseInt(int w, int h) {
 	using namespace std;
@@ -106,93 +109,52 @@ void SparseInt::set(int i,int j, int v) {
 
 //------------------------------------------------
 
-ClassifyImage::ClassifyImage(int w, int h) : RectRegion(w,h)
-{
+ClassifyImage::ClassifyImage(int w, int h) : RectRegion(w,h) {
 	initialize();
-};
+}
 
-ClassifyImage::ClassifyImage(RectRegion* R) : RectRegion(R->width,R->height)
-{
+ClassifyImage::ClassifyImage(RectRegion* R) : RectRegion(R->width,R->height) {
 	copyfromrr(R);
 	initialize();
-};
+}
 
 void ClassifyImage::initialize() {
 	isaName = "ClassifyImage";
 	isaNum = COBJ_CLASSIFYIMAGE;
-	isclassified = false;
-	data = (int*)calloc(size,sizeof(int));
-	shift = 0;
-	underlying = NULL;
-	hasboundaries=false;
-	hasconnectivity=false;
-	badimg = false;
-	npic = NULL; //number of points in each class
-	pic = NULL; //pointers in each class
-	nbasins = 0;
-	nbounds = NULL;
-	bounds = NULL;
-	cg = NULL;
-	markedregion = NULL;
-	poi = NULL; npoi=0;
-	stats = NULL;
-};
+	data.resize(size);
+}
 
-ClassifyImage::~ClassifyImage()
-{
-	free(npic); npic=NULL;
-	for(int i=0; i<nbasins; i++) {
-		if(pic) {if(pic[i]) {free(pic[i]); pic[i]=NULL;}}
-		if(hasboundaries) {free(bounds[i]); bounds[i]=NULL;}
-	}
-	free(pic); pic=NULL;
-	if(cg) {delete(cg); cg=NULL;}
-	if(markedregion) free(markedregion);
-	if(hasboundaries) {
-		free(bounds); bounds=NULL;
-		free(nbounds); nbounds=NULL;
-	}
-};
+ClassifyImage::~ClassifyImage() {
+	if(cg) { delete(cg); cg=NULL; }
+}
 
-ClassifyImage* ClassifyImage::copy() //return a copy of this image
-{
+ClassifyImage* ClassifyImage::copy() {
 	ClassifyImage *foo = new ClassifyImage((RectRegion*)this);
-	for(int i=0; i<size; i++) foo->data[i] = data[i];
+	foo->data = data;
 	foo->isclassified = isclassified;
 	foo->shift = shift;
-	foo->nbasins = nbasins;
-	foo->npic = (int*)realloc(foo->npic,nbasins*sizeof(int));
-	foo->pic = (int**)realloc(foo->pic,nbasins*sizeof(int*));
-	for(int i=0; i<nbasins; i++)
-	{
-		foo->npic[i]=npic[i];
-		foo->pic[i] = (int*)malloc(npic[i]*sizeof(int));
-		memcpy(foo->pic[i],pic[i],npic[i]*sizeof(int));
-	}
+	foo->pic = pic;
+    foo->bounds = bounds;
 	return foo;
 };
 
-void ClassifyImage::xorPoints(int* d, unsigned int n, unsigned int xorkey) {
-	for(int i=0; i<n; i++) data[d[i]] ^= xorkey;
+void ClassifyImage::xorPoints(vector<int>& d, unsigned int xorkey) {
+	for(auto it = d.begin(); it != d.end(); it++) data[*it] ^= xorkey;
 }
 
 
 void ClassifyImage::xorRegion(unsigned int n, unsigned int xorkey) {
-	if(n>=nbasins) return;
-	xorPoints(pic[n],npic[n],xorkey);
+	if(n >= pic.size()) return;
+	xorPoints(pic[n],xorkey);
 }
 
-//and cdata values for specified points
-void ClassifyImage::andPoints(int* d, unsigned int n, unsigned int andkey)
-{
-	for(int i=0; i<n; i++) data[d[i]] &= andkey;
+void ClassifyImage::andPoints(vector<int>& d, unsigned int andkey) {
+    for(auto it = d.begin(); it != d.end(); it++) data[*it] &= andkey;
 }
 
-//and cdata values in specified region
-void ClassifyImage::andRegion(unsigned int n, unsigned int andkey)
-{
-	if(n>=nbasins) return;
-	andPoints(pic[n],npic[n],andkey);
+void ClassifyImage::andRegion(unsigned int n, unsigned int andkey) {
+	if(n >= pic.size()) return;
+	andPoints(pic[n], andkey);
 }
 
 ClassifyImage* ClassifyImage::upShift(int nbits) {
@@ -202,70 +164,49 @@ ClassifyImage* ClassifyImage::upShift(int nbits) {
 }
 
 void ClassifyImage::findObjectsByLowBits(int nbits) {
-	if(npic) free(npic);
-	for(int i=0; i<nbasins; i++) {if(pic[i]) free(pic[i]);}
-	if(pic) free(pic);
+	pic.clear();
 	
 	shift = nbits;
-	nbasins=0;
-	npic = (int*)malloc(sizeof(int));
-	pic = (int**)malloc(sizeof(int*));
-	unsigned int bitmask = 0xFFFFFFFF << shift;
-	
-	int* nudata = (int*)malloc(size*sizeof(int));
-	memset(nudata,0xFF,size*sizeof(int));
-	
+	unsigned int bitmask =   0xFFFFFFFF << shift;
+	vector<int> nudata(size, 0xFFFFFFFF);
 	for(int i=0; i<size; i++) {
 		if(nudata[i] != 0xFFFFFFFF) continue; //already been claimed
-		npic = (int*)realloc(npic,(nbasins+1)*sizeof(int));
-		pic = (int**)realloc(pic,(nbasins+1)*sizeof(int*));
-		npic[nbasins] = seedFillByMaskedBits(i,&(pic[nbasins]),(1<<nbits)-1,bitmask,nbasins<<shift,nudata);
-		nbasins++;
+        pic.push_back(vector<int>());
+		seedFillByMaskedBits(i, pic.back(), (1<<nbits)-1, bitmask, (pic.size()-1) << shift, nudata);
 	}
-	free(data); data=nudata;
+	data = nudata;
 	isclassified = true;
 }
 
 void ClassifyImage::findObjectsByHigherBits(int nbits) {
-	if(npic) free(npic);
-	for(int i=0; i<nbasins; i++) {if(pic[i]) free(pic[i]);}
-	if(pic) free(pic);
+	pic.clear();
 	
 	shift = nbits;
-	nbasins=0;
-	npic = (int*)malloc(sizeof(int));
-	pic = (int**)malloc(sizeof(int*));
-	unsigned int bitmask = 0xFFFFFFFF << shift;
-	
-	int* nudata = (int*)malloc(size*sizeof(int));
-	memset(nudata,0xFF,size*sizeof(int));
+    unsigned int bitmask =   0xFFFFFFFF << shift;
+	vector<int> nudata(size, 0xFFFFFFFF);
 	
 	for(int i=0; i<size; i++) {
 		if(nudata[i] != 0xFFFFFFFF) continue; //already been claimed
-		npic = (int*)realloc(npic,(nbasins+1)*sizeof(int));
-		pic = (int**)realloc(pic,(nbasins+1)*sizeof(int*));
-		npic[nbasins] = seedFillByMaskedBits(i,&(pic[nbasins]),bitmask,bitmask,nbasins<<shift,nudata);
-		nbasins++;
+        pic.push_back(vector<int>());
+		seedFillByMaskedBits(i, pic.back(), bitmask, bitmask, (pic.size()-1) << shift, nudata);
 	}
-	free(data); data=nudata;
+	data = nudata;
 	isclassified = true;
 }
 
-int ClassifyImage::seedFillByMaskedBits(int startp, int** pout, int searchmask, int setmask, int setnum, int* nudata) {
-	
-	using namespace std;
+void ClassifyImage::seedFillByMaskedBits(int startp, vector<int>& pout, int searchmask, int setmask, int setnum, vector<int>& nudata) {
 	setnum &= setmask; //make sure we don't set unmasked bits
 	unsigned int ptype = data[startp] & searchmask; //point type we are searching for
 	nudata[startp] = (data[startp] & ~setmask) | setnum; //mark starting point
-	
-	vector <int> points;
-	vector <int> allpoints;
+	assert(nudata.size() == data.size());
+    
+	vector<int> points;
 	points.push_back(startp);
 	
 	while(points.size()) {
 		int p = points.back();
 		points.pop_back();
-		allpoints.push_back(p);
+		pout.push_back(p);
 		int x0=p%width;
 		int y0=p/width;
 		for(int q=0; q<connectn; q++)
@@ -283,95 +224,50 @@ int ClassifyImage::seedFillByMaskedBits(int startp, int** pout, int searchmask, 
 			nudata[p1] = (data[p1] & ~setmask) | setnum;
 		}
 	}
-	
-	*pout = (int*)malloc(allpoints.size()*sizeof(int));
-	int i=0;
-	while(allpoints.size()) {
-		(*pout)[i++]=allpoints.back();
-		allpoints.pop_back();
-	}
-	return i;
 }
 
 void ClassifyImage::calcstats() {
+	printf("Calculating region statistics... "); fflush(stdout);
+    
+	stats.resize(pic.size());
 	
-	if(stats) {
-		for(int i=0; i<nbasins; i++) {if(stats[i]) free(stats[i]);}
-		free(stats);
-	}
-	
-	stats = (BasinStat**)malloc(nbasins*sizeof(BasinStat*));
-	
-	for(int i=0; i<nbasins; i++) {
-		
-		stats[i] = new BasinStat;
-		stats[i]->idnum = i;
-		stats[i]->npic = npic[i];
-		stats[i]->xsum=0;
-		stats[i]->xxsum=0;
-		stats[i]->ysum=0;
-		stats[i]->yysum=0;
+	for(int i=0; i<pic.size(); i++) {
+        stats[i].idnum = i;
+		stats[i].npic = pic[i].size();
+		stats[i].xsum=0;
+		stats[i].xxsum=0;
+		stats[i].ysum=0;
+		stats[i].yysum=0;
 		
 		int p;
 		float x,y;
-		for(int j=0; j<npic[i]; j++) {
+		for(int j=0; j<pic[i].size(); j++) {
 			p = pic[i][j];
 			x=(float)(p%width); y=(float)(p/width);
-			stats[i]->xsum += x;
-			stats[i]->xxsum += x*x;
-			stats[i]->ysum += y;
-			stats[i]->yysum += y*y;
+			stats[i].xsum += x;
+			stats[i].xxsum += x*x;
+			stats[i].ysum += y;
+			stats[i].yysum += y*y;
 		}
-
 	}
 	
 	printf(" Done.\n");
 }
 
-Pointset* ClassifyImage::mutualboundary(int a, int b) {
-	Pointset* ps = new Pointset();
-	ps->additems(bounds[a],nbounds[a]);
-	Pointset bbound = Pointset();
-	bbound.additems(bounds[b],nbounds[b]);
-	ps->intersect(&bbound);
-	return ps;
-}
-
-void ClassifyImage::cleardata() {
-	
-	printf("Clearing outdated data...");
-	fflush(stdout);
-	
-	if(nbounds) {free(nbounds); nbounds=NULL;}
-	if(bounds) {
-		for(int i=0; i<nbasins; i++) {free(bounds[i]); bounds[i]=NULL;}
-		free(bounds); bounds=NULL;
-	}
-	
-	if(stats) {
-		for(int i=0; i<nbasins; i++) if(stats[i]) delete(stats[i]);
-		free(stats); stats=NULL;
-	}
-	if(markedregion) {free(markedregion); markedregion=NULL;}
-	
-	if(cg) {delete(cg); cg=NULL;}
-}
-
-void ClassifyImage::connectivitygraph(){
+void ClassifyImage::connectivitygraph() {
 	
 	if(hasconnectivity) return;
 	
 	printf("Determining connectivity graph... ");
 	fflush(stdout);
-	cg = new SparseInt(nbasins,nbasins);
+	cg = new SparseInt(pic.size(),pic.size());
 	
 	for(int i=0; i<size; i++){
-		Pointset* foo = boundswho(i);
-		for(int j=0; j<foo->nitems; j++) cg->set(data[i] >> shift,foo->getitem(j),1);
-		delete(foo);
+		set<int> foo = boundswho(i);
+		for(auto it = foo.begin(); it != foo.end(); it++) cg->set(data[i] >> shift, *it, 1);
 	}
 	
-	for(int i=0; i<nbasins; i++) cg->set((int)i,i,0);
+	for(int i=0; i<pic.size(); i++) cg->set((int)i,i,0);
 	
 	hasconnectivity=true;
 	printf("Done.\n");
@@ -381,16 +277,14 @@ void ClassifyImage::connectivitygraph(){
 void ClassifyImage::joinregions(int a, int b, bool dobounds) { //merge region b into a
 	
 	if(!hasboundaries && dobounds) findboundaries();
-	if(a>=nbasins || b>=nbasins || a==b) return; //oops! one of the basins doesn't exist
+	if(a>=pic.size() || b>=pic.size() || a==b) return; //oops! one of the basins doesn't exist
 	
 	//assign points to correct class
-	pic[a]=(int*)realloc(pic[a],(npic[a]+npic[b])*sizeof(int));
-	for(int i=0; i<npic[b]; i++) {
-		pic[a][npic[a]+i]=pic[b][i];
+	pic[a].insert(pic[a].begin(), pic[b].begin(), pic[b].end());
+	for(int i=0; i<pic[b].size(); i++) {
 		data[pic[b][i]] = (a << shift) + (data[pic[b][i]] & (1<<shift)-1); //preserve b low bits
 	}
-	npic[a]=npic[a]+npic[b];
-	npic[b]=0;
+	pic[b].clear();
 	
 	//fix RAG: connect b's neighbors to a
 	int* connectedrs;
@@ -410,52 +304,46 @@ void ClassifyImage::joinregions(int a, int b, bool dobounds) { //merge region b 
 	free(connectedrs); free(connectedvs);
 	
 	//fix basin statistics
-	if(stats[b]->basinmin < stats[a]->basinmin) stats[a]->basinmin=stats[b]->basinmin;
-	stats[a]->xsum += stats[b]->xsum;
-	stats[a]->xxsum += stats[b]->xxsum;
-	stats[a]->ysum += stats[b]->ysum;
-	stats[a]->yysum += stats[b]->yysum;
-	stats[a]->zsum += stats[b]->zsum;
-	stats[a]->zzsum += stats[b]->zzsum;
+	if(stats[b].basinmin < stats[a].basinmin) stats[a].basinmin=stats[b].basinmin;
+	stats[a].xsum += stats[b].xsum;
+	stats[a].xxsum += stats[b].xxsum;
+	stats[a].ysum += stats[b].ysum;
+	stats[a].yysum += stats[b].yysum;
+	stats[a].zsum += stats[b].zsum;
+	stats[a].zzsum += stats[b].zzsum;
 	
 	if(!dobounds) return;
 	
 	//fix boundary
 	bool* isbound = (bool*)calloc(size,sizeof(bool));
-	for(int i=0; i<nbounds[a]; i++) isbound[bounds[a][i]]=true;
-	for(int i=0; i<nbounds[b]; i++) {
-		Pointset* f = boundswho(bounds[b][i]);
-		if(f->nitems >= 2) isbound[bounds[b][i]]=true; //it's a boundary
+    assert(isbound);
+	for(int i=0; i<bounds[a].size(); i++) isbound[bounds[a][i]]=true;
+	for(int i=0; i<bounds[b].size(); i++) {
+		set<int> f = boundswho(bounds[b][i]);
+		if(f.size() >= 2) isbound[bounds[b][i]]=true; //it's a boundary
 		else isbound[bounds[b][i]]=false;
-		delete(f);
 	}
 	
-	int* newbnds = (int*)malloc(size*sizeof(int));
-	int nnewbnds=0;
-	for(int i=0; i<nbounds[a]; i++) {
+	vector<int> newbnds(size);
+	for(int i=0; i<bounds[a].size(); i++) {
 		if(isbound[bounds[a][i]]) {
-			newbnds[nnewbnds]=bounds[a][i];
-			nnewbnds++;
+			newbnds.push_back(bounds[a][i]);
 			isbound[bounds[a][i]]=false;
 		}
 	}
-	for(int i=0; i<nbounds[b]; i++) {
+	for(int i=0; i<bounds[b].size(); i++) {
 		if(isbound[bounds[b][i]]) {
-			newbnds[nnewbnds]=bounds[b][i];
-			nnewbnds++;
+			newbnds.push_back(bounds[b][i]);
 		}
 	}
 	free(isbound);
-	free(bounds[b]); bounds[b]=NULL;
-	nbounds[b]=0;
-	free(bounds[a]);
-	bounds[a]=(int*)realloc(newbnds,nnewbnds);
-	nbounds[a]=nnewbnds;
+	bounds[b].clear();
+    bounds[a] = newbnds;
 }
 
-Pointset* ClassifyImage::boundswho(int p) { //check which regions a point is a boundary for
+set<int> ClassifyImage::boundswho(int p) { //check which regions a point is a boundary for
 	
-	Pointset* bounders = new Pointset();
+	set<int> bounders;
 	int x=p%width;
 	int y=p/width;
 	
@@ -464,7 +352,7 @@ Pointset* ClassifyImage::boundswho(int p) { //check which regions a point is a b
 		if(j == -1 || j == width) continue; //edge
 		int k=y+connectdy[i];
 		if(k == -1 || k == height || connectr2[i]==0) continue; //edge or center 
-		bounders->additem(data[j+width*k] >> shift);
+		bounders.insert(data[j+width*k] >> shift);
 	}
 	
 	return bounders;
@@ -477,37 +365,33 @@ void ClassifyImage::findboundaries() {
 	printf("Finding classification boundaries...");
 	fflush(stdout);
 	
-	nbounds=(int*)calloc(nbasins,sizeof(int));
-	bounds=(int**)malloc(nbasins*sizeof(int*));
 	
-	Pointset** adjacents = (Pointset**)malloc(size*sizeof(Pointset*));
-	
-	//count the boundaries
+
+    //count the boundaries
+	vector< set<int> > adjacents(size);
+    vector<int> nbounds(pic.size());
 	for(int i=0; i<size; i++) {
-		//adjacents[i]=boundswho(i,true);
 		adjacents[i] = boundswho(i);
-		if(adjacents[i]->nitems>=2) { //it's a boundary!
-			for(int j=0; j<adjacents[i]->nitems; j++) nbounds[adjacents[i]->getitem(j)]++;
+		if(adjacents[i].size() >= 2) { //it's a boundary!
+			for(auto it  = adjacents[i].begin(); it != adjacents[i].end(); it++) nbounds[*it]++;
 		}
 	}
 	
-	for(int m=0; m<nbasins; m++) bounds[m]=(int*)malloc(nbounds[m]*sizeof(int));
-	int* tnbounds=(int*)calloc(nbasins,sizeof(int));
-	
+    bounds.resize(pic.size());
+	for(int m=0; m<pic.size(); m++) bounds[m].resize(nbounds[m]);
+	vector<int> tnbounds(pic.size());
+    
 	for(int i=0; i<size; i++) {
-		if(adjacents[i]->nitems >=2) { //it's a boundary!
-			for(int j=0; j<adjacents[i]->nitems; j++) {
-				int qqq = adjacents[i]->getitem(j);
+		if(adjacents[i].size() >=2) { //it's a boundary!
+			for(auto it  = adjacents[i].begin(); it != adjacents[i].end(); it++) {
+				int qqq = *it;
 				int rrr = tnbounds[qqq];
-				bounds[qqq][rrr]=i;
+				bounds[qqq][rrr] = i;
 				tnbounds[qqq]++;
 			}
 		}
 	}
 	
-	for(int i=0; i<size; i++) delete(adjacents[i]);
-	free(adjacents); adjacents=NULL;
-	free(tnbounds); tnbounds=NULL;
 	hasboundaries=true;
 	calcstats();
 	printf("Done.\n");
@@ -523,34 +407,34 @@ void ClassifyImage::settempstat(unsigned int n)
 {
 	if(n==0 || n>14) return;
 	bstofarr q;
-	for(int k=0; k<nbasins; k++)
+	for(int k=0; k<pic.size(); k++)
 	{
-		q.b = *stats[k];
-		stats[k]->temp = q.a[n-1];
+		q.b = stats[k];
+		stats[k].temp = q.a[n-1];
 	}
 }
 
-void ClassifyImage::circularity(){ //calculate circularity of each region
-	if(!stats) calcstats();
-	for(int i=0; i<nbasins; i++) {
-		Circle c = findboundingcirc(pic[i],npic[i]);
-		stats[i]->temp = npic[i]/(3.14159*c.r*c.r);
+void ClassifyImage::circularity() { //calculate circularity of each region
+	if(stats.size() != pic.size()) calcstats();
+	for(int i=0; i<pic.size(); i++) {
+		Circle c = findboundingcirc(pic[i].data(), pic[i].size());
+		stats[i].temp = pic[i].size()/(3.14159*c.r*c.r);
 	}
 }
 
 void ClassifyImage::random(){ //assign random number in [0,1] to temp stat
-	if(!stats) calcstats();
-	for(int i=0; i<nbasins; i++) {
-		stats[i]->temp = (float)rand()/((float)RAND_MAX);
+	if(stats.size() != pic.size()) calcstats();
+	for(int i=0; i<pic.size(); i++) {
+		stats[i].temp = (float)rand()/((float)RAND_MAX);
 	}
 }
 
 /* void ClassifyImage::angularity(){ //calculate circularity of each region
-	if(!stats) calcstats();
-	for(int i=0; i<nbasins; i++) {
-		if(npic[i]>1000) {stats[i]->temp = 1.5; continue;}
+	if(stats.size() != pic.size()) calcstats();
+	for(int i=0; i<pic.size(); i++) {
+		if(pic[i].size()>1000) {stats[i].temp = 1.5; continue;}
 		ClassifyImage* foo = extractbinarychunkmask(i,15);
-		Circle c = findboundingcirc(pic[i],npic[i]);
+		Circle c = findboundingcirc(pic[i],pic[i].size());
 		ClassifyImage* bar = foo->circleopening((int)(1+0.5*c.r));
 		float np1 = 0;
 		for(int q=0; q<bar->size; q++) np1 += (bar->data[q] & 0x1);
@@ -562,144 +446,77 @@ void ClassifyImage::random(){ //assign random number in [0,1] to temp stat
 		delete(baz);
 		delete(foo);
 
-		stats[i]->temp = (float)(np2-np1)/(float)npic[i];
+		stats[i].temp = (float)(np2-np1)/(float)pic[i].size();
 	}
 } */
 
-void ClassifyImage::markedregionstopoi() {
-	if(poi) {free(poi); poi=NULL;}
-	npoi=0;
-	for(int i=0; i<nbasins; i++){
-		if(markedregion[i]) {
-			addregiontopoi(i);
-		}
-	}
-}
-
 void ClassifyImage::labelboundaries(int c) {
 	if(!hasboundaries) findboundaries();
-	for(int i=0; i<nbasins; i++){
-		for(int j=0; j<nbounds[i]; j++) {
-			data[bounds[i][j]] = c << shift;
+	for(auto it = bounds.begin(); it != bounds.end(); it++){
+		for(auto it2 = it->begin(); it2 != it->end(); it++) {
+			data[*it2] = c << shift;
 		}
 	}
 };
 
-void ClassifyImage::renumerate() 
-{
-	printf("Re-enumerating basins: Freeing old data;");
+void ClassifyImage::renumerate() {
+	printf("Re-enumerating basins;");
 	fflush(stdout);
 	
-	if(npic != NULL) {free(npic); npic=NULL;}
-	
-	if(pic != NULL) {
-		for(int i=0; i<nbasins; i++) {if(pic[i] != NULL) {free(pic[i]); pic[i]=NULL;}}
-		free(pic); pic=NULL;
+	map<int,int> renum;
+    pic.clear();
+	for(int i=0; i<size; i++) {
+        auto it = renum.find(data[i] >> shift);
+        if(it == renum.end()) {
+            it = renum.insert(std::pair<int,int>(data[i] >> shift, pic.size())).first;
+            pic.push_back(vector<int>());
+        }
+        data[i] = (it->second << shift) + (data[i] & (1<<shift)-1); // assign to category, preserving lower bits
+        pic[it->second].push_back(i);
 	}
 	
-	printf(" renumbering;");
-	fflush(stdout);
+	printf(" %zu basins found; Done.\n", pic.size());
 	
-	npic = (int*)calloc(size,sizeof(int));
-	int* renum = (int*)malloc(size*sizeof(int));
-	for(int i=0; i<size; i++) renum[i]=-1;
-	nbasins=0;
-	for(int i=0; i<size; i++){
-		if(renum[data[i] >> shift]!=-1) { 
-			data[i] = (renum[data[i] >> shift] << shift) + (data[i] & (1<<shift)-1);
-			npic[data[i] >> shift]++;
-			continue; 
-		}
-		renum[data[i] >> shift] = nbasins;
-		data[i] = (nbasins << shift) + (data[i] & (1<<shift)-1);
-		npic[nbasins++]++;
-	}
-	free(renum); renum=NULL;
-	npic = (int*)realloc(npic,nbasins*sizeof(int));
-	
-	printf(" %i basins found. Creating point class lists;",nbasins);
-	fflush(stdout);
-	
-	//create point class lists
-	int* npict = (int*)calloc(nbasins,sizeof(int));
-	pic = (int**)malloc(nbasins*sizeof(int*));
-	for(int i=0; i<nbasins; i++) pic[i] = (int*)malloc(npic[i]*sizeof(int));
-	for(int i=0; i<size; i++) pic[data[i]>>shift][npict[data[i]>>shift]++]=i;
-	free(npict); npict=NULL;
-	
-	printf(" Done.\n");
-	
-	//deal with boundaries, connectivity
-	hasboundaries=false; //this messes up the boundary lists... could fix, but easy to recompute
-	hasconnectivity=false;
-	cleardata();
-	markedregion = (bool*)calloc(nbasins,sizeof(bool));
+    // this messes up the boundary lists... could fix, but easy to recompute
+	hasboundaries=false;
+    hasconnectivity=false;
+    bounds.clear();
+    stats.clear();
+    if(cg) { delete(cg); cg=NULL; }
 };
 
-void ClassifyImage::renumerateWithKey(int andkey) 
-{
-	printf("Re-enumerating basins: Freeing old data;");
+void ClassifyImage::renumerateWithKey(int andkey) {
+	printf("Re-enumerating basins with key %i;", andkey);
 	fflush(stdout);
 	
-	if(npic != NULL) {free(npic); npic=NULL;}
-	
-	if(pic != NULL) {
-		for(int i=0; i<nbasins; i++) {if(pic[i] != NULL) {free(pic[i]); pic[i]=NULL;}}
-		free(pic); pic=NULL;
-	}
-	
-	printf(" renumbering;");
-	fflush(stdout);
-	
-	npic = (int*)calloc(size,sizeof(int));
-	int* renum = (int*)malloc(size*sizeof(int));
-	for(int i=0; i<size; i++) renum[i]=-1;
-	nbasins=1;
-	
-	
+	map<int,int> renum;
+    pic.clear();
+    pic.push_back(vector<int>());
 	for(int i=0; i<size; i++){
-		if(!(data[i] & andkey))
-		{
-			data[i] = 0x0 + (data[i] & (1<<shift)-1);
-			npic[0]++;
+        if(!(data[i] & andkey)) {	// assign events not matching any bits to category 0
+			data[i] = 0x0 + (data[i] & (1<<shift)-1); // assign to category 0, preserving lower bits.
+			pic[0].push_back(i);
 			continue;
 		}
-		if(renum[data[i] >> shift]!=-1) { 
-			data[i] = (renum[data[i] >> shift] << shift) + (data[i] & (1<<shift)-1);
-			npic[data[i] >> shift]++;
-			continue; 
-		}
-		renum[data[i] >> shift] = nbasins;
-		data[i] = (nbasins << shift) + (data[i] & (1<<shift)-1);
-		npic[nbasins++]++;
+        auto it = renum.find(data[i] >> shift);
+        if(it == renum.end()) {
+            it = renum.insert(std::pair<int,int>(data[i] >> shift, pic.size())).first;
+            pic.push_back(vector<int>());
+        }
+        data[i] = (it->second << shift) + (data[i] & (1<<shift)-1); // assign to category, preserving lower bits
+        pic[it->second].push_back(i);
 	}
-	free(renum); renum=NULL;
-	npic = (int*)realloc(npic,nbasins*sizeof(int));
 	
-	printf(" %i basins found. Creating point class lists;",nbasins);
-	fflush(stdout);
-	
-	//create point class lists
-	int* npict = (int*)calloc(nbasins,sizeof(int));
-	pic = (int**)malloc(nbasins*sizeof(int*));
-	for(int i=0; i<nbasins; i++) pic[i] = (int*)malloc(npic[i]*sizeof(int));
-	for(int i=0; i<size; i++) pic[data[i]>>shift][npict[data[i]>>shift]++]=i;
-	free(npict); npict=NULL;
-	
-	printf(" Done.\n");
-	
-	//deal with boundaries, connectivity
-	hasboundaries=false; //this messes up the boundary lists... could fix, but easy to recompute
+    printf(" %zu basins found; Done.\n", pic.size());
+   	
+    //this messes up the boundary lists... could fix, but easy to recompute
+	hasboundaries=false;
 	hasconnectivity=false;
-	cleardata();
-	markedregion = (bool*)calloc(nbasins,sizeof(bool));
+    bounds.clear();
+    stats.clear();
+    if(cg) { delete(cg); cg=NULL; }
 };
 
-void ClassifyImage::addregiontopoi(int n){
-	if(!poi) {
-		npoi = 0;
-		poi=(int*)malloc(npic[n]*sizeof(int));
-	} else poi=(int*)realloc(poi,(npoi+npic[n])*sizeof(int));
-	for(int i=0; i<npic[n]; i++) poi[npoi+i]=pic[n][i];
-	npoi+=npic[n];
+void ClassifyImage::addregiontopoi(int n) {
+    poi.insert(poi.end(), pic[n].begin(), pic[n].end());
 };

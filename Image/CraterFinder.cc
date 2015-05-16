@@ -29,6 +29,7 @@
 
 #include <string>
 using std::string;
+#include <cassert>
 
 int comparestatbytemp(const void* a, const void* b) { //for qsort by average z
 	float at = (*(BasinStat**)a)->temp;
@@ -36,8 +37,7 @@ int comparestatbytemp(const void* a, const void* b) { //for qsort by average z
 	return (int)(bt < at) - (int)(at < bt);
 };
 
-struct crawler
-{
+struct crawler {
 	int pos;
 	int own;
 	int id;
@@ -53,21 +53,16 @@ int searchx[] = {1,1,1,0};
 int searchy[] = {1,0,-1,1};
 float srmag[] = {(float)sqrt(2.0), 1, (float)sqrt(2.0), 1};
 
-void sameCrawlers(ClassifyImage* bounds, Image* topo, Image* drx, Image* dry, float minstr)
-{
-	crawler* ocs = (crawler*)calloc(bounds->size,sizeof(crawler));
-	crawler* ncs = (crawler*)calloc(bounds->size,sizeof(crawler));
-	crawler* tcp; //temporary for swapping pointers
+void sameCrawlers(ClassifyImage* bounds, Image* topo, Image* drx, Image* dry, float minstr) {
+	vector<crawler> ocs(bounds->size);
+	vector<crawler> ncs(bounds->size);
 	
-	float* dist = (float*)malloc(bounds->size*sizeof(float));
-	for(int i=0; i<bounds->size; i++) dist[i]=FLT_MAX;
-	float* rgnmx = (float*)calloc(bounds->nbasins,sizeof(float));
+	vector<float> dist(bounds->size, FLT_MAX);
+	vector<float> rgnmx(bounds->pic.size());
 	
-		
 	//set initial crawler list
 	int ncrawls = 0;
-	for(int i=0; i<bounds->size; i++)
-	{
+	for(int i=0; i<bounds->size; i++) {
 		if(!(bounds->data[i] & 0x02)) continue; //not a starting point
 		ocs[ncrawls].pos = i;
 		ocs[ncrawls].own = bounds->data[i] >> 16;
@@ -87,11 +82,9 @@ void sameCrawlers(ClassifyImage* bounds, Image* topo, Image* drx, Image* dry, fl
 	float slx,sly,sdd;
 	float dv, dz;
 	
-	while(ncrawls)
-	{
+	while(ncrawls) {
 		nnewcrawls = 0;
-		for(int i=0; i<ncrawls; i++)
-		{
+		for(int i=0; i<ncrawls; i++) {
 			if(ocs[i].id != (bounds->data[ocs[i].pos] & 0xF0)) continue; //must've been overwritten in previous step
 			if(ocs[i].strength < minstr) continue; //too much time on low slopes
 			
@@ -154,39 +147,39 @@ void sameCrawlers(ClassifyImage* bounds, Image* topo, Image* drx, Image* dry, fl
 		}
 		printf(" %i",nnewcrawls); fflush(stdout);
 		ncrawls = nnewcrawls;
-		tcp = ncs; ncs=ocs; ocs=tcp;
+        ncs.swap(ocs);
 	}
 	
 	printf(" Done.\n");
-	free(ocs); free(ncs);
-	free(dist);
 }
 
 
-int Image::findcraters(const string& basefolder, Image* msk, CraterSpec*** cspecs, float k1, float k2, float k3, float k4, float k5, float k6, float k7)
-{
-	char* tc = (char*)malloc(256*sizeof(char));
+int Image::findcraters(const string& basefolder, Image* msk, CraterSpec*** cspecs, float k1, float k2, float k3, float k4, float k5, float k6, float k7) {
+    printf("------------------- Finding craters...\n\n");
+    
+	char* tc = (char*)malloc(2048*sizeof(char)); // temporary character buffer
 	
 	int nTotalCraters = 0;
 	CraterSpec** specout = (CraterSpec**)malloc(sizeof(CraterSpec*));
-	ClassifyImage* combined;
-
-	int r;
 	
-	if(!msk)
-	{
+
+    int r;	// analysis radius; smaller on first step without mask.
+	if(!msk) {
 		msk = new Image((RectRegion*)this);
 		for(int i=0; i<size; i++) msk->data[i] = 1.0;
 		r = 5;
-	} else { r = 20; }
+	} else r = 20;
 	
-	int cycnum = 0;
-	while(r<=20)
-	{
+	int cycnum = 0; // size reduction cycle number
+	while(r <= 20) {
+        printf("Blurring for radius %i search...\n", r);
 		Image* bld = gaussianblur(r/5.0);
-		ClassifyImage* topows = ClassifyImage::watershed(bld); //topography watershed
+        
+		ClassifyImage* topows = ClassifyImage::watershed(bld); // (blurred) topography watershed
 		topows->underlying = NULL;
 		topows->underlyingstats(bld);
+        
+        printf("Calculating gradients...\n");
 		Image* drx = bld->deriv(true);
 		Image* dry = bld->deriv(false);
 		Image* grd = dry->copy()->quadratureadd(drx); //slope image
@@ -194,45 +187,41 @@ int Image::findcraters(const string& basefolder, Image* msk, CraterSpec*** cspec
 		printf("Calculating C-Transform "); fflush(stdout);
 		Image* ct = craterFindingTransform(r, msk);
 		
-		
-		printf("Finding C-Transform basins..."); fflush(stdout);
-		combined = ClassifyImage::fromCurvature(ct);
-		printf("Done.\n");
-		
-		//generate crater cores
-		combined->connectn = 4; //set to 4-connected finder
-		combined->findObjectsByLowBits(1);
-		combined->renumerateWithKey(0x01);
+		// generate crater cores (upward concave regions in C-Transform, cleaned up)
+		printf("Finding C-Transform basins: concavity map;"); fflush(stdout);
+		ClassifyImage* combined = ClassifyImage::fromCurvature(ct); // all upward-concave basins from C-Transform
+		printf(" finding cores;"); fflush(stdout);
+		combined->connectn = 4; // set to 4-connected object finder
+        combined->findObjectsByLowBits(1); // separately enumerate each crater core
+        combined->renumerateWithKey(0x1); // 
+        printf(" Done.\n");
+		// cleanup holes
 		combined->fillHoles(0x01);
 		combined->renumerateWithKey(0x01);
-		
-		//trim candidate to basins in which it contains the minima
-		for(int i=1; i<combined->nbasins; i++)
-		{
-			for(int j=0; j<combined->npic[i]; j++)
-			{
+    
+		// trim candidate to basins in which it contains the minima
+		for(int i=1; i<combined->pic.size(); i++) {
+			for(int j=0; j<combined->pic[i].size(); j++) {
 				int p = combined->pic[i][j];
-				if( combined->data[(topows->stats[topows->data[p]])->minloc] != combined->data[p]) combined->data[p]=0;
+				if( combined->data[topows->stats[topows->data[p]].minloc] != combined->data[p]) combined->data[p]=0;
 			}
 		}
 		
 		combined->renumerateWithKey(0x01);
 		
-		//unexpanded regions output files
-		sprintf(tc,"%s/unexpand_%i_%03i.bmp",basefolder.c_str(),size,r);
+		// unexpanded regions output files
+		sprintf(tc, "%s/unexpand_%i_%03i.bmp", basefolder.c_str(), size, r);
 		combined->writeLowBitBMP(tc);
 		
-		printf("Narrowing down crater candidates from %i...\n",combined->nbasins);
+		printf("Narrowing down crater candidates from %zu...\n",combined->pic.size());
 
-		//First cut: NOT TOO MUCH PREVIOUS STEP
-		for(int i=1; i<combined->nbasins; i++)
-		{
+		// First cut: NOT TOO MUCH PREVIOUS STEP
+		for(int i=1; i<combined->pic.size(); i++) {
 			float usum = 0;
-			for(int j=0; j<combined->npic[i]; j++) usum += msk->data[combined->pic[i][j]];
-			if( usum/combined->npic[i] < 0.7)
-			{
+			for(int j=0; j<combined->pic[i].size(); j++) usum += msk->data[combined->pic[i][j]];
+			if(usum/combined->pic[i].size() < 0.7) {
 				combined->andRegion(i,0x0);
-				combined->npic[i] = 0;
+				combined->pic.clear();
 				continue;
 			}
 		}
@@ -242,94 +231,95 @@ int Image::findcraters(const string& basefolder, Image* msk, CraterSpec*** cspec
 		combined->upShift(16); // reserve lower 0xFFFF for other data
 		for(int i=0; i<combined->size; i++) if(combined->data[i] & 0x01) combined->data[i] |= 0x08; //mark Original Region
 		combined->renumerateWithKey(0x01);
-		printf("Remaining crater candidates: %i.\n",combined->nbasins);
+		printf("Remaining crater candidates: %zu.\n",combined->pic.size());
 
 		//Grab whole basin
-		int* npicshadow = (int*)malloc(topows->nbasins * sizeof(int));
-		memcpy(npicshadow,topows->npic,topows->nbasins * sizeof(int));
-		for(int i=1; i<combined->nbasins; i++)
-		{
+		vector<int> npicshadow(topows->pic.size());
+        for(size_t i = 0; i < topows->pic.size(); i++) npicshadow[i] = topows->pic[i].size();
+		for(int i=1; i<combined->pic.size(); i++) {
 			int origowner = combined->data[combined->pic[i][0]] >> 16;
-			for(int j=0; j<combined->npic[i]; j++)
-			{
+			for(int j=0; j<combined->pic[i].size(); j++) {
 				int p = topows->data[combined->pic[i][j]];
-				for(int q=0; q<npicshadow[p]; q++)
-				{
+				for(int q=0; q<npicshadow[p]; q++) {
 					if((combined->data[topows->pic[p][q]] >> 16) != origowner) combined->data[topows->pic[p][q]] = (origowner << 16) | 0x01;
 				}
 				npicshadow[p] = 0;
 			}
 		}
-		free(npicshadow);
 		
 		combined->renumerateWithKey(0x01);
 		
-		//set crawler seed
+		// set crawler seeds
 		combined->underlyingstats(bld);
-		for(int i=1; i<topows->nbasins; i++) {
-			if(combined->data[topows->stats[i]->minloc]) combined->data[topows->stats[i]->minloc] |= 0x02; //mark basin minima
+		for(int i=1; i<topows->pic.size(); i++) {
+			if(combined->data[topows->stats[i].minloc]) combined->data[topows->stats[i].minloc] |= 0x02; //mark basin minima
 		}
-		sameCrawlers(combined, bld, drx, dry,pow(.10,.2*r));
+		sameCrawlers(combined, bld, drx, dry, pow(.10,.2*r));
 		combined->renumerateWithKey(0x04); //shrink basins to crawled size
 		
-		sprintf(tc,"%s/Preculling_%i_%03i.bmp",basefolder.c_str(),size,r);
-		combined->prettyoverlayimage(grd)->writeBMP(tc);
+		//sprintf(tc,"%s/Preculling_%i_%03i.bmp",basefolder.c_str(),size,r);
+		//RGBImage* preculling_overlay = combined->prettyoverlayimage(grd);
+        //preculling_overlay->writeBMP(tc);
+        //delete(preculling_overlay);
 		
-		//clear extra data from background regions
+		// clear extra data from background regions
+        printf("Clearing background data...\n");
 		for(int i=0; i<size; i++) if(!(combined->data[i] & 0xFFFF0000)) combined->data[i] = 0;
-		
-		//Clean regions
-		combined->fillHoles(0x04 | 0x08);
+        //for(int i=0; i<size; i++) if(!(combined->data[i] >> 16)) combined->data[i] = 0;
+        
+		// Clean basin regions
+        combined->fillHoles(0x04 | 0x08);
 		combined->renumerateWithKey(0x04);
 		combined->constrainSize((int)(M_PI*r*r/4),(int)(8*M_PI*(r+5)*(r+5)));
 		combined->renumerateWithKey(0x04);
 		
 		//Characterize each region
 		printf("Checking craters...");
-		specout = (CraterSpec**)realloc(specout,(nTotalCraters+combined->nbasins)*sizeof(CraterSpec*));
+		specout = (CraterSpec**)realloc(specout,(nTotalCraters+combined->pic.size())*sizeof(CraterSpec*));
 		combined->underlying = NULL;
 		combined->underlyingstats(this);
 		int nNewCraters = 0;
-		for(int i=1; i<combined->nbasins; i++)
+		for(int i=1; i<combined->pic.size(); i++)
 		{
 			CraterSpec* c = new CraterSpec(0);
-			float invnpts = 1.0/combined->npic[i];
-			c->x = invnpts * combined->stats[i]->xsum;
-			c->y = invnpts * combined->stats[i]->ysum;
+			float invnpts = 1.0/combined->pic[i].size();
+			c->x = invnpts * combined->stats[i].xsum;
+			c->y = invnpts * combined->stats[i].ysum;
 			c->area = 1.0/invnpts;
-			c->hipt = combined->stats[i]->basinmax;
-			c->lowpt = combined->stats[i]->basinmin;
+			c->hipt = combined->stats[i].basinmax;
+			c->lowpt = combined->stats[i].basinmin;
 			c->depth = c->hipt - c->lowpt;
 			c->r = sqrt(c->area/M_PI);
-			radialFourier(c->x,c->y,combined->pic[i], combined->npic[i], (float*)NULL, &(c->xsft), &(c->ysft), 10);
-			radialFourier(c->x,c->y,combined->pic[i], combined->npic[i], drx, &(c->grxxsft), &(c->grxysft), 10);
-			radialFourier(c->x,c->y,combined->pic[i], combined->npic[i], dry, &(c->gryxsft), &(c->gryysft), 10);
+			radialFourier(c->x, c->y, combined->pic[i].data(), combined->pic[i].size(), (float*)NULL, &(c->xsft), &(c->ysft), 10);
+			radialFourier(c->x, c->y, combined->pic[i].data(), combined->pic[i].size(), drx, &(c->grxxsft), &(c->grxysft), 10);
+			radialFourier(c->x, c->y, combined->pic[i].data(), combined->pic[i].size(), dry, &(c->gryxsft), &(c->gryysft), 10);
 			
-			fourierDeviations(c->x,c->y,combined->pic[i], combined->npic[i], c->xsft, c->ysft, &c->deviation, 7);
-			bool passed = true;
+			fourierDeviations(c->x, c->y, combined->pic[i].data(), combined->pic[i].size(), c->xsft, c->ysft, &c->deviation, 7);
+			bool passed = false;
 			
 			do {
 				//basic outer shape test
-				if(sqrt(c->xsft[2]*c->xsft[2]+c->ysft[2]*c->ysft[2]) > k1*c->xsft[0]) { passed = false; break; } //too skinny? k1 default 0.25
-				if(sqrt(c->xsft[3]*c->xsft[3]+c->ysft[3]*c->ysft[3]) > k2*c->xsft[0]) { passed = false; break; } //too lumpy? k2 default 0.10
+				if(sqrt(c->xsft[2]*c->xsft[2]+c->ysft[2]*c->ysft[2]) > k1*c->xsft[0]) break; //too skinny? k1 default 0.25
+				if(sqrt(c->xsft[3]*c->xsft[3]+c->ysft[3]*c->ysft[3]) > k2*c->xsft[0]) break; //too lumpy? k2 default 0.10
 				
 				//shape deviation test
-				if(c->deviation[1] > k3) { passed = false; break; } // k3 0.06
-				if(c->deviation[2] > k4) { passed = false; break; } // k4 0.02
+				if(c->deviation[1] > k3) break; // k3 0.06
+				if(c->deviation[2] > k4) break; // k4 0.02
 				
 				//gradient fourier test
 				//if(c->grxxsft[1] > 0 || c->gryysft[1] > 0) { passed = false; break; }
 				float xymx = std::max(fabs(c->grxxsft[1]),fabs(c->gryysft[1]));
 				float xymn = std::min(fabs(c->grxxsft[1]),fabs(c->gryysft[1]));
-				if(xymn/xymx < k5) { passed = false; break; } //x-y balance k5 0.5
+				if(xymn/xymx < k5) break; //x-y balance k5 0.5
 				
 				float primarycomponent = sqrt(c->grxxsft[1]*c->grxxsft[1]+c->gryysft[1]*c->gryysft[1]);
 				
 				float gr1 = sqrt(c->grxysft[1]*c->grxysft[1]+c->gryxsft[1]*c->gryxsft[1]);
-				if(gr1 > k6*primarycomponent) { passed = false; break; } //too large 1st component k6 0.33
+				if(gr1 > k6*primarycomponent) break; //too large 1st component k6 0.33
 				float gr2 = sqrt(c->grxysft[2]*c->grxysft[2] + c->gryxsft[2]*c->gryxsft[2] + c->grxxsft[2]*c->grxxsft[2] + c->gryysft[2]*c->gryysft[2]);
-				if(gr2 > k7*primarycomponent) { passed = false; break; } //too large 2nd component k7 0.33
+				if(gr2 > k7*primarycomponent) break; //too large 2nd component k7 0.33
 				
+                passed = true;
 				
 			} while (0);
 				
@@ -349,7 +339,7 @@ int Image::findcraters(const string& basefolder, Image* msk, CraterSpec*** cspec
 			}
 		}
 		nTotalCraters += nNewCraters;
-		printf(" Done.\n");
+		printf("\nCraterfinding cycle done; cleaning up.\n\n");
 		
 		specout = (CraterSpec**)realloc(specout,nTotalCraters*sizeof(CraterSpec*));
 		
@@ -362,14 +352,12 @@ int Image::findcraters(const string& basefolder, Image* msk, CraterSpec*** cspec
 	}
 	
 	
-	
-	
+	printf("Craterfinding done; saving output.\n");
 	
 	
 	int nmycraters = nTotalCraters;
 
-	if(width > 40 && height > 40)
-	{
+	if(width > 40 && height > 40) {
 		Image* rd = reduce();
 		Image* md = msk->reduce();
 		CraterSpec** newcrats;
@@ -381,8 +369,7 @@ int Image::findcraters(const string& basefolder, Image* msk, CraterSpec*** cspec
 	}
 
 	 //return cspecs or write to catalog / final image
-	if(cspecs)
-	{
+	if(cspecs) {
 		//fix crater coordinates for this size level
 		for(int i=0; i<nmycraters; i++)
 		{
@@ -400,6 +387,8 @@ int Image::findcraters(const string& basefolder, Image* msk, CraterSpec*** cspec
 		*cspecs = specout;
 	}
 	else {
+        printf("Final output image...\n");
+        
 		//final output image and layer images
 		RGBImage* finalout = RGBImage::renderTopo(this);
 		int nlayers = 0;

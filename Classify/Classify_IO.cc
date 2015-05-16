@@ -23,18 +23,6 @@
 #include "Image.hh"
 #include "RGBImage.hh"
 
-Image* ClassifyImage::markimage() {
-	Image* foo = new Image(width,height);
-	for(int i=0; i<nbasins; i++){
-		if(markedregion[i]){
-			for(int j=0; j<npic[i]; j++) {
-				foo->data[pic[i][j]]=1.0;
-			}
-		}
-	}
-	return foo;
-};
-
 RGBImage* ClassifyImage::prettyImage() {
 	Image* CI = recolorize(1,13);
 	RGBImage* C = new RGBImage(CI);
@@ -56,32 +44,26 @@ RGBImage* ClassifyImage::colorbytemp() {
 }
 
 
-RGBImage* ClassifyImage::prettyoverlayimage(Image* under) {
+RGBImage* ClassifyImage::prettyoverlayimage(Image* under, bool shadebound) {
 	RGBImage* C = new RGBImage(under);
 	C->copyfromrr((RectRegion*)this);
 	Image* BI = fourboundaryimage();
-	Image* MI = markimage();
 	Image* NI = new Image(width,height);
-	C->overlay(MI,1,0,1,0.5);
 	C->overlay(BI,0,0,0,0.6);
 	C->overlay(NI,1,1,1,1.0);
-	if(badimg) C->shadeby(BI);
+	if(shadebound) C->shadeby(BI);
 	delete(BI);
-	delete(MI);
 	delete(NI);
 	return C;
 };
 
-RGBImage* ClassifyImage::prettyoverlayimage(RGBImage* C) {
+RGBImage* ClassifyImage::prettyoverlayimage(RGBImage* C, bool shadebound) {
 	Image* BI = fourboundaryimage();
-	Image* MI = markimage();
 	Image* NI = new Image(width,height);
-	C->overlay(MI,1,0,1,0.5);
 	C->overlay(BI,0,0,0,0.6);
 	C->overlay(NI,1,1,1,1.0);
-	if(badimg) C->shadeby(BI);
+	if(shadebound) C->shadeby(BI);
 	delete(BI);
-	delete(MI);
 	delete(NI);
 	return C;
 };
@@ -107,7 +89,7 @@ void ClassifyImage::loadarcgis(const string& ifname) {
 	
 	int ndata=0;
 	int nlines=0;
-	data = (int*)malloc(size*sizeof(int));
+	data.resize(size);
 	
 	while(fgets(linebuffer,50000,ifp) && ndata<size){
 		nlines++;
