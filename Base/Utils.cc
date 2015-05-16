@@ -92,19 +92,19 @@ float* moments(float* d, int size, int n) { //calculate the first n moments of d
 	for(int i=0; i<n-1; i++) {free(v[i]); v[i]=NULL;}
 	free(v); v=NULL;
 	return m;
-};
+}
 
 float mean(float* data, int n){
 	float t=0;
 	for(int i=0; i<n; i++) t+=data[i];
 	return t/n;
-};
+}
 
 float variance(float* data, int n, float mu) {
 	float t=0;
 	for(int i=0; i<n; i++) t+=(data[i]-mu)*(data[i]-mu);
 	return t/n;
-};
+}
 
 /* //divide n datapoints into 2 clumps to as to minimize variance from clump means; return dividing line position
 int dividinglines(float* data, int n){
@@ -312,11 +312,11 @@ Matrix* Matrix::comat(unsigned i, unsigned j)
 {
 	Matrix* M = new Matrix(cols-1,rows-1);
 	
-	int rr=0;
-	for(int r=0; r<rows; r++) {
+	unsigned int rr=0;
+	for(unsigned int r=0; r<(unsigned int)rows; r++) {
 		if(r==i) continue;
 		int cc=0;
-		for(int c=0; c<cols; c++) {
+		for(unsigned int c=0; c<(unsigned int)cols; c++) {
 			if(c==j) continue;
 			(*M)(rr,cc)=operator()(r,c);
 			cc++;
@@ -497,14 +497,14 @@ Minimizer::Minimizer( float* params, float* lbound, float* ubound, int nparams, 
 	printf("]\n\t[ ");
 	for(int i=0; i<n; i++) printf("%.4g ",dv[i]);
 	printf("]\n");
-};
+}
 
 Minimizer::~Minimizer() {
 	free(derivs);
 	for(int i=0; i<n; i++) free(sderivs[i]);
 	free(sderivs);
 	free(dv);
-};
+}
 
 bool Minimizer::fitstep() { //slow, robust method?
 	
@@ -701,7 +701,7 @@ void Minimizer::calcderivs() {
 	free(v0);
 	free(v1);
 	free(v2);
-};
+}
 
 void Minimizer::calcsderivs() {
 	float* v0 = (float*)malloc(n*sizeof(float));
@@ -744,7 +744,7 @@ void Minimizer::calcsderivs() {
 	free(v1);
 	free(v2);
 	free(v3);
-};
+}
 
 ProgressBar::ProgressBar(int l)
 {

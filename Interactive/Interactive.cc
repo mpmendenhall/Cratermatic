@@ -23,6 +23,8 @@
 #include "Utils.hh"
 #include <iostream>
 #include <sstream>
+#include <string.h>
+#include <cassert>
 
 //Error codes:
 // 0  too few stack items
@@ -40,7 +42,7 @@ Action::Action(): description("Null action; it does NOTHING!") {
 	ninputs = 0; //stack inputs
 	mystack = NULL;
 	myinteractor = NULL;
-};
+}
 
 void Action::addname(const string& c) {
 	if(!commandnames.size()) name = c;
@@ -66,7 +68,7 @@ void Action::DoIt() {
 void Action::printinfo(int depth) {
 	for(int d=0; d<depth; d++) printf("\t");
 	printf("- %s",commandnames[0].c_str());
-	for(int i=1; i < commandnames.size(); i++) printf(", %s",commandnames[i].c_str());
+	for(size_t i=1; i < commandnames.size(); i++) printf(", %s",commandnames[i].c_str());
 	printf(": %s",description.c_str());
 	if(ninputs == 1) printf(" [1 argument]");
 	if(ninputs > 1) printf(" [%i arguments]",ninputs);
@@ -163,7 +165,7 @@ void Interactor::rprinthelp(const string& topic, int depth) {
 	}
 	
 	for(auto ita = actions.begin(); ita != actions.end(); ita++)
-		for(int j=0; j<(*ita)->commandnames.size(); j++)
+            for(size_t j=0; j<(*ita)->commandnames.size(); j++)
             if((*ita)->commandnames[j] == topic) (*ita)->printinfo(depth+1);
 	for(auto itc=categories.begin(); itc!=categories.end(); itc++) (*itc)->rprinthelp(topic,depth+1);
 }
@@ -399,7 +401,7 @@ void Interactor::interactiveMode() {
 		} else {
 			printf("  ...  > ");
 		}
-		fgets(ib,900,stdin);
+		assert(fgets(ib,900,stdin));
 		printf("\n");
 		parseCommand(ib);
 	}

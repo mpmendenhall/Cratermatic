@@ -23,7 +23,7 @@
 #include "Utils.hh"
 
 Image* Image::drawmarks(const vector<ImageMark>& m, float c) {
-	for(int i=0; i<m.size(); i++) {
+	for(size_t i=0; i<m.size(); i++) {
 		if(m[i].type==ImageMark::MARK_CROSS) crossmark((int)m[i].x0,(int)m[i].y0,(int)m[i].r,c);
 		if(m[i].type==ImageMark::MARK_CIRCLE) circle((int)m[i].x0,(int)m[i].y0,(int)m[i].r,c);
 		if(m[i].type==ImageMark::MARK_LINE) line((int)m[i].x0,(int)m[i].y0,(int)m[i].x1,(int)m[i].y1,c);
@@ -102,29 +102,29 @@ void Image::draweightsymm(int x0, int y0, int dx, int dy, float c){
 Image* Image::filledcircleimage(unsigned int r)
 {
 	Image* foo = new Image(2*r+1,2*r+1);
-	for(int x=0; x<2*r+1; x++)
+	for(int x=0; x<int(2*r+1); x++)
 	{
-		for(int y=0; y<2*r+1; y++)
+		for(int y=0; y<int(2*r+1); y++)
 		{
 			if((x-r)*(x-r)+(y-r)*(y-r) <= (r+0.5)*(r+0.5)) foo->data[x+(2*r+1)*y]=1;
 		}
 	}
 	return foo;
-};
+}
 
 Image* Image::annulusimage(unsigned int r0, unsigned int r1)
 {
 	Image* foo = new Image(2*r0+1,2*r0+1);
-	for(int x=0; x<2*r0+1; x++)
+	for(int x=0; x<int(2*r0+1); x++)
 	{
-		for(int y=0; y<2*r0+1; y++)
+		for(int y=0; y<int(2*r0+1); y++)
 		{
 			int r = (x-r0)*(x-r0)+(y-r0)*(y-r0);
 			if(r <= (r0+0.5)*(r0+0.5) && r >= (r1+0.5)*(r1+0.5)) foo->data[x+(2*r0+1)*y]=1;
 		}
 	}
 	return foo;
-};
+}
 
 void Image::interpladd(float x, float y, float z)
 {
@@ -139,4 +139,4 @@ void Image::interpladd(float x, float y, float z)
 		if(y>0) data[(int)x+1+width*(int)y] += z*px*(1-py);
 		if(y+1>0 && y+1<height) data[(int)x+1+width*((int)y+1)] += z*px*py;
 	}
-};
+}

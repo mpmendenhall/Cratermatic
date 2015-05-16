@@ -20,20 +20,23 @@
 //-----------------------------------------------------------------------
 
 #include "Image.hh"
+#include <string.h>
+#include <cassert>
 
 void Image::load(const string& ifname) {
 	FILE *ifp = fopen(ifname.c_str(), "rb");
-	fread (data, size, sizeof(float), ifp);
+	size_t nread = fread(data, size, sizeof(float), ifp);
+        assert(nread);
 	coords.lx=0; coords.ux=width-1;
 	coords.ly=0; coords.uy=height-1;
-};
+}
 
 Image* Image::loadrawbinary(const string& ifname, int w, int h, int nbits) {
 	FILE *ifp = fopen(ifname.c_str(), "rb");
 	Image* foo = Image::loadrawbinary(ifp,w,h,nbits,0,1);
 	fclose(ifp);
 	return foo;
-};
+}
 
 Image* Image::loadrawbinary(FILE* ifp, int w, int h, int nbits, int offset, int every) {
 	
@@ -96,7 +99,7 @@ void Image::writeBMP(const string& ofname) {
 	fclose(ofp);
 	free(padzer);
 	delete(foo);
-};
+}
 
 void Image::writerawbinary(const string& ofname, int nbits)
 {
@@ -119,7 +122,7 @@ Image* Image::loadppm(const string& ifname, int n) {
 	char* linebuffer = (char*)malloc(1024*sizeof(char));
 	char* wordptr;
 	int itm = 0;
-	int maxval;
+	int maxval = 0;
 	bool abort = false;
 	int w=0;
 	int h=0;
@@ -170,7 +173,7 @@ Image* Image::loadppm(const string& ifname, int n) {
 	}
 	
 	
-	Image* foo;
+	Image* foo = NULL;
 	
 	
 	switch(n) {
@@ -182,7 +185,7 @@ Image* Image::loadppm(const string& ifname, int n) {
 	fclose(ifp);
 	printf(" Done.\n");
 	return foo;
-};
+}
 
 void Image::loadtexttable(const string& ifname) {
 	
@@ -251,7 +254,7 @@ void Image::loadtexttable(const string& ifname) {
 	name = ifname;
 	coords.lx=0; coords.ux=width-1;
 	coords.ly=0; coords.uy=height-1;
-};
+}
 
 void Image::loadarcgis(const string& ifname) {
 	
@@ -260,11 +263,12 @@ void Image::loadarcgis(const string& ifname) {
 	char* wordptr;
 	
 	//get width,height
-	fgets(linebuffer,500,ifp);
+	char* cread = fgets(linebuffer,500,ifp);
+        assert(cread);
 	wordptr = strtok(linebuffer," ,\t=");
 	wordptr = strtok(NULL," ,\t=");
 	width=atoi(wordptr);
-	fgets(linebuffer,500,ifp);
+	cread = fgets(linebuffer,500,ifp);
 	wordptr = strtok(linebuffer," ,\t=");
 	wordptr = strtok(NULL," ,\t=");
 	height=atoi(wordptr);
@@ -311,12 +315,12 @@ void Image::loadarcgis(const string& ifname) {
 	name = ifname;
 	coords.lx=0; coords.ux=width-1;
 	coords.ly=0; coords.uy=height-1;
-};
+}
 
 void Image::write(const string& ofname) {
 	FILE *ofp = fopen (ofname.c_str(), "wb");
 	fwrite (data, size, sizeof(float), ofp);
-};
+}
 
 void Image::writeArcGIS(const string& ofname) { //write text data to file
 	FILE *ofp = fopen (ofname.c_str(), "w");
@@ -326,7 +330,7 @@ void Image::writeArcGIS(const string& ofname) { //write text data to file
 		for(int x=0; x<width; x++) fprintf(ofp,"%f ",data[x+width*y]);
 	}
 	fclose(ofp);
-};
+}
 
 void Image::writePGM2(const string& ofname)
 {
@@ -342,7 +346,7 @@ void Image::writePGM2(const string& ofname)
 	delete(foo);
 	free(idat);
 	fclose(ofp);
-};
+}
 
 
 void Image::writePGM1(const string& ofname) {
@@ -357,12 +361,12 @@ void Image::writePGM1(const string& ofname) {
 	delete(foo);
 	free(idat);
 	fclose(ofp);
-};
+}
 
 void Image::dumpcatalog(const string& outpath) {
 	if(!mycatalog) return;
 	char* fname = (char*)malloc(1024*sizeof(char));
-	for(int i=0; i<mycatalog->entries.size(); i++) {
+	for(size_t i=0; i<mycatalog->entries.size(); i++) {
 		Image* foo = getsubregion(i,2.0);
 		sprintf(fname, outpath.c_str(), i);
 		printf("Saving %s ...\n",fname);

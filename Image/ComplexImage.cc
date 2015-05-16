@@ -31,12 +31,12 @@ ComplexImage::ComplexImage (int w, int h) : RectRegion(w/2+1,h)
 	origwidth=w;
 	origheight=h;
 	data = (fftw_complex*)calloc(size+w+h,sizeof(fftw_complex));
-};
+}
 
 ComplexImage::~ComplexImage ()
 {
 	free(data);
-};
+}
 
 ComplexImage* ComplexImage::fftreal(Image* I) {
 	ComplexImage* foo = new ComplexImage(I->width,I->height);

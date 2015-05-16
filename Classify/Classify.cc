@@ -24,6 +24,7 @@
 #include <cassert>
 #include <map>
 using std::map;
+#include <string.h>
 
 SparseInt::SparseInt(int w, int h) {
 	using namespace std;
@@ -54,7 +55,7 @@ SparseInt::~SparseInt() {
 int SparseInt::get(int i,int j) {
 	if(i>=width || j>=height) return 0;
 	//slow dumb search for dat
-	for(int x=0; x < rows[j]->size(); x++) {
+	for(size_t x=0; x < rows[j]->size(); x++) {
 		if((*rows[j])[x] == i) return (*rowdat[j])[x];
 		if((*rows[j])[x] > i) return 0;
 	}
@@ -64,30 +65,30 @@ int SparseInt::get(int i,int j) {
 void SparseInt::disprow(int row)
 {
 	printf("{\t");
-	for(int i=0; i<rows[row]->size(); i++) printf("%i\t",(*rows[row])[i]);
+	for(size_t i=0; i<rows[row]->size(); i++) printf("%i\t",(*rows[row])[i]);
 	printf("}\n");
 	printf("{{\t");
-	for(int i=0; i<rows[row]->size(); i++) printf("%i\t",(*rowdat[row])[i]);
+	for(size_t i=0; i<rows[row]->size(); i++) printf("%i\t",(*rowdat[row])[i]);
 	printf("}}\n");
 }
 
 int SparseInt::columnlist(int row, int*& output) {
 	//disprow(row);
 	output = (int*)malloc((rows[row]->size()-2)*sizeof(int));
-	for(int i=1; i<rows[row]->size()-1; i++) output[i-1] = (*rows[row])[i];
+	for(size_t i=1; i<rows[row]->size()-1; i++) output[i-1] = (*rows[row])[i];
 	return rows[row]->size()-2;
 }
 
 int SparseInt::columnvals(int row, int*& output) {
 	output = (int*)malloc((rowdat[row]->size()-2)*sizeof(int));
-	for(int i=1; i<rowdat[row]->size()-1; i++) output[i-1] = (*rowdat[row])[i];
+	for(size_t i=1; i<rowdat[row]->size()-1; i++) output[i-1] = (*rowdat[row])[i];
 	return rowdat[row]->size()-2;
 }
 
 void SparseInt::set(int i,int j, int v) {
 	if(i>=width || j>=height) return;
 	//slow dumb search for dat
-	for(int x=0; x < rows[j]->size(); x++)
+	for(size_t x=0; x < rows[j]->size(); x++)
 	{
 		if((*rows[j])[x] == i) {
 			if(v) {
@@ -136,7 +137,7 @@ ClassifyImage* ClassifyImage::copy() {
 	foo->pic = pic;
     foo->bounds = bounds;
 	return foo;
-};
+}
 
 void ClassifyImage::xorPoints(vector<int>& d, unsigned int xorkey) {
 	for(auto it = d.begin(); it != d.end(); it++) data[*it] ^= xorkey;
@@ -196,7 +197,7 @@ void ClassifyImage::findObjectsByHigherBits(int nbits) {
 
 void ClassifyImage::seedFillByMaskedBits(int startp, vector<int>& pout, int searchmask, int setmask, int setnum, vector<int>& nudata) {
 	setnum &= setmask; //make sure we don't set unmasked bits
-	unsigned int ptype = data[startp] & searchmask; //point type we are searching for
+        int ptype = data[startp] & searchmask; //point type we are searching for
 	nudata[startp] = (data[startp] & ~setmask) | setnum; //mark starting point
 	assert(nudata.size() == data.size());
     
@@ -217,7 +218,7 @@ void ClassifyImage::seedFillByMaskedBits(int startp, vector<int>& pout, int sear
 			if(!inrange(x0+dx,y0+dy)) continue;
 			
 			int p1 = x0+dx+width*(y0+dy);
-			if(nudata[p1] != 0xFFFFFFFF) continue; //someone got there first
+			if(nudata[p1] != (int)0xFFFFFFFF) continue; //someone got there first
 			if((data[p1] & searchmask) != ptype) continue; //not of same type
 			
 			points.push_back(p1);
@@ -395,10 +396,9 @@ void ClassifyImage::findboundaries() {
 	hasboundaries=true;
 	calcstats();
 	printf("Done.\n");
-};
+}
 
-union bstofarr
-{
+union bstofarr {
 	BasinStat b;
 	float a[14];
 };
@@ -457,7 +457,7 @@ void ClassifyImage::labelboundaries(int c) {
 			data[*it2] = c << shift;
 		}
 	}
-};
+}
 
 void ClassifyImage::renumerate() {
 	printf("Re-enumerating basins;");

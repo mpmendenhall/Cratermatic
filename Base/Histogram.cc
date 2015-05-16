@@ -44,7 +44,7 @@ Histogram::~Histogram()
 {
 	free(binbounds);
 	free(count);
-};
+}
 
 int Histogram::maxbin() {
 	int maxb=1;
@@ -65,7 +65,7 @@ void Histogram::display()
 		printf("\n");
 	}
 	printf("|%f\t<|\t%i\t|<\t\t|\n",binbounds[n],(int)count[n+1]);
-};
+}
 
 float Histogram::uniformity()
 {
@@ -79,7 +79,7 @@ float Histogram::uniformity()
 	for(int i=0; i<n; i++) z += fabs(count[i+1]-mu);
 	z /= tsum;
 	return -z;
-};
+}
 
 float Histogram::coverage()
 {
@@ -91,4 +91,4 @@ float Histogram::coverage()
 	for(int i=0; i<n; i++) if(count[i+1] >= 0.2*mu) z += 1.0;
 	z /= n;
 	return z;
-};
+}

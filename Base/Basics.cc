@@ -51,7 +51,7 @@ CratersBaseObject::CratersBaseObject() {
     isaName = "CratersBaseObject";
 	name = "";
 	isaNum = COBJ_CRATERSBASEOBJECT;
-};
+}
 
 void CratersBaseObject::writeBinaryFromNormalizedFloat(float* fdat, int len, FILE* ofp, int nbits) {
 	
@@ -254,7 +254,7 @@ CFloat::CFloat(float f) : CratersBaseObject() {
 	name = to_str(f);
 	isaNum = COBJ_CFLOAT;
 	val = f;
-};
+}
 
 CFloat* CFloat::copy() {
 	return new CFloat(val);
@@ -304,8 +304,8 @@ CMacro* CMacro::copy() {
 }
 
 string shortize(const string& t, int l) {
-	if(t.size()<l) return "[ "+t+" ]";
-    return "[ %s<...>%s ]"; // TODO
+	if((int)t.size()<l) return "[ "+t+" ]";
+        return "[ %s<...>%s ]"; // TODO
     
 	//char* fool = (char*)malloc(((l/2)+1)*sizeof(char));
 	//char* foor = (char*)malloc(((l/2)+1)*sizeof(char));
@@ -320,7 +320,7 @@ void CMacro::addtoken(const string& t) {
     if(stringval.size()) stringval += " ";
     stringval += t;	
 	name = shortize(stringval,60);
-};
+}
 
 CraterSpec::CraterSpec(int idn)
 {

@@ -75,10 +75,10 @@ bool* determinenoprune()
 		if(!s[i]) continue;
 		s[i]=false;
 		
-		if(!(i & 1+16+4+64+2)) continue;
-		if(!(i & 4+64+2+128+8)) continue;
-		if(!(i & 2+128+8+32+1)) continue;
-		if(!(i & 8+32+1+16+4)) continue;
+		if(!(i & (1+16+4+64+2))) continue;
+		if(!(i & (4+64+2+128+8))) continue;
+		if(!(i & (2+128+8+32+1))) continue;
+		if(!(i & (8+32+1+16+4))) continue;
 		
 		s[i]=true;
 	}
@@ -186,7 +186,7 @@ ClassifyImage* ClassifyImage::getPoints(int* d, unsigned int n, unsigned int pad
 	BoundingBox bb = findboundingbox(d,n);
 	ClassifyImage* bi = new ClassifyImage(bb.ux-bb.lx + 2*pad + 1, bb.uy-bb.ly + 2*pad + 1);
 	bi->shift = shift;
-	for(int i=0; i<n; i++) {
+	for(unsigned int i=0; i<n; i++) {
 		int p = d[i];
 		int nx = p%width - bb.lx + pad;
 		int ny = p/width - bb.ly + pad;

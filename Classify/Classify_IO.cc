@@ -22,6 +22,8 @@
 #include "Classify.hh"
 #include "Image.hh"
 #include "RGBImage.hh"
+#include <string.h>
+#include <cassert>
 
 RGBImage* ClassifyImage::prettyImage() {
 	Image* CI = recolorize(1,13);
@@ -31,7 +33,7 @@ RGBImage* ClassifyImage::prettyImage() {
 	C->overlay(BI,0,0,0,0.3);
 	delete(BI);
 	return C;
-};
+}
 
 RGBImage* ClassifyImage::colorbytemp() {
 	Image* foo = tempstatimg();
@@ -55,7 +57,7 @@ RGBImage* ClassifyImage::prettyoverlayimage(Image* under, bool shadebound) {
 	delete(BI);
 	delete(NI);
 	return C;
-};
+}
 
 RGBImage* ClassifyImage::prettyoverlayimage(RGBImage* C, bool shadebound) {
 	Image* BI = fourboundaryimage();
@@ -66,7 +68,7 @@ RGBImage* ClassifyImage::prettyoverlayimage(RGBImage* C, bool shadebound) {
 	delete(BI);
 	delete(NI);
 	return C;
-};
+}
 
 void ClassifyImage::loadarcgis(const string& ifname) {
 	
@@ -75,11 +77,11 @@ void ClassifyImage::loadarcgis(const string& ifname) {
 	char* wordptr;
 	
 	//get width,height
-	fgets(linebuffer,500,ifp);
+	assert(fgets(linebuffer,500,ifp));
 	wordptr = strtok(linebuffer," ,\t=");
 	wordptr = strtok(NULL," ,\t=");
 	width=atoi(wordptr);
-	fgets(linebuffer,500,ifp);
+	assert(fgets(linebuffer,500,ifp));
 	wordptr = strtok(linebuffer," ,\t=");
 	wordptr = strtok(NULL," ,\t=");
 	height=atoi(wordptr);
@@ -126,7 +128,7 @@ void ClassifyImage::loadarcgis(const string& ifname) {
 	name = ifname;
 	coords.lx=0; coords.ux=width-1;
 	coords.ly=0; coords.uy=height-1;
-};
+}
 
 void ClassifyImage::writeArcGIS(const string& ofname) { //write text data to file
 	FILE *ofp = fopen(ofname.c_str(), "w");
@@ -136,7 +138,7 @@ void ClassifyImage::writeArcGIS(const string& ofname) { //write text data to fil
 		for(int x=0; x<width; x++) fprintf(ofp,"%i ",data[x+width*y]);
 	}
 	fclose(ofp);
-};
+}
 
 void ClassifyImage::writeLowBitBMP(const string& ofname) //write BMP with low bits of data
 {
@@ -159,7 +161,7 @@ void ClassifyImage::writeLowBitBMP(const string& ofname) //write BMP with low bi
 	fclose(ofp);
 	free(padzer);
 	free(poodle);
-};
+}
 
 //////////////////////////////////////////////////
 
@@ -167,21 +169,21 @@ ClassifyDataScanner::ClassifyDataScanner(ClassifyImage* img, int x, int y):
 myImg(img), si(img,x,y) { }
 
 void ClassifyDataScanner::replacedata() {
-	if(dat.size()==si.datp.size()) { for(int i=0; i<si.datp.size(); i++) myImg->data[si.datp[i]] = dat[i]; }
+	if(dat.size()==si.datp.size()) { for(size_t i=0; i<si.datp.size(); i++) myImg->data[si.datp[i]] = dat[i]; }
 }
 
 void ClassifyDataScanner::replacedata(int* d) {
-	for(int i=0; i<si.datp.size(); i++) myImg->data[si.datp[i]] = d[i];
+	for(size_t i=0; i<si.datp.size(); i++) myImg->data[si.datp[i]] = d[i];
 }
 
 int ClassifyDataScanner::nextline() {
 	dat.resize(si.nextline());
-	for(int i=0; i<si.datp.size(); i++) dat[i]=myImg->data[si.datp[i]];
+	for(size_t i=0; i<si.datp.size(); i++) dat[i]=myImg->data[si.datp[i]];
 	return si.datp.size();
 }
 
 int ClassifyDataScanner::nextline(int* dput) {
 	si.nextline();
-	for(int i=0; i<si.datp.size(); i++) dput[i]=myImg->data[si.datp[i]];
+	for(size_t i=0; i<si.datp.size(); i++) dput[i]=myImg->data[si.datp[i]];
 	return si.datp.size();
 }

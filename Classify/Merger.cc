@@ -24,6 +24,7 @@
 #include "Image.hh"
 #include "RGBImage.hh"
 #include "Utils.hh"
+#include <cassert>
 
 bool domovie;
 string moviebase;
@@ -62,7 +63,7 @@ void Merger::genfcritvals(float alpha) { //create table of critical-f values
 #else
 		sprintf(rcomm,"R --vanilla --slave <tempRcommand >%s",fname);
 #endif
-		system(rcomm);
+		assert(!system(rcomm));
 		free(rcomm);
 		
 		f = fopen(fname,"r");
@@ -77,7 +78,7 @@ void Merger::genfcritvals(float alpha) { //create table of critical-f values
 	fcritvals = (float*)malloc(std::min(w->size,2000)*sizeof(float));
 	char* buf = (char*)malloc(256*sizeof(char));
 	for(int i=1; i<=std::min(w->size,2000); i++) {
-		fgets(buf,200,f);
+		assert(fgets(buf,200,f));
 		float x=0;
 		sscanf(buf,"[1] %f\n",&x);
 		fcritvals[i-1]=x;
@@ -198,7 +199,7 @@ void Merger::mainloop()
 	
 	printf ("\n*** Total Merged: %i ***\n",mergetotal);
 	w->renumerate();
-};
+}
 
 
 float Merger::calcweight(int i, int j) {
@@ -274,7 +275,7 @@ void Merger::merge(int i, int j) //merge watershed regions (j into i) and statis
 		}
 	}
 	
-};
+}
 
 void Merger::snapshot() { //save image of an intermediate frame
 	if(!domovie) return;

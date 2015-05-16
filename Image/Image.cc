@@ -20,12 +20,13 @@
 //-----------------------------------------------------------------------
 
 #include "Image.hh"
+#include <string.h>
 
 Image::Image(int w, int h) : RectRegion(w,h) {
 	isaName = "Image";
 	isaNum = COBJ_IMAGE;
 	data = (float*)calloc(size,sizeof(float));
-};
+}
 
 Image::Image(RectRegion* R) : RectRegion(R->width,R->height) {
 	isaName = "Image";
@@ -36,7 +37,7 @@ Image::Image(RectRegion* R) : RectRegion(R->width,R->height) {
 
 Image::~Image () {
 	free(data);
-};
+}
 
 
 Image* Image::copy() //return a copy of this image
@@ -44,7 +45,7 @@ Image* Image::copy() //return a copy of this image
 	Image *foo=new Image((RectRegion*)this);
 	for(int i=0; i<size; i++) foo->data[i]=data[i];
 	return foo;
-};
+}
 
 
 Image* Image::copyfrom(Image *img) //copy everything over from another image
@@ -54,7 +55,7 @@ Image* Image::copyfrom(Image *img) //copy everything over from another image
 	data = (float*)realloc(data,size*sizeof(float));
 	memcpy(data,img->data,size*sizeof(float));
 	return this;
-};
+}
 
 /*
  //This algorithm doesn't quite work... should be ~2x faster than convolve, but needs work
@@ -179,7 +180,7 @@ float* Image::minmax() //get pointer to array [minfloatue, maxfloatue] for the d
 		if (data[i]>mnmx[1]) mnmx[1]=data[i];
 	}
 	return mnmx;
-};
+}
 
 
 float* Image::stats() //get pointer to array [mu, sigma] for the data
@@ -197,7 +198,7 @@ float* Image::stats() //get pointer to array [mu, sigma] for the data
 	musigma[0]=sx;
 	musigma[1]=sqrt(sxx-sx*sx);
 	return musigma;
-};
+}
 
 //--------------------------------------------------------
 
@@ -205,7 +206,7 @@ MultiImage::MultiImage(int w, int h) : RectRegion(w,h)
 {
 	nimgs=0;
 	imgs = NULL;
-};
+}
 
 void MultiImage::addimg(Image* I)
 {
@@ -213,12 +214,12 @@ void MultiImage::addimg(Image* I)
 	if(!imgs) imgs = (Image**)malloc(sizeof(Image*));
 	else imgs = (Image**)realloc(imgs,nimgs*sizeof(Image*));
 	imgs[nimgs-1]=I;
-};
+}
 
 MultiImage::~MultiImage()
 {
 	if(imgs) {free(imgs); imgs=NULL;}
-};
+}
 
 //apply variants allow an Image:: member function to be applied to each Image in the MultiImage
 void** MultiImage::apply(void* (Image::*fctn)())
@@ -226,20 +227,20 @@ void** MultiImage::apply(void* (Image::*fctn)())
 	void** v = (void**)malloc(nimgs*sizeof(void*));
 	for(int i=0; i<nimgs; i++) v[i] = (*imgs[i].*fctn)();
 	return v;
-};
+}
 
 void MultiImage::apply(void (Image::*fctn)())
 {
 	for(int i=0; i<nimgs; i++) (*imgs[i].*fctn)();
-};
+}
 
 void MultiImage::apply(void (Image::*fctn)(float), float x)
 {
 	for(int i=0; i<nimgs; i++) (*imgs[i].*fctn)(x);
-};
+}
 
 void MultiImage::apply(void (Image::*fctn)(int), int x)
 {
 	for(int i=0; i<nimgs; i++) (*imgs[i].*fctn)(x);
-};
+}
 

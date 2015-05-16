@@ -126,7 +126,7 @@ float* Image::gausskernel(int s, float r)
 	//normalize
 	for(int i=0; i<2*s+1; i++) d[i]/=n;
 	return d;
-};
+}
 
 Image* Image::gaussianblur(float r)
 {
@@ -163,7 +163,7 @@ Image* Image::gaussianblur(float r)
 	rdat->copyfromrr((RectRegion*)this);
 	rdat->name = name+" blurred";
 	return rdat;
-};
+}
 
 Image* Image::edgefinder(float r)
 {
@@ -242,7 +242,7 @@ Image* Image::maggrad2() //mag^2 of gradient, dx^2+dy^2
 	delete(dx);
 	delete(dy);
 	return foo;
-};
+}
 
 Image* Image::slope() {
 	Image* foo = new Image((RectRegion*)this);
@@ -290,7 +290,7 @@ Image* Image::filtered(Image* f) //apply a general filter matrix (needs odd x od
 	}
 	//printf("Done convolving.\n");
 	return foo;
-};
+}
 
 Image* Image::htransform(int k)
 {
@@ -353,7 +353,7 @@ Image* Image::htransform(int k)
 	printf("Done.\n");
 	sprintf(hy->name,"%s HTransformed",name);
 	return hy; */
-};
+}
 
 Image* Image::smoothehtransform(float r0)
 {
@@ -402,7 +402,7 @@ Image* Image::smoothehtransform(float r0)
 	rdatx->name = name+" HTransformed";
 	printf(" Done.\n");
 	return rdatx;
-};
+}
 
 Image* Image::pseudo_profile_curvature()
 {
@@ -434,7 +434,7 @@ Image* Image::pseudo_profile_curvature()
 	
 	foo->name = name+" Curvature";
 	return foo;
-};
+}
 
 Image* Image::pseudo_tangent_curvature()
 {
@@ -466,7 +466,7 @@ Image* Image::pseudo_tangent_curvature()
 	
 	foo->name = name+" Curvature";
 	return foo;
-};
+}
 
 Image* Image::squaredilation(int n) //dilate image by a square of the specified size
 {
@@ -476,7 +476,7 @@ Image* Image::squaredilation(int n) //dilate image by a square of the specified 
 	K->name = name+" Square Dilated";
 	K->copyfromrr((RectRegion*)this);
 	return K;
-};
+}
 
 Image* Image::generaldilation(Image* k) //slow and painful method
 {
@@ -499,7 +499,7 @@ Image* Image::generaldilation(Image* k) //slow and painful method
 		}
 	}
 	return foo;
-};
+}
 
 Image* Image::circledilation(int r)
 {
@@ -568,4 +568,4 @@ Image* Image::removespikes() {
 	delete(Nb); delete(Ns); delete(Nbs);
 	N->name = name+" Despiked";
 	return N;
-};
+}

@@ -21,13 +21,14 @@
 
 #include "Image.hh"
 #include "Utils.hh"
+#include <string.h>
 
 Image* Image::trimmed(int l, int t, int r, int b) //return an image with trimmed borders
 {
 	Image *foo = new Image(width-l-r, height-t-b);
 	for(int y=t; y<height-b; y++) memcpy(&foo->data[(width-t-b)*(y-t)],&data[l+width*y],(width-t-b)*sizeof(float));
 	return foo;
-};
+}
 
 
 Image* Image::padded(int l, int t, int r, int b) //return an image padded on sides
@@ -35,7 +36,7 @@ Image* Image::padded(int l, int t, int r, int b) //return an image padded on sid
 	Image *foo = new Image(width+l+r, height+t+b);
 	for(int y=0; y<height; y++) memcpy(&(foo->data[l+(width+l+r)*(y+t)]),&(data[width*y]),width*sizeof(float));
 	return foo;
-};
+}
 
 
 Image* Image::mirrorpadded(int r) //return an image padded on sides with mirroring
@@ -56,7 +57,7 @@ Image* Image::mirrorpadded(int r) //return an image padded on sides with mirrori
 	}
 	//printf("Done mirror padding.\n");
 	return foo;
-};
+}
 
 
 Image* Image::trim_inplace(int l, int t, int r, int b) //trim dimensions of this image
@@ -69,7 +70,7 @@ Image* Image::trim_inplace(int l, int t, int r, int b) //trim dimensions of this
 	height=height-t-b;
 	size=width*height;
 	return this;
-};
+}
 
 
 Image* Image::rotate() //rotate the data array (transpose for square data)
@@ -83,7 +84,7 @@ Image* Image::rotate() //rotate the data array (transpose for square data)
 		}
 	}
 	return foo;
-};
+}
 
 Image* Image::reduce() { //reduce each image dimension by factor of two
 	Image* foo = lanczos2decimate(true);
@@ -118,7 +119,7 @@ Image* Image::xlinearscale(float z) {
 	foo->width = nw;
 	foo->size = nw*height;
 	return foo;
-};
+}
 
 Image* Image::bilinearscale(float s) {
 	Image* foo = xlinearscale(s);
@@ -219,22 +220,22 @@ myImg(img), si((RectRegion*)img,x,y) { }
 
 void ImageDataScanner::replacedata() {
 	if(dat.size()==si.datp.size())
-        for(int i=0; i<si.datp.size(); i++)
+        for(size_t i=0; i<si.datp.size(); i++)
             myImg->data[si.datp[i]] = dat[i];
 }
 
 void ImageDataScanner::replacedata(float* d) {
-	for(int i=0; i<si.datp.size(); i++) myImg->data[si.datp[i]] = d[i];
+    for(size_t i=0; i<si.datp.size(); i++) myImg->data[si.datp[i]] = d[i];
 }
 
 int ImageDataScanner::nextline() {
     dat.resize(si.nextline());
-	for(int i=0; i<si.datp.size(); i++) dat[i] = myImg->data[si.datp[i]];
+    for(size_t i=0; i<si.datp.size(); i++) dat[i] = myImg->data[si.datp[i]];
     return si.datp.size();
 }
 
 int ImageDataScanner::nextline(float* dput) {
 	si.nextline();
-	for(int i=0; i<si.datp.size(); i++) dput[i] = myImg->data[si.datp[i]];
+        for(size_t i=0; i<si.datp.size(); i++) dput[i] = myImg->data[si.datp[i]];
     return si.datp.size();
 }
