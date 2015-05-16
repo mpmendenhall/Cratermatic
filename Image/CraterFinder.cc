@@ -66,7 +66,7 @@ void sameCrawlers(ClassifyImage* bounds, Image* topo, Image* drx, Image* dry, fl
 	for(int i=0; i<bounds->size; i++) {
 		if(!(bounds->data[i] & 0x02)) continue; //not a starting point
 		ocs[ncrawls].pos = i;
-		ocs[ncrawls].own = bounds->data[i] >> 16;
+		ocs[ncrawls].own = bounds->data[i] >> bounds->shift;
 		ocs[ncrawls].hival = 0;
 		ocs[ncrawls].hislp = 0;
 		ocs[ncrawls].dist = 0;
@@ -99,7 +99,7 @@ void sameCrawlers(ClassifyImage* bounds, Image* topo, Image* drx, Image* dry, fl
 				np = ocs[i].pos+dx+w*dy; //new position under consideration
 				if(!topo->inrange(np)) continue; //new position is out of image
 				
-				if((bounds->data[np] >> 16) != ocs[i].own) continue; //in wrong region
+				if((bounds->data[np] >> bounds->shift) != ocs[i].own) continue; //in wrong region
 				
 				dv = sqrt(dx*dx+dy*dy); //incremental distance of move
 				if(dist[np] <= ocs[i].dist + dv) continue; //someone closer got there first
@@ -127,7 +127,7 @@ void sameCrawlers(ClassifyImage* bounds, Image* topo, Image* drx, Image* dry, fl
 				{
 					//weaken strength if necessary
 					if(dz < 0.6*ocs[i].hival) ncs[nnewcrawls].strength *= dz/ocs[i].hival;
-					if(dz < 0.2*rgnmx[ocs[i].own >> 16])  ncs[nnewcrawls].strength *= 3*dz/rgnmx[ocs[i].own >> 16];
+					if(dz < 0.2*rgnmx[ocs[i].own >> bounds->shift])  ncs[nnewcrawls].strength *= 3*dz/rgnmx[ocs[i].own >> bounds->shift];
 					
 					if(bounds->data[op] & 0x08) //special behaviors at core region boundary
 					{
@@ -138,7 +138,7 @@ void sameCrawlers(ClassifyImage* bounds, Image* topo, Image* drx, Image* dry, fl
 								
 				dist[np] = ncs[nnewcrawls].dist;
 				if( dz > ocs[i].hival ) { ncs[nnewcrawls].hival = dz; ncs[nnewcrawls].strength = 1.0; }
-				if( dz > rgnmx[ocs[i].own >> 16] ) rgnmx[ocs[i].own >> 16] = dz;
+				if( dz > rgnmx[ocs[i].own >> bounds->shift] ) rgnmx[ocs[i].own >> bounds->shift] = dz;
 
 				bounds->data[np] += 0x10;
 				ncs[nnewcrawls].id = (bounds->data[np] & 0xF0);
@@ -229,7 +229,7 @@ int Image::findcraters(const string& basefolder, Image* msk, CraterSpec*** cspec
 		
 		combined->renumerateWithKey(0x01);
 		
-		combined->upShift(16); // reserve lower 0xFFFF for other data
+		combined->upShift(8); // reserve lower 0xFF for crawler data
 		for(int i=0; i<combined->size; i++) if(combined->data[i] & 0x01) combined->data[i] |= 0x08; //mark Original Region
 		combined->renumerateWithKey(0x01);
 		printf("Remaining crater candidates: %zu.\n",combined->pic.size());
@@ -238,11 +238,11 @@ int Image::findcraters(const string& basefolder, Image* msk, CraterSpec*** cspec
 		vector<int> npicshadow(topows->pic.size());
         for(size_t i = 0; i < topows->pic.size(); i++) npicshadow[i] = topows->pic[i].size();
 		for(int i=1; i<combined->pic.size(); i++) {
-			int origowner = combined->data[combined->pic[i][0]] >> 16;
+			int origowner = combined->data[combined->pic[i][0]] >> combined->shift;
 			for(int j=0; j<combined->pic[i].size(); j++) {
 				int p = topows->data[combined->pic[i][j]];
 				for(int q=0; q<npicshadow[p]; q++) {
-					if((combined->data[topows->pic[p][q]] >> 16) != origowner) combined->data[topows->pic[p][q]] = (origowner << 16) | 0x01;
+					if((combined->data[topows->pic[p][q]] >> combined->shift) != origowner) combined->data[topows->pic[p][q]] = (origowner << combined->shift) | 0x01;
 				}
 				npicshadow[p] = 0;
 			}
@@ -258,15 +258,15 @@ int Image::findcraters(const string& basefolder, Image* msk, CraterSpec*** cspec
 		sameCrawlers(combined, bld, drx, dry, pow(.10,.2*r));
 		combined->renumerateWithKey(0x04); //shrink basins to crawled size
 		
-		//sprintf(tc,"%s/Preculling_%i_%03i.bmp",basefolder.c_str(),size,r);
-		//RGBImage* preculling_overlay = combined->prettyoverlayimage(grd);
-        //preculling_overlay->writeBMP(tc);
-        //delete(preculling_overlay);
+		sprintf(tc,"%s/Preculling_%i_%03i.bmp",basefolder.c_str(),size,r);
+		RGBImage* preculling_overlay = combined->prettyoverlayimage(grd);
+        preculling_overlay->writeBMP(tc);
+        delete(preculling_overlay);
 		
 		// clear extra data from background regions
         printf("Clearing background data...\n");
-		for(int i=0; i<size; i++) if(!(combined->data[i] & 0xFFFF0000)) combined->data[i] = 0;
-        //for(int i=0; i<size; i++) if(!(combined->data[i] >> 16)) combined->data[i] = 0;
+		//for(int i=0; i<size; i++) if(!(combined->data[i] & 0xFFFF0000)) combined->data[i] = 0;
+        for(int i=0; i<size; i++) if(!(combined->data[i] >> combined->shift)) combined->data[i] = 0;
         
 		// Clean basin regions
         combined->fillHoles(0x04 | 0x08);

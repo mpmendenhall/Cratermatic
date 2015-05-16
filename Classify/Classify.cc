@@ -159,7 +159,7 @@ void ClassifyImage::andRegion(unsigned int n, unsigned int andkey) {
 }
 
 ClassifyImage* ClassifyImage::upShift(int nbits) {
-	for(int i=0; i<size; i++) data[i] = ((data[i]/(1<<shift)) << nbits) + (data[i]%(1<<shift));
+	for(int i=0; i<size; i++) data[i] = ((data[i] >> shift) << nbits) + (data[i]%(1<<shift));
 	shift = nbits;
 	return this;
 }
