@@ -404,7 +404,7 @@ ScanIterator::~ScanIterator() {
 
 int ScanIterator::nextline() {
     if(buildout) {
-        if(y0 < h) x0=0; 
+        if(y0 < h) x0=0;
         else {
             x0 = bps[y0-h];
             if(x0==-1) return 0;

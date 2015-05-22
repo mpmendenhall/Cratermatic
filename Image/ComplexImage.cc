@@ -26,81 +26,81 @@
 
 ComplexImage::ComplexImage (int w, int h) : RectRegion(w/2+1,h)
 {
-	isaName = "ComplexImage";
-	isaNum = COBJ_COMPLEXIMAGE;
-	origwidth=w;
-	origheight=h;
-	data = (fftw_complex*)calloc(size+w+h,sizeof(fftw_complex));
+    isaName = "ComplexImage";
+    isaNum = COBJ_COMPLEXIMAGE;
+    origwidth=w;
+    origheight=h;
+    data = (fftw_complex*)calloc(size+w+h,sizeof(fftw_complex));
 }
 
 ComplexImage::~ComplexImage ()
 {
-	free(data);
+    free(data);
 }
 
 ComplexImage* ComplexImage::fftreal(Image* I) {
-	ComplexImage* foo = new ComplexImage(I->width,I->height);
-	double* datain = (double*)malloc((I->size+I->width+I->height)*sizeof(double));
-	fftw_plan myplan = fftw_plan_dft_r2c_2d(I->height,I->width,datain,foo->data,FFTW_ESTIMATE);
-	for(int i=0; i<I->size; i++) datain[i] = (double)(I->data[i]);
-	fftw_execute(myplan);
-	fftw_destroy_plan(myplan);
-	free(datain);
-	return foo;
+    ComplexImage* foo = new ComplexImage(I->width,I->height);
+    double* datain = (double*)malloc((I->size+I->width+I->height)*sizeof(double));
+    fftw_plan myplan = fftw_plan_dft_r2c_2d(I->height,I->width,datain,foo->data,FFTW_ESTIMATE);
+    for(int i=0; i<I->size; i++) datain[i] = (double)(I->data[i]);
+    fftw_execute(myplan);
+    fftw_destroy_plan(myplan);
+    free(datain);
+    return foo;
 }
 
 ComplexImage* ComplexImage::copy()
 {
-	ComplexImage* C = new ComplexImage(origwidth, origheight);
-	C->copyfromrr((RectRegion*)this);
-	for(int i=0; i<size; i++) {
-		C->data[i][0]=data[i][0];
-		C->data[i][1]=data[i][1];
-	}
-	return C;
+    ComplexImage* C = new ComplexImage(origwidth, origheight);
+    C->copyfromrr((RectRegion*)this);
+    for(int i=0; i<size; i++) {
+        C->data[i][0]=data[i][0];
+        C->data[i][1]=data[i][1];
+    }
+    return C;
 }
 
 Image* ComplexImage::inversefftreal() {
-	Image* foo = new Image(origwidth,origheight);
-	double* dataout = (double*)malloc(origwidth*origheight*sizeof(double));
-	fftw_plan myplan = fftw_plan_dft_c2r_2d(origheight,origwidth,data,dataout,FFTW_ESTIMATE);
-	fftw_execute(myplan);
-	fftw_destroy_plan(myplan);
-	for(int i=0; i<origwidth*origheight; i++) foo->data[i] = (float)dataout[i];
-	free(dataout);
-	return foo; 
+    Image* foo = new Image(origwidth,origheight);
+    double* dataout = (double*)malloc(origwidth*origheight*sizeof(double));
+    fftw_plan myplan = fftw_plan_dft_c2r_2d(origheight,origwidth,data,dataout,FFTW_ESTIMATE);
+    fftw_execute(myplan);
+    fftw_destroy_plan(myplan);
+    for(int i=0; i<origwidth*origheight; i++) foo->data[i] = (float)dataout[i];
+    free(dataout);
+    return foo;
 }
 
 Image* ComplexImage::real() {
-	Image* foo = new Image(width,height);
-	for(int i=0; i<size; i++) foo->data[i]=(float)data[i][0];
-	return foo;
+    Image* foo = new Image(width,height);
+    for(int i=0; i<size; i++) foo->data[i]=(float)data[i][0];
+    return foo;
 }
 
 Image* ComplexImage::imag() {
-	Image* foo = new Image(width,height);
-	for(int i=0; i<size; i++) foo->data[i]=(float)data[i][1];
-	return foo;
+    Image* foo = new Image(width,height);
+    for(int i=0; i<size; i++) foo->data[i]=(float)data[i][1];
+    return foo;
 }
 
 Image* ComplexImage::magv() {
-	Image* foo = new Image(width,height);
-	float rp,ip;
-	for(int i=0; i<size; i++) {
-		rp=(float)data[i][0];
-		ip=(float)data[i][1];
-		foo->data[i]=sqrt(rp*rp+ip*ip);
-	}
-	return foo;
+    Image* foo = new Image(width,height);
+    float rp,ip;
+    for(int i=0; i<size; i++) {
+        rp=(float)data[i][0];
+        ip=(float)data[i][1];
+        foo->data[i]=sqrt(rp*rp+ip*ip);
+    }
+    return foo;
 }
 
 ComplexImage* ComplexImage::mult(ComplexImage* ci) {
-	for(int i=0; i<size; i++) {
-		double tmp = data[i][0]*ci->data[i][0] - data[i][1]*ci->data[i][1];
-		data[i][1] = data[i][1]*ci->data[i][0] + data[i][0]*ci->data[i][1];
-		data[i][0] = tmp;
-	}
-	return this;
+    for(int i=0; i<size; i++) {
+        double tmp = data[i][0]*ci->data[i][0] - data[i][1]*ci->data[i][1];
+        data[i][1] = data[i][1]*ci->data[i][0] + data[i][0]*ci->data[i][1];
+        data[i][0] = tmp;
+    }
+    return this;
 }
 
 #endif

@@ -47,79 +47,79 @@ float* lindilate(int l, float* d, int w);
 
 class Minimizer {
 public:
-	Minimizer(float* params, float* lbound, float* ubound, int nparams, float (*evalfunc)(float* params, int n, void* p), void* po);
-	~Minimizer();
-	bool fitstep();
-	int n;
-	float* dv;
-	float* p;
-	float* lb;
-	float* ub;
-	void* parentobject;
-	float (*func)(float* params, int n, void* po);
-	float* derivs;
-	float** sderivs;
-	void calcderivs();
-	void calcsderivs();
+    Minimizer(float* params, float* lbound, float* ubound, int nparams, float (*evalfunc)(float* params, int n, void* p), void* po);
+    ~Minimizer();
+    bool fitstep();
+    int n;
+    float* dv;
+    float* p;
+    float* lb;
+    float* ub;
+    void* parentobject;
+    float (*func)(float* params, int n, void* po);
+    float* derivs;
+    float** sderivs;
+    void calcderivs();
+    void calcsderivs();
 };
 
 class LineIterator
 {
 public:
-	int x0,y0,x1,y1,x,y;
-	bool steep;
-	bool reverse;
-	int n;
-	int deltax;
-	int deltay;
-	int error;
-	int ystep;
-	LineIterator(int xa,int ya,int xb,int yb);
-	//LineIterator(x0,y0,a,b);
-	bool step();
-	int px();
-	int py();
+    int x0,y0,x1,y1,x,y;
+    bool steep;
+    bool reverse;
+    int n;
+    int deltax;
+    int deltay;
+    int error;
+    int ystep;
+    LineIterator(int xa,int ya,int xb,int yb);
+    //LineIterator(x0,y0,a,b);
+    bool step();
+    int px();
+    int py();
 };
 
 class Matrix
 {
 public:
-	int rows;
-	int cols;
-	float* data;
-	Matrix(int r, int c);
-	Matrix* cp(); //copy
-	~Matrix();
-	float& operator() (unsigned i, unsigned j);
-	Matrix* mult(float c);
-	Matrix* imult(float c);
-	Matrix* mult(Matrix* M);
-	Matrix* add(Matrix* M);
-	Matrix* iadd(Matrix* M);
-	Matrix* transpose();
-	Matrix* itranspose();
-	Matrix* comat(unsigned, unsigned);
-	Matrix* invert();
-	float det();
-	void disp();
+    int rows;
+    int cols;
+    float* data;
+    Matrix(int r, int c);
+    Matrix* cp(); //copy
+    ~Matrix();
+    float& operator() (unsigned i, unsigned j);
+    Matrix* mult(float c);
+    Matrix* imult(float c);
+    Matrix* mult(Matrix* M);
+    Matrix* add(Matrix* M);
+    Matrix* iadd(Matrix* M);
+    Matrix* transpose();
+    Matrix* itranspose();
+    Matrix* comat(unsigned, unsigned);
+    Matrix* invert();
+    float det();
+    void disp();
 };
 
 class Vector: public Matrix
 {
 public:
-	Vector(int l);
+    Vector(int l);
 };
 
 class ProgressBar
 {
 public:
-	float p;
-	int npts;
-	int length;
-	
-	ProgressBar(int l);
-	~ProgressBar();
-	void update(float u);
+    float p;
+    int npts;
+    int length;
+    
+    ProgressBar(int l);
+    ~ProgressBar();
+    void update(float u);
 };
 
 #endif

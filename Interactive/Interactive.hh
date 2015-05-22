@@ -50,47 +50,47 @@ class Interactor;
 class Stack {
 public:
     /// Constructor
-	Stack(): ntotal(0), controller(NULL) { }
+    Stack(): ntotal(0), controller(NULL) { }
     
     /// push object onto top of stack
-	void push(CratersBaseObject* ptr);
+    void push(CratersBaseObject* ptr);
     /// get and remove top object
-	CratersBaseObject* pop();
+    CratersBaseObject* pop();
     /// get top object without removal
-	CratersBaseObject* get();
+    CratersBaseObject* get();
     /// get n^th-from-top object
-	CratersBaseObject* get(unsigned int);
+    CratersBaseObject* get(unsigned int);
     /// get float value of n^th-from-top object
-	float getfloat(unsigned int);
+    float getfloat(unsigned int);
     /// get int value of n^th-from-top object
-	int getint(unsigned int);
+    int getint(unsigned int);
     /// get string value of n^th-from-top object
-	string getstring(unsigned int);
+    string getstring(unsigned int);
     /// check whether top object matches specified type
-	bool istype(int t);
+    bool istype(int t);
     /// check whether top object has type flags attribute
-	bool istypef(int t);
+    bool istypef(int t);
     /// display stack contents
-	void disp();
+    void disp();
     
-	bool validateinput(int*,unsigned int);
+    bool validateinput(int*,unsigned int);
     /// check whether named file is readable
-	bool checkReadable();
+    bool checkReadable();
     /// check whether named file is writeable
-	bool checkWritable();
+    bool checkWritable();
     /// check whether named folder exists
-	bool checkFolder();
+    bool checkFolder();
     /// rotate top n items
-	void rot(int n);
+    void rot(int n);
     /// swap top 2 items
-	void swap();
+    void swap();
     /// drop top item
-	void drop();
+    void drop();
     
-	int ntotal;							///< total number of items ever created on stack
-	vector<CratersBaseObject*> items;	///< items on stack
-    vector<int> entrynum;				///< entry numbers for items on stack
-	Interactor* controller;				///< Interactor manipulating stack
+    int ntotal;                            ///< total number of items ever created on stack
+    vector<CratersBaseObject*> items;    ///< items on stack
+    vector<int> entrynum;                ///< entry numbers for items on stack
+    Interactor* controller;                ///< Interactor manipulating stack
 };
 
 /// Action for manipulating stack items
@@ -108,15 +108,15 @@ public:
     /// print help info
     virtual void printinfo(int depth);
     
-	string description;				///< help description of command
-	vector<string> commandnames;	///< list of names to call command
-	void addname(const string& c);	///< add name for command
-	
-	int ninputs;					///< number of inputs required
-	int* inputtypes;				///< types of each required input
-	
-	Stack* mystack;					///< stack being manipulated
-	Interactor* myinteractor;		///< Interactor providing commands
+    string description;                ///< help description of command
+    vector<string> commandnames;    ///< list of names to call command
+    void addname(const string& c);    ///< add name for command
+    
+    int ninputs;                    ///< number of inputs required
+    int* inputtypes;                ///< types of each required input
+    
+    Stack* mystack;                    ///< stack being manipulated
+    Interactor* myinteractor;        ///< Interactor providing commands
 };
 
 /// Class for handling interactive command streams
@@ -152,24 +152,24 @@ public:
     /// locate action matching given name
     Action* findaction(const string& c);
     
-    string name;						///< display name of interactor
-    string description;					///< text help description
-	bool haltinteract;					///< whether to break interactive processing cycle
-	bool istop;							///< whether this is the top-level interaction process
-	unsigned int evallevel;
-	CMacro* recordingmacro;				///< macro being recorded
-	vector<Action*> actions;			///< available actions
-    vector<Interactor*> categories;		///< available categories (sub-menus with several actions)
-    Stack* mystack;						///< stack being manipulated
-	std::deque<string> commandstream;	///< commands to process
-	
+    string name;                        ///< display name of interactor
+    string description;                    ///< text help description
+    bool haltinteract;                    ///< whether to break interactive processing cycle
+    bool istop;                            ///< whether this is the top-level interaction process
+    unsigned int evallevel;
+    CMacro* recordingmacro;                ///< macro being recorded
+    vector<Action*> actions;            ///< available actions
+    vector<Interactor*> categories;        ///< available categories (sub-menus with several actions)
+    Stack* mystack;                        ///< stack being manipulated
+    std::deque<string> commandstream;    ///< commands to process
+    
 };
 
 /// Top-level Interactor
 class TopInteractor : public Interactor {
 public:
     /// Constructor
-	TopInteractor();
+    TopInteractor();
 };
 
 #include "Interactive_Analytic.hh"

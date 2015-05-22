@@ -29,35 +29,35 @@ class ClassifyImage;
 class RGBImage : public RectRegion
 {
 public:
-	Image* R;
-	Image* G;
-	Image* B;
-	RGBImage(int w, int h);
-	RGBImage(Image* img);
-	RGBImage(Image* x, Image* y);
-	RGBImage(RectRegion* R);
-	~RGBImage();
-	
-	void solidcolor(float r, float g, float b);
-	void desaturate(float z);
-	void speckfield();
-	void pointfield(int);
-	void gridfield(int);
-	static RGBImage* redzeros(Image* I);
-	RGBImage* colorby(Image* img);
-	static RGBImage* grayby(Image* img, float bp);
-	static RGBImage* renderTopo(Image* t);
-	RGBImage* shadeby(Image* img);
-	RGBImage* maskby(Image* img);
-	RGBImage* emboss(Image* img);
-	RGBImage* qrbs(Image* img, float z);
-	RGBImage* overlay(Image* img, float r, float g, float b, float t);
-	RGBImage* drawmarks();
-	RGBImage* classifyoverlay(ClassifyImage* C, int andkey, int xorkey, float r, float g, float b);
-	void writeBMP(const string& ofname);
-	
-	static RGBImage* colorwheel(int r);
-	static RGBImage* fourierSpinner(int r, int k, float theta);
+    Image* R;
+    Image* G;
+    Image* B;
+    RGBImage(int w, int h);
+    RGBImage(Image* img);
+    RGBImage(Image* x, Image* y);
+    RGBImage(RectRegion* R);
+    ~RGBImage();
+    
+    void solidcolor(float r, float g, float b);
+    void desaturate(float z);
+    void speckfield();
+    void pointfield(int);
+    void gridfield(int);
+    static RGBImage* redzeros(Image* I);
+    RGBImage* colorby(Image* img);
+    static RGBImage* grayby(Image* img, float bp);
+    static RGBImage* renderTopo(Image* t);
+    RGBImage* shadeby(Image* img);
+    RGBImage* maskby(Image* img);
+    RGBImage* emboss(Image* img);
+    RGBImage* qrbs(Image* img, float z);
+    RGBImage* overlay(Image* img, float r, float g, float b, float t);
+    RGBImage* drawmarks();
+    RGBImage* classifyoverlay(ClassifyImage* C, int andkey, int xorkey, float r, float g, float b);
+    void writeBMP(const string& ofname);
+    
+    static RGBImage* colorwheel(int r);
+    static RGBImage* fourierSpinner(int r, int k, float theta);
 };
 
 #endif

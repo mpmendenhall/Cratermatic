@@ -33,18 +33,18 @@ class Image;
 class ComplexImage : public RectRegion
 {
 public:
-	int origwidth;
-	int origheight;
-	fftw_complex* data;
-	ComplexImage(int w, int h);
-	~ComplexImage();
-	ComplexImage* copy();
-	Image* inversefftreal();
-	static ComplexImage* fftreal(Image* I);
-	Image* real();
-	Image* imag();
-	Image* magv();
-	ComplexImage* mult(ComplexImage*);
+    int origwidth;
+    int origheight;
+    fftw_complex* data;
+    ComplexImage(int w, int h);
+    ~ComplexImage();
+    ComplexImage* copy();
+    Image* inversefftreal();
+    static ComplexImage* fftreal(Image* I);
+    Image* real();
+    Image* imag();
+    Image* magv();
+    ComplexImage* mult(ComplexImage*);
 };
 #endif
 

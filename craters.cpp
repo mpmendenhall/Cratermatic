@@ -30,18 +30,18 @@ extern int mergemethod;
 
 int main (int argc, char **argv)
 {
-	//systemwide globals
-	domovie = false;
-	moviebase = "movieframe_%04i.bmp";
-	movieframeadvance = 20;
-	mergemethod=2;
-	//------------------
-	
-	TopInteractor* I = new TopInteractor();
-	printf("\n");
-	if(argc>1) I->commandLineToCommandstream(argc,argv);
-	else I->interactiveMode();
-	printf("\n");
-	
-	return 0;
+    //systemwide globals
+    domovie = false;
+    moviebase = "movieframe_%04i.bmp";
+    movieframeadvance = 20;
+    mergemethod=2;
+    //------------------
+    
+    TopInteractor* I = new TopInteractor();
+    printf("\n");
+    if(argc>1) I->commandLineToCommandstream(argc,argv);
+    else I->interactiveMode();
+    printf("\n");
+    
+    return 0;
 }

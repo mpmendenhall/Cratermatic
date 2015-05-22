@@ -31,25 +31,25 @@ class Image;
 class Merger
 {
 public:
-	Merger(ClassifyImage* ws, Image** ch, int nch);
-	void basinstats();
-	void mainloop();
-	void domerge(float);
-	void snapshot();
-	void genfcritvals(float);
-	float getfcritval(int);
-	float calcweight(int,int);
-	float** linkweights;
-	//~Merger();
-	ClassifyImage* w;
-	Image** ch;
-	Matrix** reg_sum;
-	Matrix** reg_sscp;
-	float* fcritvals;
-	int* bestj;
-	float* bestdv;
-	int nch;
-	void merge(int i, int j);
+    Merger(ClassifyImage* ws, Image** ch, int nch);
+    void basinstats();
+    void mainloop();
+    void domerge(float);
+    void snapshot();
+    void genfcritvals(float);
+    float getfcritval(int);
+    float calcweight(int,int);
+    float** linkweights;
+    //~Merger();
+    ClassifyImage* w;
+    Image** ch;
+    Matrix** reg_sum;
+    Matrix** reg_sscp;
+    float* fcritvals;
+    int* bestj;
+    float* bestdv;
+    int nch;
+    void merge(int i, int j);
 };
 
 #endif

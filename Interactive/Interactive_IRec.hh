@@ -21,46 +21,46 @@
 
 class aFindcraters: public Action {
 public:
-	aFindcraters() : Action(){
-		description="Place results in <output directory> from finding craters in an (elevation) <Image>";
-		addname("findcraters");
-		ninputs = 2;
-		inputtypes[0] = COF_CRATERSTRING;
-		inputtypes[1] = COF_IMAGE;
-	};
-	
-	void DoIt() {
-		if(!mystack->checkFolder()) return;
-		string c = mystack->getstring(0);
+    aFindcraters() : Action(){
+        description="Place results in <output directory> from finding craters in an (elevation) <Image>";
+        addname("findcraters");
+        ninputs = 2;
+        inputtypes[0] = COF_CRATERSTRING;
+        inputtypes[1] = COF_IMAGE;
+    };
+    
+    void DoIt() {
+        if(!mystack->checkFolder()) return;
+        string c = mystack->getstring(0);
         vector<CraterSpec> v;
-		((Image*)mystack->get(1))->findcraters(c, NULL, v, true, 0.25, 0.10, 0.06, 0.02, 0.5, 0.33, 0.33);
-		mystack->drop();
-	}
+        ((Image*)mystack->get(1))->findcraters(c, NULL, v, true, 0.25, 0.10, 0.06, 0.02, 0.5, 0.33, 0.33);
+        mystack->drop();
+    }
 };
 
 class aFindcratersParams: public Action {
 public:
-	aFindcratersParams() : Action(){
-		description="Use 7 tuning parameters <<k1...k7>> and specified <products directory> for finding craters in an (elevation) <Image>";
-		addname("findcratersP");
-		ninputs = 9;
-		inputtypes[0] = COF_CFLOAT;
-		inputtypes[1] = COF_CFLOAT;
-		inputtypes[2] = COF_CFLOAT;
-		inputtypes[3] = COF_CFLOAT;
-		inputtypes[4] = COF_CFLOAT;
-		inputtypes[5] = COF_CFLOAT;
-		inputtypes[6] = COF_CFLOAT;
-		inputtypes[7] = COF_CRATERSTRING;
-		inputtypes[8] = COF_IMAGE;
-	};
-	
-	void DoIt() {
-		if(!mystack->checkFolder()) return;
-		string c = mystack->getstring(7);
+    aFindcratersParams() : Action(){
+        description="Use 7 tuning parameters <<k1...k7>> and specified <products directory> for finding craters in an (elevation) <Image>";
+        addname("findcratersP");
+        ninputs = 9;
+        inputtypes[0] = COF_CFLOAT;
+        inputtypes[1] = COF_CFLOAT;
+        inputtypes[2] = COF_CFLOAT;
+        inputtypes[3] = COF_CFLOAT;
+        inputtypes[4] = COF_CFLOAT;
+        inputtypes[5] = COF_CFLOAT;
+        inputtypes[6] = COF_CFLOAT;
+        inputtypes[7] = COF_CRATERSTRING;
+        inputtypes[8] = COF_IMAGE;
+    };
+    
+    void DoIt() {
+        if(!mystack->checkFolder()) return;
+        string c = mystack->getstring(7);
         vector<CraterSpec> v;
-		((Image*)mystack->get(8))->findcraters(c, NULL, v, true, mystack->getfloat(6),
-											   mystack->getfloat(5), mystack->getfloat(4), mystack->getfloat(3), 
-											   mystack->getfloat(2), mystack->getfloat(1), mystack->getfloat(0));
-	}
+        ((Image*)mystack->get(8))->findcraters(c, NULL, v, true, mystack->getfloat(6),
+                                               mystack->getfloat(5), mystack->getfloat(4), mystack->getfloat(3), 
+                                               mystack->getfloat(2), mystack->getfloat(1), mystack->getfloat(0));
+    }
 };

@@ -37,135 +37,135 @@ using std::vector;
 
 enum CraterObjectType
 {
-	COBJ_CRATERSBASEOBJECT,
-	COBJ_RECTREGION,
-	COBJ_IMAGE,
-	COBJ_CLASSIFYIMAGE,
-	COBJ_COMPLEXIMAGE,
-	COBJ_RGBIMAGE,
-	COBJ_CFLOAT,
-	COBJ_CRATERSTRING,
-	COBJ_CMACRO,
-	COBJ_RASTERREGION,
-	COBJ_CERROR
+    COBJ_CRATERSBASEOBJECT,
+    COBJ_RECTREGION,
+    COBJ_IMAGE,
+    COBJ_CLASSIFYIMAGE,
+    COBJ_COMPLEXIMAGE,
+    COBJ_RGBIMAGE,
+    COBJ_CFLOAT,
+    COBJ_CRATERSTRING,
+    COBJ_CMACRO,
+    COBJ_RASTERREGION,
+    COBJ_CERROR
 };
 
 enum CraterObjectTypeFlag
 {
-	COF_CRATERSBASEOBJECT	= 1 << COBJ_CRATERSBASEOBJECT,
-	COF_RECTREGION			= 1 << COBJ_RECTREGION,
-	COF_IMAGE				= 1 << COBJ_IMAGE,
-	COF_CLASSIFYIMAGE		= 1 << COBJ_CLASSIFYIMAGE,
-	COF_COMPLEXIMAGE		= 1 << COBJ_COMPLEXIMAGE,
-	COF_RGBIMAGE			= 1 << COBJ_RGBIMAGE,
-	COF_RASTERREGION		= 1 << COBJ_RASTERREGION,
-	COF_CFLOAT				= 1 << COBJ_CFLOAT,
-	COF_CRATERSTRING		= 1 << COBJ_CRATERSTRING,
-	COF_CMACRO				= 1 << COBJ_CMACRO,
-	COF_CERROR				= 1 << COBJ_CERROR,
-	COF_ANYTYPE = COF_CRATERSBASEOBJECT | COF_RECTREGION | COF_IMAGE |
-		COF_CLASSIFYIMAGE | COF_COMPLEXIMAGE | COF_RGBIMAGE | COF_RASTERREGION |
-		COF_CFLOAT | COF_CRATERSTRING | COF_CMACRO | COF_CERROR
+    COF_CRATERSBASEOBJECT    = 1 << COBJ_CRATERSBASEOBJECT,
+    COF_RECTREGION            = 1 << COBJ_RECTREGION,
+    COF_IMAGE                = 1 << COBJ_IMAGE,
+    COF_CLASSIFYIMAGE        = 1 << COBJ_CLASSIFYIMAGE,
+    COF_COMPLEXIMAGE        = 1 << COBJ_COMPLEXIMAGE,
+    COF_RGBIMAGE            = 1 << COBJ_RGBIMAGE,
+    COF_RASTERREGION        = 1 << COBJ_RASTERREGION,
+    COF_CFLOAT                = 1 << COBJ_CFLOAT,
+    COF_CRATERSTRING        = 1 << COBJ_CRATERSTRING,
+    COF_CMACRO                = 1 << COBJ_CMACRO,
+    COF_CERROR                = 1 << COBJ_CERROR,
+    COF_ANYTYPE = COF_CRATERSBASEOBJECT | COF_RECTREGION | COF_IMAGE |
+    COF_CLASSIFYIMAGE | COF_COMPLEXIMAGE | COF_RGBIMAGE | COF_RASTERREGION |
+    COF_CFLOAT | COF_CRATERSTRING | COF_CMACRO | COF_CERROR
 };
 
 class CratersBaseObject
 {
 public:
-	string isaName;
-	CraterObjectType isaNum;
-	string name;
-	
-	static const int bytelength;
-	
-	CratersBaseObject();
-	virtual ~CratersBaseObject() { }
-	
-	static void writeBinaryFromNormalizedFloat(float* fdat, int len, FILE* ofp, int nbits);
-	static void writeBinaryFromBool(bool* bdat, int len, FILE* ofp);
-	static void writeBMPHeaders(FILE* ofp, int bitdepth, int width, int height);
-	static void rev2byte(FILE* ofp, unsigned short foo);
-	static void rev4byte(FILE* ofp, unsigned int foo);
-	static void writeBMPgreyColorPalette(FILE* ofp);
-	static void writeBMPmonoColorPalette(FILE* ofp);
-	static int* scatterNumberBase(unsigned int n);
-	static int* scatterNumber(unsigned int n);
-	static void lsrl(float* x, float* y, float* w, int n, float* a, float* b, float* r);
-	
-	static void hsv2rgb(float h, float s, float v, float* r, float* g, float* b);
-	static void rgb2hsv(float r, float g, float b, float* h, float* s, float* v);
-	
-	static int compareFloat(const void * a, const void * b);
-	static int compareFloatP(const void * a, const void * b);
+    string isaName;
+    CraterObjectType isaNum;
+    string name;
+    
+    static const int bytelength;
+    
+    CratersBaseObject();
+    virtual ~CratersBaseObject() { }
+    
+    static void writeBinaryFromNormalizedFloat(float* fdat, int len, FILE* ofp, int nbits);
+    static void writeBinaryFromBool(bool* bdat, int len, FILE* ofp);
+    static void writeBMPHeaders(FILE* ofp, int bitdepth, int width, int height);
+    static void rev2byte(FILE* ofp, unsigned short foo);
+    static void rev4byte(FILE* ofp, unsigned int foo);
+    static void writeBMPgreyColorPalette(FILE* ofp);
+    static void writeBMPmonoColorPalette(FILE* ofp);
+    static int* scatterNumberBase(unsigned int n);
+    static int* scatterNumber(unsigned int n);
+    static void lsrl(float* x, float* y, float* w, int n, float* a, float* b, float* r);
+    
+    static void hsv2rgb(float h, float s, float v, float* r, float* g, float* b);
+    static void rgb2hsv(float r, float g, float b, float* h, float* s, float* v);
+    
+    static int compareFloat(const void * a, const void * b);
+    static int compareFloatP(const void * a, const void * b);
 };
 
 class CFloat : public CratersBaseObject
 {
 public:
-	float val;
-	CFloat(float f);
-	CFloat* copy();
-	operator float() const;
+    float val;
+    CFloat(float f);
+    CFloat* copy();
+    operator float() const;
 };
 
 
 class CraterString : public CratersBaseObject
 {
 public:
-	string val;
-	CraterString(const string& c);
-	CraterString* copy();
+    string val;
+    CraterString(const string& c);
+    CraterString* copy();
 };
 
 class CError : public CratersBaseObject
 {
 public:
-	string errname;
-	int errnum;
-	CError(const string& c, int i);
-	CError* copy();
+    string errname;
+    int errnum;
+    CError(const string& c, int i);
+    CError* copy();
 };
 
 class CMacro : public CratersBaseObject
 {
 public:
-	signed int maxlen;
-	string stringval;
-	CMacro();
-	CMacro* copy();
-	void addtoken(const string& t);
+    signed int maxlen;
+    string stringval;
+    CMacro();
+    CMacro* copy();
+    void addtoken(const string& t);
 };
 
 class CraterSpec {
 public:
-	
-	CraterSpec(int idn): idnum(idn) { }
-	
-	int idnum;
-	float x = 0;
-	float y = 0;
-	float r = 0;
-	float area = 0;
-	float volume = 0;
-	float hipt = 0;
-	float lowpt = 0;
-	float depth = 0;
-	float steepness = 0;
-	
-	//shape Fourier terms
-	vector<float> xsft;
-	vector<float> ysft;
-	vector<float> deviation;
-	
-	//gradient fourier terms
-	vector<float> grxxsft;
-	vector<float> grxysft;
-	vector<float> gryxsft;
-	vector<float> gryysft;
-	
-	void writeToFile(FILE* ofp);
-	static void writeHeaders(FILE* ofp);
-	void writeShapeFourierToFile(FILE* ofp);
-	void writeGradFourierToFile(FILE* ofp);
+    
+    CraterSpec(int idn): idnum(idn) { }
+    
+    int idnum;
+    float x = 0;
+    float y = 0;
+    float r = 0;
+    float area = 0;
+    float volume = 0;
+    float hipt = 0;
+    float lowpt = 0;
+    float depth = 0;
+    float steepness = 0;
+    
+    //shape Fourier terms
+    vector<float> xsft;
+    vector<float> ysft;
+    vector<float> deviation;
+    
+    //gradient fourier terms
+    vector<float> grxxsft;
+    vector<float> grxysft;
+    vector<float> gryxsft;
+    vector<float> gryysft;
+    
+    void writeToFile(FILE* ofp);
+    static void writeHeaders(FILE* ofp);
+    void writeShapeFourierToFile(FILE* ofp);
+    void writeGradFourierToFile(FILE* ofp);
 };
 
 #endif

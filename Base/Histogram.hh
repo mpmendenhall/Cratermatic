@@ -26,17 +26,17 @@
 
 class Histogram {
 public:
-	float* binbounds;
-	float* count;
-	float totalcount;
-	int n;
-	float wtot;
-	Histogram(float *d, int size, float* weight, float min, float max, int nbins);
-	~Histogram();
-	void display();
-	int maxbin();
-	float uniformity();
-	float coverage();
+    float* binbounds;
+    float* count;
+    float totalcount;
+    int n;
+    float wtot;
+    Histogram(float *d, int size, float* weight, float min, float max, int nbins);
+    ~Histogram();
+    void display();
+    int maxbin();
+    float uniformity();
+    float coverage();
 };
 
 #endif
