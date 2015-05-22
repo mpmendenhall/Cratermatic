@@ -30,6 +30,7 @@ using std::string;
 #include <float.h>
 #include <cmath>
 #include <vector>
+using std::vector;
 #include <time.h>
 
 #define WITHFFTW
@@ -134,34 +135,32 @@ public:
 	void addtoken(const string& t);
 };
 
-class CraterSpec
-{
+class CraterSpec {
 public:
 	
-	CraterSpec(int idn);
-	~CraterSpec();
+	CraterSpec(int idn): idnum(idn) { }
 	
 	int idnum;
-	float x;
-	float y;
-	float r;
-	float area;
-	float volume;
-	float hipt;
-	float lowpt;
-	float depth;
-	float steepness;
+	float x = 0;
+	float y = 0;
+	float r = 0;
+	float area = 0;
+	float volume = 0;
+	float hipt = 0;
+	float lowpt = 0;
+	float depth = 0;
+	float steepness = 0;
 	
 	//shape Fourier terms
-	float* xsft;
-	float* ysft;
-	float* deviation;
+	vector<float> xsft;
+	vector<float> ysft;
+	vector<float> deviation;
 	
 	//gradient fourier terms
-	float* grxxsft;
-	float* grxysft;
-	float* gryxsft;
-	float* gryysft;
+	vector<float> grxxsft;
+	vector<float> grxysft;
+	vector<float> gryxsft;
+	vector<float> gryysft;
 	
 	void writeToFile(FILE* ofp);
 	static void writeHeaders(FILE* ofp);

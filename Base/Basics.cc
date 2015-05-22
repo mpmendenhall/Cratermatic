@@ -322,55 +322,22 @@ void CMacro::addtoken(const string& t) {
 	name = shortize(stringval,60);
 }
 
-CraterSpec::CraterSpec(int idn)
-{
-	idnum = idn;
-	x = 0;
-	y = 0;
-	r = 0;
-	area = 0;
-	volume = 0;
-	hipt = 0;
-	lowpt = 0;
-	depth = 0;
-	steepness = 0;
-	xsft = NULL;
-	ysft = NULL;
-	grxxsft = NULL;
-	grxysft = NULL;
-	gryxsft = NULL;
-	gryysft = NULL;
-	deviation = NULL;
-}
+////////////////////////////////////////
 
-CraterSpec::~CraterSpec()
-{
-	if(xsft) free(xsft);
-	if(ysft) free(ysft);
-	if(grxxsft) free(grxxsft);
-	if(grxysft) free(grxysft);
-	if(gryxsft) free(gryxsft);
-	if(gryysft) free(gryysft);
-	if(deviation) free(deviation);
-}
-
-void CraterSpec::writeHeaders(FILE* ofp)
-{
+void CraterSpec::writeHeaders(FILE* ofp) {
 	fprintf(ofp,"# ID\tx\ty\tr\tdepth\tarea\ta_1\tb_1\n");
 }
 
-void CraterSpec::writeToFile(FILE* ofp)
-{
+void CraterSpec::writeToFile(FILE* ofp) {
 	fprintf(ofp,"%i\t%5.2f\t%5.2f\t%5.2f\t%6.4g\t%6.4g\t%6.4g\t%6.4g\n",idnum,x,y,r,depth,xsft[0],xsft[2]/xsft[0],ysft[2]/xsft[0]);
 	fflush(ofp);
 }
 
-void CraterSpec::writeShapeFourierToFile(FILE* ofp)
-{
+void CraterSpec::writeShapeFourierToFile(FILE* ofp) {
 	fprintf(ofp,"%i",idnum);
-	if(xsft && ysft) {
+	if(xsft.size() && xsft.size() == ysft.size()) {
 		fprintf(ofp,"\t%+.4e",xsft[0]);
-		for(int i=1; i<10; i++) fprintf(ofp,"\t%+.4e\t%+.4e",xsft[i]/xsft[0],ysft[i]/xsft[0]);
+		for(size_t i=1; i<xsft.size(); i++) fprintf(ofp,"\t%+.4e\t%+.4e", xsft[i]/xsft[0], ysft[i]/xsft[0]);
 	}
 	fprintf(ofp,"\n");
 	fflush(ofp);
@@ -379,18 +346,18 @@ void CraterSpec::writeShapeFourierToFile(FILE* ofp)
 void CraterSpec::writeGradFourierToFile(FILE* ofp)
 {
 	fprintf(ofp,"%i",idnum);
-	if(grxxsft && grxysft)
-	{
-		for(int i=0; i<8; i++) fprintf(ofp,"\t%+.4e\t%+.4e",grxxsft[i],grxysft[i]);
+	if(grxxsft.size() && grxxsft.size() == grxysft.size()) {
+		for(size_t i=0; i<grxxsft.size(); i++) fprintf(ofp,"\t%+.4e\t%+.4e", grxxsft[i], grxysft[i]);
 	}
 	fprintf(ofp,"\n%i",idnum);
-	if(gryxsft && gryysft)
-	{
-		for(int i=0; i<8; i++) fprintf(ofp,"\t%+.4e\t%+.4e",gryxsft[i],gryysft[i]);
+	if(gryxsft.size() && gryxsft.size() == gryysft.size()) {
+		for(size_t i=0; i<8; i++) fprintf(ofp,"\t%+.4e\t%+.4e", gryxsft[i], gryysft[i]);
 	}	
 	fprintf(ofp,"\n");
 	fflush(ofp);
 }
+
+////////////////////////////////////////
 
 void CratersBaseObject::hsv2rgb(float h, float s, float v, float* r, float* g, float* b)
 {

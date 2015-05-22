@@ -155,13 +155,12 @@ void sameCrawlers(ClassifyImage* bounds, Image* topo, Image* drx, Image* dry, fl
 }
 
 
-int Image::findcraters(const string& basefolder, Image* msk, CraterSpec*** cspecs, float k1, float k2, float k3, float k4, float k5, float k6, float k7) {
+int Image::findcraters(const string& basefolder, Image* msk, vector<CraterSpec>& cspecs, bool makeoutimg, float k1, float k2, float k3, float k4, float k5, float k6, float k7) {
     printf("------------------- Finding craters...\n\n");
     
 	char* tc = (char*)malloc(2048*sizeof(char)); // temporary character buffer
 	
-	int nTotalCraters = 0;
-	CraterSpec** specout = (CraterSpec**)malloc(sizeof(CraterSpec*));
+	vector<CraterSpec> specout;
 	
 
     int r;	// analysis radius; smaller on first step without mask.
@@ -276,73 +275,65 @@ int Image::findcraters(const string& basefolder, Image* msk, CraterSpec*** cspec
 		
 		//Characterize each region
 		printf("Checking craters...");
-		specout = (CraterSpec**)realloc(specout,(nTotalCraters+combined->pic.size())*sizeof(CraterSpec*));
 		combined->underlying = NULL;
 		combined->underlyingstats(this);
-		int nNewCraters = 0;
-		for(size_t i=1; i<combined->pic.size(); i++)
-		{
-			CraterSpec* c = new CraterSpec(0);
+		for(size_t i=1; i<combined->pic.size(); i++) {
+			CraterSpec c(0);
 			float invnpts = 1.0/combined->pic[i].size();
-			c->x = invnpts * combined->stats[i].xsum;
-			c->y = invnpts * combined->stats[i].ysum;
-			c->area = 1.0/invnpts;
-			c->hipt = combined->stats[i].basinmax;
-			c->lowpt = combined->stats[i].basinmin;
-			c->depth = c->hipt - c->lowpt;
-			c->r = sqrt(c->area/M_PI);
-			radialFourier(c->x, c->y, combined->pic[i].data(), combined->pic[i].size(), (float*)NULL, &(c->xsft), &(c->ysft), 10);
-			radialFourier(c->x, c->y, combined->pic[i].data(), combined->pic[i].size(), drx, &(c->grxxsft), &(c->grxysft), 10);
-			radialFourier(c->x, c->y, combined->pic[i].data(), combined->pic[i].size(), dry, &(c->gryxsft), &(c->gryysft), 10);
+			c.x = invnpts * combined->stats[i].xsum;
+			c.y = invnpts * combined->stats[i].ysum;
+			c.area = 1.0/invnpts;
+			c.hipt = combined->stats[i].basinmax;
+			c.lowpt = combined->stats[i].basinmin;
+			c.depth = c.hipt - c.lowpt;
+			c.r = sqrt(c.area/M_PI);
+			radialFourier(c.x, c.y, combined->pic[i], NULL, c.xsft, c.ysft, 10);
+			radialFourier(c.x, c.y, combined->pic[i], drx, c.grxxsft, c.grxysft, 10);
+			radialFourier(c.x, c.y, combined->pic[i], dry, c.gryxsft, c.gryysft, 10);
 			
-			fourierDeviations(c->x, c->y, combined->pic[i].data(), combined->pic[i].size(), c->xsft, c->ysft, &c->deviation, 7);
+			fourierDeviations(c.x, c.y, combined->pic[i], c.xsft, c.ysft, c.deviation, 7);
 			bool passed = false;
 			
 			do {
 				//basic outer shape test
-				if(sqrt(c->xsft[2]*c->xsft[2]+c->ysft[2]*c->ysft[2]) > k1*c->xsft[0]) break; //too skinny? k1 default 0.25
-				if(sqrt(c->xsft[3]*c->xsft[3]+c->ysft[3]*c->ysft[3]) > k2*c->xsft[0]) break; //too lumpy? k2 default 0.10
+				if(sqrt(c.xsft[2]*c.xsft[2]+c.ysft[2]*c.ysft[2]) > k1*c.xsft[0]) break; //too skinny? k1 default 0.25
+				if(sqrt(c.xsft[3]*c.xsft[3]+c.ysft[3]*c.ysft[3]) > k2*c.xsft[0]) break; //too lumpy? k2 default 0.10
 				
 				//shape deviation test
-				if(c->deviation[1] > k3) break; // k3 0.06
-				if(c->deviation[2] > k4) break; // k4 0.02
+				if(c.deviation[1] > k3) break; // k3 0.06
+				if(c.deviation[2] > k4) break; // k4 0.02
 				
 				//gradient fourier test
-				//if(c->grxxsft[1] > 0 || c->gryysft[1] > 0) { passed = false; break; }
-				float xymx = std::max(fabs(c->grxxsft[1]),fabs(c->gryysft[1]));
-				float xymn = std::min(fabs(c->grxxsft[1]),fabs(c->gryysft[1]));
+				//if(c.grxxsft[1] > 0 || c.gryysft[1] > 0) { passed = false; break; }
+				float xymx = std::max(fabs(c.grxxsft[1]),fabs(c.gryysft[1]));
+				float xymn = std::min(fabs(c.grxxsft[1]),fabs(c.gryysft[1]));
 				if(xymn/xymx < k5) break; //x-y balance k5 0.5
 				
-				float primarycomponent = sqrt(c->grxxsft[1]*c->grxxsft[1]+c->gryysft[1]*c->gryysft[1]);
+				float primarycomponent = sqrt(c.grxxsft[1]*c.grxxsft[1]+c.gryysft[1]*c.gryysft[1]);
 				
-				float gr1 = sqrt(c->grxysft[1]*c->grxysft[1]+c->gryxsft[1]*c->gryxsft[1]);
+				float gr1 = sqrt(c.grxysft[1]*c.grxysft[1]+c.gryxsft[1]*c.gryxsft[1]);
 				if(gr1 > k6*primarycomponent) break; //too large 1st component k6 0.33
-				float gr2 = sqrt(c->grxysft[2]*c->grxysft[2] + c->gryxsft[2]*c->gryxsft[2] + c->grxxsft[2]*c->grxxsft[2] + c->gryysft[2]*c->gryysft[2]);
+				float gr2 = sqrt(c.grxysft[2]*c.grxysft[2] + c.gryxsft[2]*c.gryxsft[2] + c.grxxsft[2]*c.grxxsft[2] + c.gryysft[2]*c.gryysft[2]);
 				if(gr2 > k7*primarycomponent) break; //too large 2nd component k7 0.33
 				
                 passed = true;
 				
 			} while (0);
 				
-			if(!passed)
-			{
+			if(!passed) {
 				combined->andRegion(i,0x0);
 				printf("x"); fflush(stdout);
-				delete(c);
 				continue;
 			} else {
 				//passed all tests
 				printf("*"); fflush(stdout);
-				specout[nTotalCraters + nNewCraters] = c;
+                c.idnum = specout.size();
+				specout.push_back(c);
 				combined->cutoutChunkMask(msk,i);
-				c->idnum = nNewCraters;
-				nNewCraters++;
 			}
 		}
-		nTotalCraters += nNewCraters;
 		printf("\nCraterfinding cycle done; cleaning up.\n\n");
 		
-		specout = (CraterSpec**)realloc(specout,nTotalCraters*sizeof(CraterSpec*));
 		
 		r *= 2;
 		++cycnum;
@@ -356,90 +347,93 @@ int Image::findcraters(const string& basefolder, Image* msk, CraterSpec*** cspec
 	printf("Craterfinding done; saving output.\n");
 	
 	
-	int nmycraters = nTotalCraters;
-
 	if(width > 40 && height > 40) {
 		Image* rd = reduce();
 		Image* md = msk->reduce();
-		CraterSpec** newcrats;
-		int nnewcrats = rd->findcraters(basefolder,md,&newcrats,k1,k2,k3,k4,k5,k6,k7);
-		specout = (CraterSpec**)realloc(specout,(nTotalCraters+nnewcrats)*sizeof(CraterSpec*));
-		for(int i=0; i<nnewcrats; i++) specout[nTotalCraters+i] = newcrats[i];
-		free(newcrats);
-		nTotalCraters += nnewcrats;
+		rd->findcraters(basefolder, md, specout, false, k1,k2,k3,k4,k5,k6,k7);
 	}
 
-	 //return cspecs or write to catalog / final image
-	if(cspecs) {
+    // return cspecs or write to catalog / final image
+	if(!makeoutimg) {
 		//fix crater coordinates for this size level
-		for(int i=0; i<nmycraters; i++)
-		{
-			specout[i]->x = realx(specout[i]->x);
-			specout[i]->y = realy(specout[i]->y);
-			specout[i]->area *= realdx(1.0)*realdy(1.0);
-			specout[i]->xsft[0] *= realdx(1.0)*realdy(1.0);			
-			for(int j=1; j<10; j++)
-			{
-				specout[i]->xsft[j] = realdx(specout[i]->xsft[j]);
-				specout[i]->ysft[j] = realdy(specout[i]->ysft[j]);
+		for(auto it = specout.begin(); it != specout.end(); it++) {
+			it->x = realx(it->x);
+			it->y = realy(it->y);
+			it->area *= realdx(1.0)*realdy(1.0);
+			it->xsft[0] *= realdx(1.0)*realdy(1.0);
+			for(int j=1; j<10; j++) {
+				it->xsft[j] = realdx(it->xsft[j]);
+				it->ysft[j] = realdy(it->ysft[j]);
 			}
+            cspecs.push_back(*it);
 		}
-		
-		*cspecs = specout;
-	}
-	else {
+    } else {
         printf("Final output image...\n");
         
 		//final output image and layer images
 		RGBImage* finalout = RGBImage::renderTopo(this);
+    
 		int nlayers = 0;
-		int* cpts;
+        
 		ClassifyImage* layerImage = NULL;
 		sprintf(tc,"%s/Catalog.txt",basefolder.c_str());
 		FILE* catfile = fopen(tc,"w");
+        assert(catfile);
 		sprintf(tc,"%s/Shape.txt",basefolder.c_str());
 		FILE* shapefile = fopen(tc,"w");
+        assert(shapefile);
 		sprintf(tc,"%s/Slope.txt",basefolder.c_str());
 		FILE* gradfile = fopen(tc,"w");
+        assert(gradfile);
 		CraterSpec::writeHeaders(catfile);
-				
-		for(int i=0; i<nTotalCraters; i++)
-		{
-			if(specout[i]->idnum == 0)
-			{
-				if(layerImage)
-				{
+        
+        printf("\tDrawing %zu craters...\n", specout.size());
+        
+		vector<unsigned int> craterpts;
+		for(size_t i = 0; i < specout.size(); i++) {
+			if(specout[i].idnum == 0) {
+				if(layerImage) {
+                    printf("\t\tSaving layer %i file...\n", nlayers);
 					sprintf(tc,"%s/Layer_%i.txt",basefolder.c_str(),nlayers);
 					layerImage->writeArcGIS(tc);
 					delete(layerImage);
 				}
-				layerImage = new ClassifyImage((RectRegion*)this);
+				//layerImage = new ClassifyImage((RectRegion*)this);
 				nlayers++;
 			}
-			specout[i]->idnum = i + 1;
-			specout[i]->writeToFile(catfile);
-			specout[i]->writeShapeFourierToFile(shapefile);
-			specout[i]->writeGradFourierToFile(gradfile);
-			finalout->fouriermark(specout[i]->x,specout[i]->y,specout[i]->xsft,specout[i]->ysft,8,4);
-			int nf = fourierPoints(specout[i]->x,specout[i]->y,specout[i]->xsft,specout[i]->ysft, 8, &cpts);
-			for(int j=0; j<nf; j++) layerImage->data[cpts[j]] = i+1;
-			free(cpts);
+			specout[i].idnum = i + 1;
+			specout[i].writeToFile(catfile);
+			specout[i].writeShapeFourierToFile(shapefile);
+			specout[i].writeGradFourierToFile(gradfile);
+			finalout->fouriermark(specout[i].x, specout[i].y, specout[i].xsft, specout[i].ysft, 4);
+            
+            if(!layerImage) continue;
+			craterpts.clear();
+            fourierPoints(specout[i].x, specout[i].y, specout[i].xsft, specout[i].ysft, craterpts);
+			for(auto it = craterpts.begin(); it != craterpts.end(); it++) {
+                assert(*it < layerImage->data.size());
+                layerImage->data[*it] = i+1;
+            }
 		}
-
-		sprintf(tc,"%s/Layer_%i.txt",basefolder.c_str(),nlayers);
-		layerImage->writeArcGIS(tc);
-		delete(layerImage);
-		
+        
+        if(layerImage) {
+            printf("\t\tSaving layer file...\n");
+            sprintf(tc,"%s/Layer_%i.txt",basefolder.c_str(),nlayers);
+            layerImage->writeArcGIS(tc);
+            delete(layerImage);
+		}
+        
 		fclose(catfile);
 		fclose(shapefile);
 		fclose(gradfile);
+        
 		sprintf(tc,"%s/final_%i.bmp",basefolder.c_str(),size);
 		finalout->writeBMP(tc);
 		delete(finalout);
 	}
 	
 	free(tc);
-	return nTotalCraters;
+	return specout.size();
 }
 
 //------------------------------------------------------------------

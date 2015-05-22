@@ -134,7 +134,8 @@ public:
 	Image* edgefinder(float r);
 	Image* craterFindingTransform(float r0, Image* mask);
 	static Image* craterFindingTransform(float r0, Image* gx, Image* gy);
-	int findcraters(const string& basefolder, Image* msk, CraterSpec*** cspecs, float k1, float k2, float k3, float k4, float k5, float k6, float k7);
+    /// Find craters, with optional mask to exclude previously found craters. Record results to cspecs.
+	int findcraters(const string& basefolder, Image* msk, vector<CraterSpec>& cspecs, bool makeoutimg, float k1, float k2, float k3, float k4, float k5, float k6, float k7);
 	
 	Image* pseudo_profile_curvature();
 	Image* pseudo_tangent_curvature();

@@ -398,20 +398,18 @@ public:
 		mystack->drop();
 		ClassifyImage* C = (ClassifyImage*)mystack->get();
 		if(nterms < 0 || nterms > 100 || rgn < 0 || rgn >= (int)C->pic.size()) return;
-		float* xsft;
-		float* ysft;
+		vector<float> xsft;
+		vector<float> ysft;
 		float xc = C->xcenter(C->pic[rgn].data(), C->pic[rgn].size(), NULL);
 		float yc = C->ycenter(C->pic[rgn].data(), C->pic[rgn].size(), NULL);
-		C->radialFourier(xc, yc, C->pic[rgn].data(), C->pic[rgn].size(), (float*)NULL, &xsft, &ysft, nterms);
-		C->fouriermark(xc, yc, xsft, ysft, nterms, 50/std::min(nterms,50));
+		C->radialFourier(xc, yc, C->pic[rgn], NULL, xsft, ysft, nterms);
+		C->fouriermark(xc, yc, xsft, ysft, 50/std::min(nterms,50));
 		xsft[0]*=0.95;
-		C->fouriermark(xc, yc, xsft, ysft, nterms, 50/std::min(nterms,50));
+		C->fouriermark(xc, yc, xsft, ysft, 50/std::min(nterms,50));
 		xsft[0]*=1.11;
-		C->fouriermark(xc, yc, xsft, ysft, nterms, 50/std::min(nterms,50));
+		C->fouriermark(xc, yc, xsft, ysft, 50/std::min(nterms,50));
 		for(int i=0; i<nterms; i++) printf("%+.3e\t%+.3e",xsft[i],ysft[i]);
 		printf("\n");
-		free(xsft);
-		free(ysft);
 	}
 };
 

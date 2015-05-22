@@ -98,7 +98,7 @@ public:
     /// add specified line mark to marks list
 	void addmarkline(float x0, float y0, float x1, float y1);
     /// add specified Fourier series mark to marks list
-	void fouriermark(float x0, float y0, float* xs, float* ys, unsigned int nterms, unsigned int ndivisions);
+	void fouriermark(float x0, float y0, const vector<float>& xs, const vector<float>& ys, unsigned int ndivisions = 4);
 	
     /// pixel distance squared between two points
     int dist2(int p, int q) const;
@@ -126,15 +126,15 @@ public:
     /// find y center-of-mass of specified (weighted) points
 	float ycenter(unsigned int* pts, unsigned int npts, float* wt);
     /// determine radial Fourier series for shape of points set
-	void radialFourier(float x0, float y0, unsigned int* ps, unsigned int nps, float* wt, float** xs, float** ys, unsigned int nmoms);
+	void radialFourier(float x0, float y0, const vector<unsigned int>& ps, const vector<float>& wt, vector<float>& xs, vector<float>& ys, unsigned int nmoms);
     /// determine radial Fourier series for shape of points set
-	void radialFourier(float x0, float y0, unsigned int* ps, unsigned int nps, Image* wtimg, float** xs, float** ys, unsigned int nmoms);
+	void radialFourier(float x0, float y0, const vector<unsigned int>& ps, Image* wtimg, vector<float>& xs, vector<float>& ys, unsigned int nmoms);
     /// sum radial Fourier series at specified angle
-	float invRadialFourier(float angl, float* xs, float* ys, unsigned int nmoms);
-    ///
-	void fourierDeviations(float x0, float y0, unsigned int* pts, unsigned int npts, float* xs, float* ys, float** ds, int nterms);
+	float invRadialFourier(float angl, const vector<float>& xs, const vector<float>& ys);
+    /// fourier series ds of RMS deviation from shape
+	void fourierDeviations(float x0, float y0, const vector<unsigned int>& pts, const vector<float>& xs, const vector<float>& ys, vector<float>& ds, size_t nterms);
     /// return list of points enclosed by Fourier boundaries
-	int fourierPoints(float x0, float y0, float* xs, float* ys, int nterms, int** pout);
+	void fourierPoints(float x0, float y0, const vector<float>& xs, const vector<float>& ys, vector<unsigned int>& pout);
 };
 
 /// Class for scanning across arbitrarily-oriented pixel lines
