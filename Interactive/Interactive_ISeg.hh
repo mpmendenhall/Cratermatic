@@ -397,7 +397,7 @@ public:
 		mystack->drop();
 		mystack->drop();
 		ClassifyImage* C = (ClassifyImage*)mystack->get();
-		if(nterms < 0 || nterms > 100 || rgn < 0 || rgn >= C->pic.size()) return;
+		if(nterms < 0 || nterms > 100 || rgn < 0 || rgn >= (int)C->pic.size()) return;
 		float* xsft;
 		float* ysft;
 		float xc = C->xcenter(C->pic[rgn].data(), C->pic[rgn].size(), NULL);

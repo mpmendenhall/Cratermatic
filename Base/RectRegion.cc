@@ -151,15 +151,15 @@ void RectRegion::fouriermark(float x0, float y0, float* xs, float* ys, unsigned 
 }
 
 
-BoundingBox RectRegion::findboundingbox(int* p, int n) {
+BoundingBox RectRegion::findboundingbox(unsigned int* p, int n) {
 	BoundingBox b;
 	b.lx=INT_MAX; b.ly=INT_MAX;
 	b.ux=-1; b.uy=-1;
 	for(int i=0; i<n; i++) {
-		if(p[i]%width < b.lx) b.lx = p[i]%width;
-		if(p[i]%width > b.ux) b.ux = p[i]%width;
-		if(p[i]/width < b.ly) b.ly = p[i]/width;
-		if(p[i]/width > b.uy) b.uy = p[i]/width;
+		if(int(p[i]%width) < b.lx) b.lx = p[i]%width;
+		if(int(p[i]%width) > b.ux) b.ux = p[i]%width;
+		if(int(p[i]/width) < b.ly) b.ly = p[i]/width;
+		if(int(p[i]/width) > b.uy) b.uy = p[i]/width;
 	}
     assert(b.ux > -1 && b.uy > -1 && b.lx < INT_MAX && b.ly < INT_MAX);
 	return b;
@@ -171,7 +171,7 @@ int RectRegion::dist2(int p, int q) const {
 	return dx*dx+dy*dy;
 }
 
-void RectRegion::radialFourier(float x0, float y0, int* ps, unsigned int nps, float* wt, float** xs, float** ys, unsigned int nmoms)
+void RectRegion::radialFourier(float x0, float y0, unsigned int* ps, unsigned int nps, float* wt, float** xs, float** ys, unsigned int nmoms)
 {
 	if(nmoms == 0) return;
 	
@@ -212,7 +212,7 @@ void RectRegion::radialFourier(float x0, float y0, int* ps, unsigned int nps, fl
 	if(!wt) free(w);
 }
 
-void RectRegion::radialFourier(float x0, float y0, int* ps, unsigned int nps, Image* wt, float** xs, float** ys, unsigned int nmoms)
+void RectRegion::radialFourier(float x0, float y0, unsigned int* ps, unsigned int nps, Image* wt, float** xs, float** ys, unsigned int nmoms)
 {
 	float* w = (float*)malloc(nps*sizeof(float));
 	for(unsigned int i=0; i<nps; i++) w[i] = wt->data[ps[i]];
@@ -231,7 +231,7 @@ float RectRegion::invRadialFourier(float angl, float* xs, float* ys, unsigned in
 	return rexp;
 }
 
-float RectRegion::xcenter(int* pts, unsigned int npts, float* wt)
+float RectRegion::xcenter(unsigned int* pts, unsigned int npts, float* wt)
 {
 	float accum = 0;
 	float w = 0;
@@ -246,7 +246,7 @@ float RectRegion::xcenter(int* pts, unsigned int npts, float* wt)
 	return (float)accum/npts;
 }
 
-float RectRegion::ycenter(int* pts, unsigned int npts, float* wt)
+float RectRegion::ycenter(unsigned int* pts, unsigned int npts, float* wt)
 {
 	float accum = 0;
 	float w = 0;
@@ -293,7 +293,7 @@ int RectRegion::fourierPoints(float x0, float y0, float* xs, float* ys, int nter
 	return npts;
 }
 
-void RectRegion::fourierDeviations(float x0, float y0, int* pts, unsigned int npts, float* xs, float* ys, float** ds, int nterms)
+void RectRegion::fourierDeviations(float x0, float y0, unsigned int* pts, unsigned int npts, float* xs, float* ys, float** ds, int nterms)
 {
 	(*ds) = (float*)malloc(nterms*sizeof(float));
 	
@@ -334,7 +334,7 @@ void RectRegion::fourierDeviations(float x0, float y0, int* pts, unsigned int np
 }
 
 
-Circle RectRegion::findboundingcirc(int* p, unsigned int n) {
+Circle RectRegion::findboundingcirc(unsigned int* p, unsigned int n) {
 	Circle c;
 	c.r = -1;
 	

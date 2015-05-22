@@ -182,7 +182,7 @@ ClassifyImage* ClassifyImage::dat_xor(int q)
 	return this;
 }
 
-ClassifyImage* ClassifyImage::getPoints(int* d, unsigned int n, unsigned int pad) {
+ClassifyImage* ClassifyImage::getPoints(unsigned int* d, unsigned int n, unsigned int pad) {
 	BoundingBox bb = findboundingbox(d,n);
 	ClassifyImage* bi = new ClassifyImage(bb.ux-bb.lx + 2*pad + 1, bb.uy-bb.ly + 2*pad + 1);
 	bi->shift = shift;
@@ -218,7 +218,7 @@ Image* ClassifyImage::getImageMaskObject(unsigned int n, unsigned int pad)
 	if(n>=pic.size()) return NULL;
 	BoundingBox bb = findboundingbox(pic[n].data(),pic[n].size());
 	Image* bi = new Image(bb.ux-bb.lx+2*pad+1,bb.uy-bb.ly+2*pad+1);
-	for(int i=0; i<pic[n].size(); i++) {
+	for(unsigned int i=0; i<pic[n].size(); i++) {
 		int p = pic[n][i];
 		int nx = p%width - bb.lx + pad;
 		int ny = p/width - bb.ly + pad;
@@ -235,7 +235,7 @@ void ClassifyImage::radialization(unsigned int n, Image* u)
 	float* rs = (float*)calloc(100,sizeof(float));
 	
 	int r;
-	for(int i=0; i<pic[n].size(); i++)
+	for(unsigned int i=0; i<pic[n].size(); i++)
 	{
 		r = (int)(2*sqrt((float)dist2(p0,pic[n][i])));
 		if(r>=100) continue;
@@ -243,7 +243,7 @@ void ClassifyImage::radialization(unsigned int n, Image* u)
 		rs[r] += u->data[pic[n][i]];
 	}
 	
-	for(int i=0; i<pic[n].size(); i++)
+	for(unsigned int i=0; i<pic[n].size(); i++)
 	{
 		r = (int)(2*sqrt((float)dist2(p0,pic[n][i])));
 		if(r>=100) continue;
@@ -299,14 +299,14 @@ ClassifyImage* ClassifyImage::putObject(unsigned int n, ClassifyImage* bi, unsig
 
 ClassifyImage* ClassifyImage::fillHoles(int flagmark) {
     printf("Filling holes in %zu regions with mark %i... ", pic.size(), flagmark); fflush(stdout);
-	for(int b = 1; b < pic.size(); b++) {
+	for(unsigned int b = 1; b < pic.size(); b++) {
 		ClassifyImage* foo = getObject(b,1);
         //printf("%zu/%i\t", pic[b].size(), foo->size); fflush(stdout);
 		foo->findObjectsByHigherBits(shift);
         assert(foo->pic.size() >= 2);
 		for(auto it = foo->pic[0].begin(); it != foo->pic[0].end(); it++) foo->data[*it] = 0;
 		for(auto it = foo->pic[1].begin(); it != foo->pic[1].end(); it++) foo->data[*it] = (1<<shift) | (foo->data[*it] & ((1<<shift)-1));
-		for(int j=2; j<foo->pic.size(); j++) for(auto it = foo->pic[j].begin(); it != foo->pic[j].end(); it++) foo->data[*it] = (1<<shift) | flagmark;
+		for(unsigned int j=2; j<foo->pic.size(); j++) for(auto it = foo->pic[j].begin(); it != foo->pic[j].end(); it++) foo->data[*it] = (1<<shift) | flagmark;
 		putObject(b,foo,1);
 		delete(foo);
 	}
@@ -315,30 +315,24 @@ ClassifyImage* ClassifyImage::fillHoles(int flagmark) {
 	return this;
 }
 
-ClassifyImage* ClassifyImage::removeSmall(int s) {
+ClassifyImage* ClassifyImage::removeSmall(size_t s) {
 	if(!isclassified) findObjectsByLowBits(1);
-	for(int i=0; i<pic.size(); i++)
-	{
+	for(unsigned int i=0; i<pic.size(); i++)
 		if(data[pic[i][0]] & 0x1 && pic[i].size()<s) xorRegion(i,0x1);
-	}
 	isclassified = false;
 	return this;
 }
 
-ClassifyImage* ClassifyImage::constrainSize(int s1, int s2)
-{
-	for(int i=1; i<pic.size(); i++)
-	{
+ClassifyImage* ClassifyImage::constrainSize(unsigned int s1, unsigned int s2) {
+	for(size_t i=1; i<pic.size(); i++)
 		if(pic[i].size()<s1 || pic[i].size()>s2) andRegion(i,0x0);
-	}
 	isclassified = false;
 	return this;
 }
 
 ClassifyImage* ClassifyImage::removeUncircular(float th)
 {
-	for(int i=1; i<pic.size(); i++)
-	{
+	for(unsigned int i=1; i<pic.size(); i++) {
 		Circle c = findboundingcirc(pic[i].data(), pic[i].size());
 		if(pic[i].size() < 3.14159*th*c.r*c.r) andRegion(i,0x0);
 	}

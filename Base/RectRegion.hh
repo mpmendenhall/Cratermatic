@@ -115,24 +115,24 @@ public:
 	bool inrange(int);
 	bool inrange(int,int);
     /// find bounding box for specified array of points
-	BoundingBox findboundingbox(int* p, int n);
+	BoundingBox findboundingbox(unsigned int* p, int n);
     /// find bounding circle for specified array of points
-	Circle findboundingcirc(int* p, unsigned int n);
+	Circle findboundingcirc(unsigned int* p, unsigned int n);
     /// expand a bounding box by specified margin
 	BoundingBox expandbb(BoundingBox, int);
 
 	/// find x center-of-mass of specified (weighted) points
-	float xcenter(int* pts, unsigned int npts, float* wt);
+	float xcenter(unsigned int* pts, unsigned int npts, float* wt);
     /// find y center-of-mass of specified (weighted) points
-	float ycenter(int* pts, unsigned int npts, float* wt);
-    /// determine raidal Fourier series for shape of points set
-	void radialFourier(float x0, float y0, int* ps, unsigned int nps, float* wt, float** xs, float** ys, unsigned int nmoms);
-    /// determine raidal Fourier series for shape of points set
-	void radialFourier(float x0, float y0, int* ps, unsigned int nps, Image* wtimg, float** xs, float** ys, unsigned int nmoms);
+	float ycenter(unsigned int* pts, unsigned int npts, float* wt);
+    /// determine radial Fourier series for shape of points set
+	void radialFourier(float x0, float y0, unsigned int* ps, unsigned int nps, float* wt, float** xs, float** ys, unsigned int nmoms);
+    /// determine radial Fourier series for shape of points set
+	void radialFourier(float x0, float y0, unsigned int* ps, unsigned int nps, Image* wtimg, float** xs, float** ys, unsigned int nmoms);
     /// sum radial Fourier series at specified angle
 	float invRadialFourier(float angl, float* xs, float* ys, unsigned int nmoms);
     ///
-	void fourierDeviations(float x0, float y0, int* pts, unsigned int npts, float* xs, float* ys, float** ds, int nterms);
+	void fourierDeviations(float x0, float y0, unsigned int* pts, unsigned int npts, float* xs, float* ys, float** ds, int nterms);
     /// return list of points enclosed by Fourier boundaries
 	int fourierPoints(float x0, float y0, float* xs, float* ys, int nterms, int** pout);
 };

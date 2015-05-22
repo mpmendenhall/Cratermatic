@@ -93,17 +93,16 @@ ClassifyImage* ClassifyImage::watershed(Image* u)
 	
 	//find ownership of flat regions
 	//printf("Classifying flat regions...\n");
-	for(int i=0; i<size; i++) CI->data[i]=-1; //initialize to unclaimed
-	int* distance = (int*)malloc(size*sizeof(int)); //how close they are
-	for(int i=0; i<size; i++) distance[i]=INT_MAX;
-	CI->watershedFloodplainFill(fd, distance);
+	for(int i=0; i<size; i++) CI->data[i] = UINT_MAX; //initialize to unclaimed
+	vector<int> distance(size, INT_MAX); //how close they are
+	CI->watershedFloodplainFill(fd, distance.data());
 	pb->update(0.5);
 	
 	//mark unowned flat regions
 	//printf("Classifying unowned flat regions...\n");
 	for(int x=0; x<width; x++){
 		for(int y=0; y<height; y++){
-			if(fd[x+width*y]==4 && CI->data[x+width*y]==-1) CI->watershedMinimaRecursor(x, y, x, y, fd);
+			if(fd[x+width*y]==4 && CI->data[x+width*y] == UINT_MAX) CI->watershedMinimaRecursor(x, y, x, y, fd);
 		}
 	}
 	pb->update(0.75);
@@ -112,13 +111,12 @@ ClassifyImage* ClassifyImage::watershed(Image* u)
 	//printf("Going with the flow...\n");
 	for(int x=0; x<width; x++){
 		for(int y=0; y<height; y++){
-			if(CI->data[x+width*y]!=-1) continue; //already claimed
+			if(CI->data[x+width*y] != UINT_MAX) continue; //already claimed
 			CI->data[x+width*y]=CI->watershedFlowRecursor(x, y, fd);
 		}
 	}
 	delete(pb);
 	
-	free(distance); distance=NULL;
 	free(fd); fd=NULL;
 	free(df); df=NULL;
 	
@@ -198,13 +196,13 @@ void ClassifyImage::watershedMinimaRecursor(int x, int y, int x0, int y0, int* f
 		int y1=y+connectdy[i];
 		if(y1 == -1 || y1 == height) continue; //edge
 		if(fd[x1+width*y1]!=4) continue; //not a level point
-		if(data[x1+width*y1]!=-1) continue; //already been claimed
+		if(data[x1+width*y1] != UINT_MAX) continue; //already been claimed
 		watershedMinimaRecursor(x1,y1,x0,y0,fd);
 	}
 }
 
 int ClassifyImage::watershedFlowRecursor(int x, int y, int* fd) {
-	if(data[x+width*y]!=-1) return data[x+width*y]; //already know way to terminus
+	if(data[x+width*y] != UINT_MAX) return data[x+width*y]; //already know way to terminus
 	data[x+width*y]=watershedFlowRecursor(x+connectdx[fd[x+width*y]],y+connectdy[fd[x+width*y]],fd);
 	return data[x+width*y];
 }

@@ -39,9 +39,9 @@ int comparestatbytemp(const void* a, const void* b) { //for qsort by average z
 }
 
 struct crawler {
-	int pos;
-	int own;
-	int id;
+	unsigned int pos;
+	unsigned int own;
+	unsigned int id;
 	short flags;
 	float hival;
 	float hislp;
@@ -201,8 +201,8 @@ int Image::findcraters(const string& basefolder, Image* msk, CraterSpec*** cspec
 		combined->renumerateWithKey(0x01);
     
 		// trim candidate to basins in which it contains the minima
-		for(int i=1; i<combined->pic.size(); i++) {
-			for(int j=0; j<combined->pic[i].size(); j++) {
+		for(size_t i=1; i<combined->pic.size(); i++) {
+			for(size_t j=0; j<combined->pic[i].size(); j++) {
 				int p = combined->pic[i][j];
 				if( combined->data[topows->stats[topows->data[p]].minloc] != combined->data[p]) combined->data[p]=0;
 			}
@@ -217,9 +217,9 @@ int Image::findcraters(const string& basefolder, Image* msk, CraterSpec*** cspec
 		printf("Narrowing down crater candidates from %zu...\n",combined->pic.size());
 
 		// First cut: NOT TOO MUCH PREVIOUS STEP
-		for(int i=1; i<combined->pic.size(); i++) {
+		for(size_t i=1; i<combined->pic.size(); i++) {
 			float usum = 0;
-			for(int j=0; j<combined->pic[i].size(); j++) usum += msk->data[combined->pic[i][j]];
+			for(size_t j=0; j<combined->pic[i].size(); j++) usum += msk->data[combined->pic[i][j]];
 			if(usum/combined->pic[i].size() < 0.7) {
 				combined->andRegion(i,0x0);
 				combined->pic.clear();
@@ -237,9 +237,9 @@ int Image::findcraters(const string& basefolder, Image* msk, CraterSpec*** cspec
 		//Grab whole basin
 		vector<int> npicshadow(topows->pic.size());
         for(size_t i = 0; i < topows->pic.size(); i++) npicshadow[i] = topows->pic[i].size();
-		for(int i=1; i<combined->pic.size(); i++) {
-			int origowner = combined->data[combined->pic[i][0]] >> combined->shift;
-			for(int j=0; j<combined->pic[i].size(); j++) {
+		for(size_t i=1; i<combined->pic.size(); i++) {
+			unsigned int origowner = combined->data[combined->pic[i][0]] >> combined->shift;
+			for(size_t j=0; j<combined->pic[i].size(); j++) {
 				int p = topows->data[combined->pic[i][j]];
 				for(int q=0; q<npicshadow[p]; q++) {
 					if((combined->data[topows->pic[p][q]] >> combined->shift) != origowner) combined->data[topows->pic[p][q]] = (origowner << combined->shift) | 0x01;
@@ -252,7 +252,7 @@ int Image::findcraters(const string& basefolder, Image* msk, CraterSpec*** cspec
 		
 		// set crawler seeds
 		combined->underlyingstats(bld);
-		for(int i=1; i<topows->pic.size(); i++) {
+		for(size_t i=1; i<topows->pic.size(); i++) {
 			if(combined->data[topows->stats[i].minloc]) combined->data[topows->stats[i].minloc] |= 0x02; //mark basin minima
 		}
 		sameCrawlers(combined, bld, drx, dry, pow(.10,.2*r));
@@ -280,7 +280,7 @@ int Image::findcraters(const string& basefolder, Image* msk, CraterSpec*** cspec
 		combined->underlying = NULL;
 		combined->underlyingstats(this);
 		int nNewCraters = 0;
-		for(int i=1; i<combined->pic.size(); i++)
+		for(size_t i=1; i<combined->pic.size(); i++)
 		{
 			CraterSpec* c = new CraterSpec(0);
 			float invnpts = 1.0/combined->pic[i].size();

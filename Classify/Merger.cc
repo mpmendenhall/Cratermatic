@@ -111,7 +111,7 @@ void Merger::domerge(float alpha) {
 	basinstats();
 	mainloop();
 	w->name = w->name+" Merged";
-	printf ("%zu basins left after merging, with %lu Pixels/Basin average\n", w->pic.size(), w->size/w->pic.size());
+	printf ("%zu basins left after merging, with %.1f Pixels/Basin average\n", w->pic.size(), double(w->size)/w->pic.size());
 }
 
 void Merger::basinstats()
@@ -122,13 +122,13 @@ void Merger::basinstats()
 	reg_sum = (Matrix**)malloc((w->pic.size())*sizeof(Matrix*)); //sum of image values in region
 	reg_sscp = (Matrix**)malloc((w->pic.size())*sizeof(Matrix*)); //sum of X_i X_j in region
 	bestj = (int*)malloc((w->pic.size())*sizeof(int));
-	for(int i=0; i<w->pic.size(); i++) bestj[i]=-1;
+	for(size_t i=0; i<w->pic.size(); i++) bestj[i] = -1;
 	bestdv= (float*)calloc((w->pic.size()),sizeof(float));
 	
 	//region sum
-	for(int i=0; i<w->pic.size(); i++){
+	for(size_t i=0; i<w->pic.size(); i++){
 		reg_sum[i] = new Matrix(nch,1);
-		for(int k=0; k<w->pic[i].size(); k++) {
+		for(size_t k=0; k<w->pic[i].size(); k++) {
 			for(int c=0; c<nch; c++) (*reg_sum[i])(c,0) += ch[c]->data[w->pic[i][k]];
 		}
 	}
@@ -137,9 +137,9 @@ void Merger::basinstats()
 	fflush(stdout);
 	//sscp matrix
 	Matrix* v =  new Matrix(1,nch);
-	for(int i=0; i<w->pic.size(); i++){
+	for(size_t i=0; i<w->pic.size(); i++){
 		reg_sscp[i] = new Matrix(nch,nch);
-		for(int k=0; k<w->pic[i].size(); k++) {
+		for(size_t k=0; k<w->pic[i].size(); k++) {
 			for(int c=0; c<nch; c++) (*v)(0,c) = ch[c]->data[w->pic[i][k]];
 			reg_sscp[i]->iadd(mmult(v->transpose(),v->cp()));
 		}
@@ -150,15 +150,15 @@ void Merger::basinstats()
 	fflush(stdout);
 	int nmergable = 0;
 	linkweights = (float**)malloc(w->pic.size()*sizeof(float*));
-	for(int i=0; i<w->pic.size(); i++) linkweights[i] = (float*)calloc(w->pic.size(),sizeof(float));
-	for(int i=0; i<w->pic.size(); i++) {
-		for(int j=i+1; j<w->pic.size(); j++) {
+	for(size_t i=0; i<w->pic.size(); i++) linkweights[i] = (float*)calloc(w->pic.size(),sizeof(float));
+	for(size_t i=0; i<w->pic.size(); i++) {
+		for(size_t j=i+1; j<w->pic.size(); j++) {
 			linkweights[i][j]=calcweight(i,j);
 			linkweights[j][i]=linkweights[i][j];
 			if(linkweights[i][j]!=-1) nmergable++;
 		}
 	}
-	for(int i=0; i<w->pic.size(); i++) linkweights[i][i]=-1;
+	for(size_t i=0; i<w->pic.size(); i++) linkweights[i][i]=-1;
 	
 	fprintf (stdout, "%i mergeable links. Done.\n",nmergable);
 }
@@ -173,7 +173,7 @@ void Merger::mainloop()
 		float zbest = 0;
 		ibest=-1;
 		
-		for(int i=0; i<w->pic.size(); i++)
+		for(size_t i=0; i<w->pic.size(); i++)
 		{
 			if(w->pic[i].size() == 0) continue;
 			if(bestj[i] == -1) continue;
@@ -206,7 +206,7 @@ float Merger::calcweight(int i, int j) {
 	if(!(w->cg->get(i,j))) return -1; //it's not adjoining
 	if(j==i) return -1; //don't try merging a region with itself
 	if(w->pic[i].size()*w->pic[j].size() == 0) return -1; //skip empty (already merged) regions
-	if(w->pic[i].size()+w->pic[j].size() <= nch) return -1; // skip too-small-to-merge regions
+	if((int)(w->pic[i].size()+w->pic[j].size()) <= nch) return -1; // skip too-small-to-merge regions
 	
 	float nu_ij = w->pic[i].size()+w->pic[j].size()-2;
 	
@@ -253,7 +253,7 @@ float Merger::calcweight(int i, int j) {
 
 void Merger::merge(int i, int j) //merge watershed regions (j into i) and statistics
 {	
-	for(int k=0; k<w->pic.size(); k++) {
+	for(size_t k=0; k<w->pic.size(); k++) {
 		if(w->cg->get(j,k)) {
 			linkweights[j][k] = -1;
 			linkweights[k][j] = -1;
@@ -268,7 +268,7 @@ void Merger::merge(int i, int j) //merge watershed regions (j into i) and statis
 	reg_sum[i]->iadd(reg_sum[j]);
 	reg_sscp[i]->iadd(reg_sscp[j]);
 	
-	for(int k=0; k<w->pic.size(); k++) {
+	for(size_t k=0; k<w->pic.size(); k++) {
 		if(w->cg->get(i,k)) {
 			linkweights[i][k] = calcweight(i,k);
 			linkweights[k][i]=linkweights[i][k];

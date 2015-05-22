@@ -139,7 +139,7 @@ ClassifyImage* ClassifyImage::copy() {
 	return foo;
 }
 
-void ClassifyImage::xorPoints(vector<int>& d, unsigned int xorkey) {
+void ClassifyImage::xorPoints(vector<unsigned int>& d, unsigned int xorkey) {
 	for(auto it = d.begin(); it != d.end(); it++) data[*it] ^= xorkey;
 }
 
@@ -149,7 +149,7 @@ void ClassifyImage::xorRegion(unsigned int n, unsigned int xorkey) {
 	xorPoints(pic[n],xorkey);
 }
 
-void ClassifyImage::andPoints(vector<int>& d, unsigned int andkey) {
+void ClassifyImage::andPoints(vector<unsigned int>& d, unsigned int andkey) {
     for(auto it = d.begin(); it != d.end(); it++) data[*it] &= andkey;
 }
 
@@ -169,10 +169,10 @@ void ClassifyImage::findObjectsByLowBits(int nbits) {
 	
 	shift = nbits;
 	unsigned int bitmask =   0xFFFFFFFF << shift;
-	vector<int> nudata(size, 0xFFFFFFFF);
+	vector<unsigned int> nudata(size, 0xFFFFFFFF);
 	for(int i=0; i<size; i++) {
 		if(nudata[i] != 0xFFFFFFFF) continue; //already been claimed
-        pic.push_back(vector<int>());
+        pic.push_back(vector<unsigned int>());
 		seedFillByMaskedBits(i, pic.back(), (1<<nbits)-1, bitmask, (pic.size()-1) << shift, nudata);
 	}
 	data = nudata;
@@ -184,28 +184,28 @@ void ClassifyImage::findObjectsByHigherBits(int nbits) {
 	
 	shift = nbits;
     unsigned int bitmask =   0xFFFFFFFF << shift;
-	vector<int> nudata(size, 0xFFFFFFFF);
+	vector<unsigned int> nudata(size, 0xFFFFFFFF);
 	
 	for(int i=0; i<size; i++) {
 		if(nudata[i] != 0xFFFFFFFF) continue; //already been claimed
-        pic.push_back(vector<int>());
+        pic.push_back(vector<unsigned int>());
 		seedFillByMaskedBits(i, pic.back(), bitmask, bitmask, (pic.size()-1) << shift, nudata);
 	}
 	data = nudata;
 	isclassified = true;
 }
 
-void ClassifyImage::seedFillByMaskedBits(int startp, vector<int>& pout, int searchmask, int setmask, int setnum, vector<int>& nudata) {
+void ClassifyImage::seedFillByMaskedBits(unsigned int startp, vector<unsigned int>& pout, unsigned int searchmask, unsigned int setmask, unsigned int setnum, vector<unsigned int>& nudata) {
 	setnum &= setmask; //make sure we don't set unmasked bits
-        int ptype = data[startp] & searchmask; //point type we are searching for
+        unsigned int ptype = data[startp] & searchmask; //point type we are searching for
 	nudata[startp] = (data[startp] & ~setmask) | setnum; //mark starting point
 	assert(nudata.size() == data.size());
     
-	vector<int> points;
+	vector<unsigned int> points;
 	points.push_back(startp);
 	
 	while(points.size()) {
-		int p = points.back();
+		unsigned int p = points.back();
 		points.pop_back();
 		pout.push_back(p);
 		int x0=p%width;
@@ -218,7 +218,7 @@ void ClassifyImage::seedFillByMaskedBits(int startp, vector<int>& pout, int sear
 			if(!inrange(x0+dx,y0+dy)) continue;
 			
 			int p1 = x0+dx+width*(y0+dy);
-			if(nudata[p1] != (int)0xFFFFFFFF) continue; //someone got there first
+			if(nudata[p1] != 0xFFFFFFFF) continue; //someone got there first
 			if((data[p1] & searchmask) != ptype) continue; //not of same type
 			
 			points.push_back(p1);
@@ -232,7 +232,7 @@ void ClassifyImage::calcstats() {
     
 	stats.resize(pic.size());
 	
-	for(int i=0; i<pic.size(); i++) {
+	for(size_t i=0; i<pic.size(); i++) {
         stats[i].idnum = i;
 		stats[i].npic = pic[i].size();
 		stats[i].xsum=0;
@@ -242,7 +242,7 @@ void ClassifyImage::calcstats() {
 		
 		int p;
 		float x,y;
-		for(int j=0; j<pic[i].size(); j++) {
+		for(size_t j=0; j<pic[i].size(); j++) {
 			p = pic[i][j];
 			x=(float)(p%width); y=(float)(p/width);
 			stats[i].xsum += x;
@@ -264,26 +264,26 @@ void ClassifyImage::connectivitygraph() {
 	cg = new SparseInt(pic.size(),pic.size());
 	
 	for(int i=0; i<size; i++){
-		set<int> foo = boundswho(i);
+		auto foo = boundswho(i);
 		for(auto it = foo.begin(); it != foo.end(); it++) cg->set(data[i] >> shift, *it, 1);
 	}
 	
-	for(int i=0; i<pic.size(); i++) cg->set((int)i,i,0);
+	for(size_t i=0; i<pic.size(); i++) cg->set((int)i,i,0);
 	
 	hasconnectivity=true;
 	printf("Done.\n");
 }
 
 
-void ClassifyImage::joinregions(int a, int b, bool dobounds) { //merge region b into a
+void ClassifyImage::joinregions(unsigned int a, unsigned int b, bool dobounds) { //merge region b into a
 	
 	if(!hasboundaries && dobounds) findboundaries();
 	if(a>=pic.size() || b>=pic.size() || a==b) return; //oops! one of the basins doesn't exist
 	
 	//assign points to correct class
 	pic[a].insert(pic[a].begin(), pic[b].begin(), pic[b].end());
-	for(int i=0; i<pic[b].size(); i++) {
-		data[pic[b][i]] = (a << shift) + (data[pic[b][i]] & (1<<shift)-1); //preserve b low bits
+	for(size_t i=0; i<pic[b].size(); i++) {
+		data[pic[b][i]] = (a << shift) + (data[pic[b][i]] & ((1<<shift)-1)); //preserve b low bits
 	}
 	pic[b].clear();
 	
@@ -316,35 +316,32 @@ void ClassifyImage::joinregions(int a, int b, bool dobounds) { //merge region b 
 	if(!dobounds) return;
 	
 	//fix boundary
-	bool* isbound = (bool*)calloc(size,sizeof(bool));
-    assert(isbound);
-	for(int i=0; i<bounds[a].size(); i++) isbound[bounds[a][i]]=true;
-	for(int i=0; i<bounds[b].size(); i++) {
-		set<int> f = boundswho(bounds[b][i]);
-		if(f.size() >= 2) isbound[bounds[b][i]]=true; //it's a boundary
-		else isbound[bounds[b][i]]=false;
+	vector<bool> isbound(size);
+	for(auto it = bounds[a].begin(); it != bounds[a].end(); it++) isbound[*it]=true;
+	for(auto it = bounds[b].begin(); it != bounds[b].end(); it++) {
+		auto f = boundswho(*it);
+		if(f.size() >= 2) isbound[*it]=true; //it's a boundary
+		else isbound[*it]=false;
 	}
 	
-	vector<int> newbnds(size);
-	for(int i=0; i<bounds[a].size(); i++) {
-		if(isbound[bounds[a][i]]) {
-			newbnds.push_back(bounds[a][i]);
-			isbound[bounds[a][i]]=false;
+	vector<unsigned int> newbnds(size);
+	for(auto it = bounds[a].begin(); it != bounds[a].end(); it++) {
+		if(isbound[*it]) {
+			newbnds.push_back(*it);
+			isbound[*it]=false;
 		}
 	}
-	for(int i=0; i<bounds[b].size(); i++) {
-		if(isbound[bounds[b][i]]) {
-			newbnds.push_back(bounds[b][i]);
-		}
+	for(auto it = bounds[b].begin(); it != bounds[b].end(); it++) {
+		if(isbound[*it]) newbnds.push_back(*it);
 	}
-	free(isbound);
+	
 	bounds[b].clear();
     bounds[a] = newbnds;
 }
 
-set<int> ClassifyImage::boundswho(int p) { //check which regions a point is a boundary for
+set<unsigned int> ClassifyImage::boundswho(int p) { //check which regions a point is a boundary for
 	
-	set<int> bounders;
+	set<unsigned int> bounders;
 	int x=p%width;
 	int y=p/width;
 	
@@ -369,8 +366,8 @@ void ClassifyImage::findboundaries() {
 	
 
     //count the boundaries
-	vector< set<int> > adjacents(size);
-    vector<int> nbounds(pic.size());
+	vector< set<unsigned int> > adjacents(size);
+    vector<unsigned int> nbounds(pic.size());
 	for(int i=0; i<size; i++) {
 		adjacents[i] = boundswho(i);
 		if(adjacents[i].size() >= 2) { //it's a boundary!
@@ -379,8 +376,8 @@ void ClassifyImage::findboundaries() {
 	}
 	
     bounds.resize(pic.size());
-	for(int m=0; m<pic.size(); m++) bounds[m].resize(nbounds[m]);
-	vector<int> tnbounds(pic.size());
+	for(unsigned int m=0; m<pic.size(); m++) bounds[m].resize(nbounds[m]);
+	vector<unsigned int> tnbounds(pic.size());
     
 	for(int i=0; i<size; i++) {
 		if(adjacents[i].size() >=2) { //it's a boundary!
@@ -407,7 +404,7 @@ void ClassifyImage::settempstat(unsigned int n)
 {
 	if(n==0 || n>14) return;
 	bstofarr q;
-	for(int k=0; k<pic.size(); k++)
+	for(unsigned int k=0; k<pic.size(); k++)
 	{
 		q.b = stats[k];
 		stats[k].temp = q.a[n-1];
@@ -416,7 +413,7 @@ void ClassifyImage::settempstat(unsigned int n)
 
 void ClassifyImage::circularity() { //calculate circularity of each region
 	if(stats.size() != pic.size()) calcstats();
-	for(int i=0; i<pic.size(); i++) {
+	for(unsigned int i=0; i<pic.size(); i++) {
 		Circle c = findboundingcirc(pic[i].data(), pic[i].size());
 		stats[i].temp = pic[i].size()/(3.14159*c.r*c.r);
 	}
@@ -424,7 +421,7 @@ void ClassifyImage::circularity() { //calculate circularity of each region
 
 void ClassifyImage::random(){ //assign random number in [0,1] to temp stat
 	if(stats.size() != pic.size()) calcstats();
-	for(int i=0; i<pic.size(); i++) {
+	for(unsigned int i=0; i<pic.size(); i++) {
 		stats[i].temp = (float)rand()/((float)RAND_MAX);
 	}
 }
@@ -469,9 +466,9 @@ void ClassifyImage::renumerate() {
         auto it = renum.find(data[i] >> shift);
         if(it == renum.end()) {
             it = renum.insert(std::pair<int,int>(data[i] >> shift, pic.size())).first;
-            pic.push_back(vector<int>());
+            pic.push_back(vector<unsigned int>());
         }
-        data[i] = (it->second << shift) + (data[i] & (1<<shift)-1); // assign to category, preserving lower bits
+        data[i] = (it->second << shift) + (data[i] & ((1<<shift)-1)); // assign to category, preserving lower bits
         pic[it->second].push_back(i);
 	}
 	
@@ -483,7 +480,7 @@ void ClassifyImage::renumerate() {
     bounds.clear();
     stats.clear();
     if(cg) { delete(cg); cg=NULL; }
-};
+}
 
 void ClassifyImage::renumerateWithKey(int andkey) {
 	printf("Re-enumerating basins with key %i;", andkey);
@@ -491,19 +488,19 @@ void ClassifyImage::renumerateWithKey(int andkey) {
 	
 	map<int,int> renum;
     pic.clear();
-    pic.push_back(vector<int>());
+    pic.push_back(vector<unsigned int>());
 	for(int i=0; i<size; i++){
         if(!(data[i] & andkey)) {	// assign events not matching any bits to category 0
-			data[i] = 0x0 + (data[i] & (1<<shift)-1); // assign to category 0, preserving lower bits.
+			data[i] = 0x0 + (data[i] & ((1<<shift)-1)); // assign to category 0, preserving lower bits.
 			pic[0].push_back(i);
 			continue;
 		}
         auto it = renum.find(data[i] >> shift);
         if(it == renum.end()) {
             it = renum.insert(std::pair<int,int>(data[i] >> shift, pic.size())).first;
-            pic.push_back(vector<int>());
+            pic.push_back(vector<unsigned int>());
         }
-        data[i] = (it->second << shift) + (data[i] & (1<<shift)-1); // assign to category, preserving lower bits
+        data[i] = (it->second << shift) + (data[i] & ((1<<shift)-1)); // assign to category, preserving lower bits
         pic[it->second].push_back(i);
 	}
 	
@@ -515,8 +512,9 @@ void ClassifyImage::renumerateWithKey(int andkey) {
     bounds.clear();
     stats.clear();
     if(cg) { delete(cg); cg=NULL; }
-};
+}
 
 void ClassifyImage::addregiontopoi(int n) {
     poi.insert(poi.end(), pic[n].begin(), pic[n].end());
-};
+}
+
