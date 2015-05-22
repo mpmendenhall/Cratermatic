@@ -323,7 +323,7 @@ ClassifyImage* ClassifyImage::removeSmall(size_t s) {
 	return this;
 }
 
-ClassifyImage* ClassifyImage::constrainSize(unsigned int s1, unsigned int s2) {
+ClassifyImage* ClassifyImage::constrainSize(size_t s1, size_t s2) {
 	for(size_t i=1; i<pic.size(); i++)
 		if(pic[i].size()<s1 || pic[i].size()>s2) andRegion(i,0x0);
 	isclassified = false;
